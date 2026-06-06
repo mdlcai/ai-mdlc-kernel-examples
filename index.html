@@ -3,110 +3,131 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>MDLC — Example Builds</title>
+<title>MDLC™ — Example Builds</title>
 <meta name="description" content="Five real applications, each built end-to-end by the MDLC methodology — from a one-page blueprint to a gate-passing build." />
-<meta property="og:title" content="MDLC — Example Builds" />
+<meta property="og:title" content="MDLC™ — Example Builds" />
 <meta property="og:description" content="Five real applications, each built end-to-end by the MDLC methodology. Live previews, architecture, and the full build report for each." />
 <meta property="og:type" content="website" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
 <style>
+  /* ── mdlc.ai design tokens (copied verbatim from the site :root) ─────────── */
   :root{
-    --bg:#0a0e17; --bg-2:#0e1422; --surface:#121a2b; --surface-2:#16203400;
-    --line:#1f2a44; --line-2:#2a3858;
-    --fg:#eaf0fb; --muted:#9fb0cf; --muted-2:#6f80a3;
-    --accent:#5b8cff; --accent-2:#3b6dff; --accent-soft:#16224a;
-    --good:#34d399;
-    --font-display:"Manrope",sans-serif; --font-body:"Inter",sans-serif; --font-mono:"JetBrains Mono",monospace;
-    --radius:18px; --radius-sm:11px;
-    --shadow:0 30px 70px -30px rgba(0,0,0,.7), 0 8px 24px -12px rgba(0,0,0,.5);
+    --void:#04070f; --deep:#080d19; --surface:#0d1221; --surface-raised:#111828; --surface-overlay:#172033;
+    --border:#1f2d47; --border-subtle:#131e34;
+    --text-primary:#edf0f7; --text-secondary:#8e9bb5; --text-muted:#465069;
+    --blue:#3b82f6; --blue-dim:#2563eb; --blue-glow:rgba(59,130,246,0.12);
+    --cyan:#06b6d4; --cyan-dim:#0891b2; --cyan-glow:rgba(6,182,212,0.10);
+    --accent-warm:#f59e0b; --accent-green:#10b981; --accent-rose:#f43f5e;
+    --font-display:'Instrument Serif',Georgia,serif;
+    --font-body:'Plus Jakarta Sans','DM Sans',system-ui,sans-serif;
+    --font-mono:'JetBrains Mono','Fira Code',monospace;
+    --ease:cubic-bezier(0.16,1,0.3,1);
+    --radius-sm:8px; --radius-md:12px; --radius-lg:18px; --radius-xl:24px;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
-  body{font-family:var(--font-body);background:
-      radial-gradient(1200px 600px at 50% -200px, #16234d 0%, rgba(22,35,77,0) 60%),
-      var(--bg);
-    color:var(--fg);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;min-height:100vh}
-  h1,h2,h3{font-family:var(--font-display);margin:0;letter-spacing:-.025em;text-wrap:balance}
+  body{font-family:var(--font-body);color:var(--text-primary);font-size:16px;line-height:1.65;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;min-height:100vh;
+    background:
+      radial-gradient(900px 480px at 50% -160px, var(--blue-glow) 0%, rgba(59,130,246,0) 62%),
+      radial-gradient(700px 380px at 85% 8%, var(--cyan-glow) 0%, rgba(6,182,212,0) 60%),
+      var(--void);
+  }
   a{color:inherit;text-decoration:none}
   .mono{font-family:var(--font-mono)}
   .wrap{width:min(1160px,100% - 48px);margin-inline:auto}
+  ::selection{background:rgba(6,182,212,.25)}
 
-  /* Top bar */
-  .bar{display:flex;align-items:center;justify-content:space-between;padding:22px 0}
-  .brand{display:flex;align-items:center;gap:11px;font-family:var(--font-display);font-weight:800;font-size:18px}
-  .logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(140deg,var(--accent),var(--accent-2));
-    display:grid;place-items:center;box-shadow:0 6px 18px -6px var(--accent-2)}
-  .logo svg{width:17px;height:17px}
-  .bar a.cta{font-family:var(--font-display);font-weight:700;font-size:14px;padding:9px 16px;border-radius:var(--radius-sm);
-    background:var(--accent);color:#fff;box-shadow:0 8px 20px -8px var(--accent-2);transition:.18s}
-  .bar a.cta:hover{background:var(--accent-2);transform:translateY(-2px)}
+  /* ── Top bar ─────────────────────────────────────────────────────────────── */
+  .bar{display:flex;align-items:center;justify-content:space-between;padding:20px 0}
+  .brand{display:flex;align-items:center;gap:11px}
+  .brand img{width:30px;height:30px;filter:drop-shadow(0 0 12px var(--cyan-glow))}
+  .brand .wm{font-family:var(--font-mono);font-weight:700;font-size:16px;letter-spacing:.04em}
+  .brand .wm sup{color:var(--cyan);font-size:.6em;vertical-align:super}
+  .bar .cta{font-family:var(--font-mono);font-weight:600;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;
+    padding:9px 16px;border-radius:var(--radius-sm);background:var(--blue);color:#fff;
+    box-shadow:0 8px 22px -8px rgba(59,130,246,.55);transition:.2s var(--ease)}
+  .bar .cta:hover{background:var(--blue-dim);transform:translateY(-2px)}
 
-  /* Hero */
-  .hero{padding:72px 0 40px;text-align:center;max-width:780px;margin-inline:auto}
-  .eyebrow{font-family:var(--font-mono);font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
-    color:var(--accent);margin-bottom:22px}
-  .hero h1{font-size:clamp(38px,6vw,62px);line-height:1.04;font-weight:800}
-  .hero h1 .grad{background:linear-gradient(110deg,var(--accent) 10%,#9db8ff 70%);-webkit-background-clip:text;background-clip:text;color:transparent}
-  .hero p{font-size:clamp(16px,2.2vw,19px);color:var(--muted);margin:22px auto 0;max-width:620px}
-  .hero .actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:30px}
-  .btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-display);font-weight:700;font-size:15px;
-    padding:13px 22px;border-radius:var(--radius-sm);border:1px solid transparent;cursor:pointer;transition:.18s}
-  .btn-primary{background:var(--accent);color:#fff;box-shadow:0 12px 26px -10px var(--accent-2)}
-  .btn-primary:hover{background:var(--accent-2);transform:translateY(-2px)}
-  .btn-ghost{background:rgba(255,255,255,.03);border-color:var(--line-2);color:var(--fg)}
-  .btn-ghost:hover{border-color:var(--accent);color:#cdddff;transform:translateY(-2px)}
+  /* ── Hero ────────────────────────────────────────────────────────────────── */
+  .hero{padding:78px 0 38px;text-align:center;max-width:840px;margin-inline:auto}
+  .eyebrow{font-family:var(--font-mono);font-size:12px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--text-secondary);margin-bottom:24px}
+  .eyebrow .gl{color:var(--cyan)}
+  .hero h1{font-family:var(--font-display);font-weight:400;font-size:clamp(46px,7.5vw,82px);line-height:1.02;
+    letter-spacing:-.01em;margin:0}
+  .hero h1 em{font-style:italic;color:var(--blue);
+    background:linear-gradient(100deg,var(--blue) 20%,var(--cyan) 95%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .hero p.sub{font-size:clamp(15px,2.1vw,18px);color:var(--text-secondary);margin:26px auto 0;max-width:620px;line-height:1.7}
+  .hero p.sub code{font-family:var(--font-mono);font-size:.88em;color:var(--text-primary);background:var(--surface-overlay);
+    border:1px solid var(--border-subtle);border-radius:5px;padding:1px 6px}
+  .actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:32px}
+  .btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-weight:600;font-size:13px;
+    letter-spacing:.04em;text-transform:uppercase;padding:13px 22px;border-radius:var(--radius-sm);
+    border:1px solid transparent;cursor:pointer;transition:.2s var(--ease)}
+  .btn-primary{background:var(--blue);color:#fff;box-shadow:0 12px 28px -10px rgba(59,130,246,.5)}
+  .btn-primary:hover{background:var(--blue-dim);transform:translateY(-2px)}
+  .btn-ghost{background:transparent;border-color:var(--border);color:var(--text-primary)}
+  .btn-ghost:hover{border-color:var(--cyan);color:var(--cyan);transform:translateY(-2px)}
 
-  /* Stat strip */
-  .stats{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:34px 0 8px;font-family:var(--font-mono);font-size:12.5px;color:var(--muted-2)}
-  .stats span{display:inline-flex;align-items:center;gap:7px}
-  .dot{width:6px;height:6px;border-radius:50%;background:var(--good);box-shadow:0 0 10px var(--good)}
+  .stats{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin-top:38px;
+    font-family:var(--font-mono);font-size:12px;letter-spacing:.06em;color:var(--text-muted);text-transform:uppercase}
+  .stats span{display:inline-flex;align-items:center;gap:8px}
+  .stats span::before{content:"✦";color:var(--cyan);font-size:11px}
 
-  /* Cards */
-  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;padding:40px 0 20px}
+  /* ── Card grid ───────────────────────────────────────────────────────────── */
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;padding:44px 0 12px}
   @media(max-width:820px){.grid{grid-template-columns:1fr}}
-  .card{background:linear-gradient(180deg,var(--surface),var(--bg-2));border:1px solid var(--line);border-radius:var(--radius);
-    overflow:hidden;box-shadow:var(--shadow);transition:.22s;display:flex;flex-direction:column}
-  .card:hover{transform:translateY(-4px);border-color:var(--line-2)}
-  .shot{position:relative;display:block;aspect-ratio:16/10;overflow:hidden;background:#0c1220;border-bottom:1px solid var(--line)}
-  .shot img{width:100%;height:100%;object-fit:cover;object-position:top center;transition:.5s ease}
+  .card{background:linear-gradient(180deg,var(--surface-raised),var(--surface));border:1px solid var(--border);
+    border-radius:var(--radius-lg);overflow:hidden;display:flex;flex-direction:column;transition:.25s var(--ease)}
+  .card:hover{transform:translateY(-4px);border-color:var(--cyan-dim);
+    box-shadow:0 30px 70px -34px rgba(0,0,0,.8),0 0 0 1px var(--blue-glow),0 18px 50px -24px var(--cyan-glow)}
+  .shot{position:relative;display:block;aspect-ratio:16/10;overflow:hidden;background:var(--deep);border-bottom:1px solid var(--border)}
+  .shot img{width:100%;height:100%;object-fit:cover;object-position:top center;transition:.5s var(--ease)}
   .card:hover .shot img{transform:scale(1.03)}
-  .shot .open{position:absolute;inset:0;display:grid;place-items:center;opacity:0;transition:.22s;
-    background:linear-gradient(0deg,rgba(8,12,22,.72),rgba(8,12,22,.18))}
+  .shot .open{position:absolute;inset:0;display:grid;place-items:center;opacity:0;transition:.22s var(--ease);
+    background:linear-gradient(0deg,rgba(4,7,15,.78),rgba(4,7,15,.12))}
   .card:hover .shot .open{opacity:1}
-  .shot .open span{font-family:var(--font-display);font-weight:700;font-size:14px;padding:11px 20px;border-radius:var(--radius-sm);
-    background:rgba(255,255,255,.95);color:#0a0e17;box-shadow:var(--shadow)}
-  .body{padding:20px 22px 22px;display:flex;flex-direction:column;gap:12px;flex:1}
-  .body h3{font-size:21px;font-weight:800;display:flex;align-items:center;gap:10px}
-  .badge{font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
-    color:var(--accent);background:var(--accent-soft);border:1px solid var(--line-2);padding:3px 8px;border-radius:999px}
-  .body p{margin:0;color:var(--muted);font-size:14.5px;line-height:1.55}
-  .gates{display:flex;flex-wrap:wrap;gap:7px;margin-top:2px}
-  .gate{font-family:var(--font-mono);font-size:11px;color:#bfe8d4;background:rgba(52,211,153,.08);
-    border:1px solid rgba(52,211,153,.22);padding:4px 9px;border-radius:999px}
-  .links{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:6px}
-  .links a{font-family:var(--font-display);font-weight:600;font-size:13px;padding:8px 13px;border-radius:9px;
-    border:1px solid var(--line-2);color:var(--muted);transition:.16s}
-  .links a:hover{color:#fff;border-color:var(--accent);background:var(--accent-soft)}
-  .links a.lead{color:#dce8ff;border-color:var(--accent);background:var(--accent-soft)}
+  .shot .open span{font-family:var(--font-mono);font-weight:600;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;
+    padding:11px 20px;border-radius:var(--radius-sm);background:var(--blue);color:#fff;box-shadow:0 12px 30px -10px rgba(59,130,246,.6)}
+  .body{padding:22px 24px 24px;display:flex;flex-direction:column;gap:13px;flex:1}
+  .body h3{font-family:var(--font-display);font-weight:400;font-size:27px;line-height:1.1;margin:0;
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .badge{font-family:var(--font-mono);font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--cyan);background:var(--cyan-glow);border:1px solid rgba(6,182,212,.28);padding:3px 9px;border-radius:999px}
+  .body p{margin:0;color:var(--text-secondary);font-size:14.5px;line-height:1.6}
+  .gates{display:flex;flex-wrap:wrap;gap:7px;margin-top:1px}
+  .gate{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.03em;color:#7ff0c8;
+    background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.24);padding:4px 9px;border-radius:999px}
+  .links{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:8px}
+  .links a{font-family:var(--font-mono);font-weight:500;font-size:12px;letter-spacing:.03em;text-transform:uppercase;
+    padding:8px 13px;border-radius:var(--radius-sm);border:1px solid var(--border);color:var(--text-secondary);transition:.18s var(--ease)}
+  .links a:hover{color:var(--text-primary);border-color:var(--cyan);background:var(--cyan-glow)}
+  .links a.lead{color:#bfe1ff;border-color:var(--blue-dim);background:var(--blue-glow)}
 
-  /* How it works */
-  .how{padding:54px 0 20px}
-  .how h2{text-align:center;font-size:clamp(26px,4vw,36px);font-weight:800}
-  .how .sub{text-align:center;color:var(--muted);max-width:600px;margin:14px auto 0}
-  .flow{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:38px}
+  /* ── How it's built ──────────────────────────────────────────────────────── */
+  .how{padding:60px 0 18px}
+  .how .lab{text-align:center;font-family:var(--font-mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan);margin-bottom:14px}
+  .how h2{text-align:center;font-family:var(--font-display);font-weight:400;font-size:clamp(30px,4.5vw,46px);margin:0;letter-spacing:-.01em}
+  .how .s{text-align:center;color:var(--text-secondary);max-width:600px;margin:16px auto 0;font-size:15px}
+  .flow{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:40px}
   @media(max-width:820px){.flow{grid-template-columns:1fr 1fr}}
-  .step{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:18px 16px}
-  .step .n{font-family:var(--font-mono);font-size:11px;color:var(--accent);letter-spacing:.1em}
-  .step h4{font-family:var(--font-display);font-size:15px;margin:8px 0 5px;font-weight:700}
-  .step p{margin:0;font-size:13px;color:var(--muted-2);line-height:1.5}
+  .step{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:20px 16px;transition:.2s var(--ease)}
+  .step:hover{border-color:var(--border);box-shadow:0 0 0 1px var(--blue-glow)}
+  .step .n{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;color:var(--cyan)}
+  .step h4{font-family:var(--font-display);font-weight:400;font-size:21px;margin:8px 0 6px}
+  .step p{margin:0;font-size:13px;color:var(--text-muted);line-height:1.55}
+  .step p code{font-family:var(--font-mono);font-size:.92em;color:var(--text-secondary)}
 
-  /* Footer */
-  footer{text-align:center;padding:64px 0 70px;margin-top:40px;border-top:1px solid var(--line)}
-  footer h2{font-size:clamp(24px,4vw,34px);font-weight:800}
-  footer p{color:var(--muted);margin:14px 0 26px}
-  .fine{margin-top:40px;color:var(--muted-2);font-size:12.5px;font-family:var(--font-mono)}
+  /* ── Footer ──────────────────────────────────────────────────────────────── */
+  footer{text-align:center;padding:70px 0 76px;margin-top:46px;border-top:1px solid var(--border-subtle)}
+  footer h2{font-family:var(--font-display);font-weight:400;font-size:clamp(28px,4.5vw,44px);margin:0}
+  footer h2 em{font-style:italic;color:var(--cyan)}
+  footer p{color:var(--text-secondary);margin:16px 0 28px}
+  .fine{margin-top:42px;color:var(--text-muted);font-size:11.5px;font-family:var(--font-mono);letter-spacing:.05em}
+  .fine a{color:var(--cyan)}
 </style>
 </head>
 <body>
@@ -114,24 +135,24 @@
 
   <div class="bar">
     <a class="brand" href="https://mdlc.ai">
-      <span class="logo"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4.5v9L12 20 4 15.5v-9L12 2z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 11l3 3 5-6" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-      MDLC
+      <img src="https://mdlc.ai/images/logo.webp" alt="" />
+      <span class="wm">MDLC<sup>™</sup></span>
     </a>
     <a class="cta" href="https://mdlc.ai">Build yours →</a>
   </div>
 
   <header class="hero">
-    <div class="eyebrow">Reference builds</div>
-    <h1>Five real apps,<br><span class="grad">built by the methodology.</span></h1>
-    <p>Each app below started as a one-page <span class="mono">RESEARCH.md</span> blueprint and came out the other side as a working, reviewed application — with the architecture, the spec, the decisions, and the full build report to prove it.</p>
+    <div class="eyebrow"><span class="gl">✦</span> Reference Builds <span class="gl">→</span> Built with MDLC™</div>
+    <h1>Five real apps,<br><em>built by the methodology.</em></h1>
+    <p class="sub">Each app below started as a one-page <code>RESEARCH.md</code> blueprint and came out the other side as a working, reviewed application — with the architecture, the spec, the decisions, and the full build report to prove it.</p>
     <div class="actions">
       <a class="btn btn-primary" href="#gallery">See the builds</a>
       <a class="btn btn-ghost" href="https://mdlc.ai/ai-mdlc-kernel.html">What is MDLC?</a>
     </div>
     <div class="stats">
-      <span><i class="dot"></i> 5 apps, 0 hand-written</span>
-      <span><i class="dot"></i> 84 smoke flows passed</span>
-      <span><i class="dot"></i> every gate, with receipts</span>
+      <span>5 apps, 0 hand-written</span>
+      <span>84 smoke flows passed</span>
+      <span>every gate, with receipts</span>
     </div>
   </header>
 
@@ -190,22 +211,23 @@
   </section>
 
   <section class="how">
-    <h2>How each one was built</h2>
-    <p class="sub">Same pipeline every time. Open any folder and read the artifacts in order — you can watch the methodology think.</p>
+    <div class="lab">✦ How each one was built</div>
+    <h2>Same pipeline, every time.</h2>
+    <p class="s">Open any folder and read the artifacts in order — you can watch the methodology think.</p>
     <div class="flow">
-      <div class="step"><div class="n">01</div><h4>Research</h4><p>A <span class="mono">RESEARCH.md</span> blueprint: vision, users, threat model, GO/NO-GO.</p></div>
+      <div class="step"><div class="n">01</div><h4>Research</h4><p>A <code>RESEARCH.md</code> blueprint: vision, users, threat model, GO/NO-GO.</p></div>
       <div class="step"><div class="n">02</div><h4>Architect</h4><p>System design and data flow fall out of the blueprint.</p></div>
       <div class="step"><div class="n">03</div><h4>Contract</h4><p>A spec and a decision log every line of the build is held to.</p></div>
       <div class="step"><div class="n">04</div><h4>Build &amp; gate</h4><p>Typecheck, lint, tests, security invariants, smoke flows.</p></div>
-      <div class="step"><div class="n">05</div><h4>Report</h4><p>A <span class="mono">REPORT.md</span> proving every gate that ran, with evidence.</p></div>
+      <div class="step"><div class="n">05</div><h4>Report</h4><p>A <code>REPORT.md</code> proving every gate that ran, with evidence.</p></div>
     </div>
   </section>
 
   <footer>
-    <h2>Want one of these for your idea?</h2>
+    <h2>Want one of these for <em>your</em> idea?</h2>
     <p>Bring the blueprint. MDLC builds the rest — and shows its work.</p>
     <a class="btn btn-primary" href="https://mdlc.ai">Start building at mdlc.ai →</a>
-    <div class="fine">Built with MDLC · previews are self-contained · <a href="https://github.com/mdlcai/ai-mdlc-kernel-examples" style="color:var(--accent)">source on GitHub</a></div>
+    <div class="fine">Built with MDLC™ · previews are self-contained · <a href="https://github.com/mdlcai/ai-mdlc-kernel-examples">source on GitHub</a></div>
   </footer>
 
 </div>
