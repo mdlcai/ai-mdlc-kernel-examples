@@ -1,0 +1,720 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SmarCoders — Medical coding workflow &amp; QA training</title>
+<meta name="description" content="SmarCoders moves every chart from intake to audit in one workflow: queue assignment, code with rationale, real-time validation, and supervisor QA. All data is synthetic (Synthea)." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  /* ============ Design tokens (from packages/tokens + globals.css) ============ */
+  :root {
+    --color-bg: #f4f7fb;
+    --color-surface: #ffffff;
+    --color-surface-2: #eef2f9;
+    --color-fg: #0d1626;
+    --color-muted: #5a6a82;
+    --color-border: #e3e9f2;
+    --color-accent: #2563eb;
+    --color-accent-strong: #1d4ed8;
+    --color-accent-soft: #e7eefe;
+    --color-success: #15803d;
+    --color-success-soft: #e3f3e8;
+    --color-warning: #b45309;
+    --color-warning-soft: #fbeedd;
+    --color-error: #dc2626;
+    --color-error-soft: #fce8e8;
+
+    --font-display: "Manrope", sans-serif;
+    --font-body: "Inter", sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
+
+    --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+    --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px; --space-9: 96px;
+
+    --radius-sm: 6px; --radius-md: 12px; --radius-lg: 20px; --radius-pill: 999px;
+
+    --shadow-sm: 0 1px 2px rgba(13,22,38,.06), 0 1px 3px rgba(13,22,38,.04);
+    --shadow-md: 0 6px 16px rgba(13,22,38,.08), 0 2px 6px rgba(13,22,38,.05);
+    --shadow-lg: 0 24px 56px rgba(13,22,38,.16), 0 8px 20px rgba(13,22,38,.08);
+    --focus-ring: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-accent);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  * { border-color: var(--color-border); }
+  html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  body {
+    margin: 0;
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-body);
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  h1, h2, h3, h4 { font-family: var(--font-display); color: var(--color-fg); margin: 0; }
+  h1 { font-size: clamp(40px, 4.6vw, 60px); font-weight: 800; line-height: 1.04; letter-spacing: -.02em; }
+  h2 { font-size: clamp(28px, 3vw, 38px); font-weight: 800; line-height: 1.1; letter-spacing: -.01em; }
+  h3 { font-size: 20px; font-weight: 700; line-height: 1.3; }
+  p { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+  :focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--radius-sm); }
+  ::selection { background: var(--color-accent-soft); color: var(--color-accent-strong); }
+
+  /* ============ Layout primitives ============ */
+  .container-app {
+    max-width: 1240px; margin: 0 auto; width: 100%;
+    padding-left: var(--space-5); padding-right: var(--space-5);
+  }
+
+  /* ============ Components ============ */
+  .card {
+    background: var(--color-surface); border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: var(--space-6);
+  }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+    border-radius: var(--radius-md); padding: 12px 24px; font-weight: 600; font-size: 15px;
+    line-height: 1; min-height: 44px; cursor: pointer; user-select: none; white-space: nowrap;
+    font-family: var(--font-body); border: 1px solid transparent;
+    transition: background .15s ease, transform .12s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease;
+  }
+  .btn:disabled { opacity: .55; cursor: not-allowed; transform: none !important; }
+  .btn-primary { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+  .btn-primary:hover { background: var(--color-accent-strong); border-color: var(--color-accent-strong); transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-ghost { background: var(--color-surface); color: var(--color-fg); border-color: var(--color-border); }
+  .btn-ghost:hover { background: var(--color-surface-2); border-color: var(--color-muted); transform: translateY(-1px); }
+  .btn-danger { background: var(--color-error); color: #fff; border-color: var(--color-error); }
+  .btn-danger:hover { filter: brightness(.94); transform: translateY(-1px); }
+  .btn-sm { padding: 8px 14px; min-height: 36px; font-size: 13px; border-radius: var(--radius-sm); }
+
+  .input {
+    width: 100%; background: var(--color-surface); border: 1px solid var(--color-border);
+    border-radius: var(--radius-md); padding: 11px 14px; font-size: 15px; color: var(--color-fg);
+    font-family: var(--font-body); min-height: 44px;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .input::placeholder { color: var(--color-muted); }
+  .input:hover { border-color: var(--color-muted); }
+  .input:focus { outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 3px var(--color-accent-soft); }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: var(--space-1); padding: 3px 10px;
+    border-radius: var(--radius-pill); font-size: 12px; font-weight: 600; line-height: 1.4;
+    white-space: nowrap; font-family: var(--font-body);
+  }
+  .badge .dot { height: 6px; width: 6px; border-radius: 999px; }
+
+  .nav-blur {
+    background: rgba(255,255,255,.72);
+    backdrop-filter: saturate(180%) blur(14px);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .mono { font-family: var(--font-mono); }
+  .muted { color: var(--color-muted); }
+  .accent { color: var(--color-accent); }
+
+  /* ============ Header / nav ============ */
+  header.site { position: sticky; top: 0; z-index: 30; }
+  .nav-row { display: flex; height: 64px; align-items: center; justify-content: space-between; gap: 16px; }
+  .nav-left { display: flex; align-items: center; gap: 24px; }
+  .nav-links { display: none; align-items: center; gap: 4px; }
+  .nav-link {
+    display: flex; height: 44px; align-items: center; border-radius: var(--radius-sm);
+    padding: 0 12px; font-size: 14px; font-weight: 600; color: var(--color-muted);
+    transition: background .15s, color .15s; cursor: pointer; background: none; border: none; font-family: var(--font-body);
+  }
+  .nav-link:hover { background: var(--color-surface-2); color: var(--color-fg); }
+  .nav-link.active { background: var(--color-accent-soft); color: var(--color-accent-strong); }
+  .nav-right { display: flex; align-items: center; gap: 8px; }
+  @media (min-width: 768px) { .nav-links { display: flex; } }
+
+  .logo { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+  .logo-mark {
+    display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-sm);
+    width: 28px; height: 28px; background: var(--color-accent); color: #fff;
+  }
+  .logo-word { font-family: var(--font-display); font-size: 19px; font-weight: 800; letter-spacing: -.02em; }
+
+  .icon-btn {
+    display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px;
+    border-radius: var(--radius-md); border: 1px solid transparent; background: none; cursor: pointer; color: var(--color-muted);
+    position: relative;
+  }
+  .icon-btn:hover { background: var(--color-surface-2); color: var(--color-fg); }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 999px; background: var(--color-accent-soft);
+    color: var(--color-accent-strong); display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px; cursor: pointer;
+  }
+  .bell-dot {
+    position: absolute; top: 7px; right: 8px; width: 8px; height: 8px; border-radius: 999px;
+    background: var(--color-error); border: 2px solid var(--color-surface);
+  }
+
+  /* ============ Utilities ============ */
+  .stack { display: flex; flex-direction: column; }
+  .row { display: flex; align-items: center; }
+  .grid { display: grid; }
+  .hidden { display: none !important; }
+  main { min-height: 60vh; }
+
+  /* Landing-specific */
+  .hero { display: grid; align-items: center; gap: 64px; padding: 64px 0; }
+  @media (min-width: 1024px) { .hero { grid-template-columns: 1.05fr .95fr; padding: 96px 0; } }
+  .hero-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; max-width: 420px; margin-top: 48px; }
+  .hero-stats dt { font-family: var(--font-display); font-size: 26px; font-weight: 800; line-height: 1; }
+  .hero-stats dd { margin: 4px 0 0; font-size: 12px; color: var(--color-muted); }
+
+  .note-box { border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--color-surface-2); padding: 16px; }
+  .code-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--color-surface);
+    padding: 8px 12px;
+  }
+  .trust { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border); background: var(--color-surface); padding: 32px; box-shadow: var(--shadow-sm); }
+  @media (min-width: 768px) { .trust { grid-template-columns: repeat(4, 1fr); } }
+  .trust div { text-align: center; }
+  .trust p.stat { font-family: var(--font-display); font-size: 30px; font-weight: 800; line-height: 1; color: var(--color-accent); }
+  .features-grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
+  @media (min-width: 768px) { .features-grid { grid-template-columns: 1fr 1fr; } }
+  .cta {
+    position: relative; overflow: hidden; border-radius: var(--radius-lg); padding: 96px 32px;
+    text-align: center; background: var(--color-fg);
+  }
+  .cta::before {
+    content: ""; position: absolute; left: 50%; top: 0; height: 288px; width: 288px;
+    transform: translate(-50%, -33%); border-radius: 999px; filter: blur(64px);
+    background: rgba(37,99,235,.45); pointer-events: none;
+  }
+  footer.site { border-top: 1px solid var(--color-border); background: var(--color-surface); }
+  .foot-row { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 32px 0; }
+  @media (min-width: 640px) { .foot-row { flex-direction: row; justify-content: space-between; } }
+
+  /* Tables */
+  .table-wrap { overflow-x: auto; border-radius: var(--radius-lg); border: 1px solid var(--color-border); background: var(--color-surface); box-shadow: var(--shadow-sm); }
+  table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+  thead { background: var(--color-surface-2); color: var(--color-muted); }
+  th { white-space: nowrap; padding: 12px 16px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+  td { padding: 12px 16px; vertical-align: middle; color: var(--color-fg); }
+  tbody tr { border-top: 1px solid var(--color-border); transition: background .15s; }
+  tbody tr.interactive { cursor: pointer; }
+  tbody tr.interactive:hover { background: var(--color-surface-2); }
+  .text-right { text-align: right; }
+
+  /* Page header */
+  .page-header { margin-bottom: 32px; display: flex; flex-direction: column; gap: 12px; }
+  @media (min-width: 640px) { .page-header { flex-direction: row; align-items: flex-end; justify-content: space-between; } }
+  .page-header h2.title { font-size: 28px; font-weight: 800; line-height: 1.1; }
+  .page-header .desc { margin-top: 4px; max-width: 640px; font-size: 14px; color: var(--color-muted); }
+  .header-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+  /* Metrics */
+  .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  @media (min-width: 768px) { .stat-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (min-width: 1024px) { .stat-grid { grid-template-columns: repeat(6, 1fr); } }
+  .stat-card { padding: 24px; }
+  .stat-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--color-muted); }
+  .stat-value { margin-top: 8px; font-family: var(--font-display); font-size: 34px; font-weight: 800; line-height: 1; }
+  .rate-grid { display: grid; gap: 24px; }
+  @media (min-width: 1024px) { .rate-grid { grid-template-columns: repeat(3, 1fr); } }
+  .progress { margin-top: 12px; height: 10px; overflow: hidden; border-radius: var(--radius-pill); background: var(--color-surface-2); }
+  .progress > div { height: 100%; border-radius: var(--radius-pill); transition: width .4s ease; }
+
+  /* Coding screen */
+  .coding-grid { display: grid; gap: 24px; }
+  @media (min-width: 1024px) { .coding-grid { grid-template-columns: 1fr 1fr; align-items: start; } }
+  .field-label { display: block; font-size: 13px; font-weight: 600; color: var(--color-muted); margin-bottom: 6px; }
+  .alert { border-radius: var(--radius-md); padding: 12px 16px; font-size: 14px; display: flex; gap: 10px; align-items: flex-start; }
+  .alert-warning { background: var(--color-warning-soft); color: var(--color-warning); }
+  .alert-error { background: var(--color-error-soft); color: var(--color-error); }
+  .alert-success { background: var(--color-success-soft); color: var(--color-success); }
+
+  .seg { display: inline-flex; background: var(--color-surface-2); border-radius: var(--radius-md); padding: 4px; gap: 4px; }
+  .seg button {
+    border: none; background: none; cursor: pointer; font-family: var(--font-body); font-weight: 600;
+    font-size: 13px; padding: 7px 14px; border-radius: var(--radius-sm); color: var(--color-muted);
+  }
+  .seg button.active { background: var(--color-surface); color: var(--color-fg); box-shadow: var(--shadow-sm); }
+
+  .filter-bar { margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  select.input { -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235a6a82' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+
+  .gap-2 { gap: 8px; } .gap-3 { gap: 12px; } .gap-4 { gap: 16px; } .gap-5 { gap: 24px; }
+  .mt-1 { margin-top: 4px; } .mt-2 { margin-top: 8px; } .mt-3 { margin-top: 12px; } .mt-4 { margin-top: 16px; } .mt-5 { margin-top: 24px; } .mt-6 { margin-top: 32px; }
+  .mb-4 { margin-bottom: 16px; } .mb-5 { margin-bottom: 24px; }
+  .live-row { margin-bottom: 16px; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--color-muted); }
+  .live-dot { display: inline-block; height: 8px; width: 8px; border-radius: 999px; }
+</style>
+</head>
+<body>
+
+<!-- ============================== HEADER ============================== -->
+<header class="site nav-blur">
+  <div class="container-app nav-row">
+    <div class="nav-left">
+      <span class="logo" onclick="showLanding()" aria-label="SmarCoders home">
+        <span class="logo-mark" aria-hidden="true">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m8 18 4-12 4 12"/><path d="M3 12h3M18 12h3"/></svg>
+        </span>
+        <span class="logo-word">SmarCoders</span>
+      </span>
+
+      <!-- Landing section links -->
+      <nav class="nav-links" id="landing-nav" aria-label="Sections">
+        <a class="nav-link" href="#workflow">Workflow</a>
+        <a class="nav-link" href="#validation">Validation</a>
+        <a class="nav-link" href="#audit">Audit</a>
+        <a class="nav-link" href="#metrics">Metrics</a>
+      </nav>
+
+      <!-- App nav links -->
+      <nav class="nav-links hidden" id="app-nav" aria-label="Primary">
+        <button class="nav-link active" data-view="queue"   onclick="showApp('queue')">Queue</button>
+        <button class="nav-link"        data-view="audit"   onclick="showApp('audit')">Audit</button>
+        <button class="nav-link"        data-view="metrics" onclick="showApp('metrics')">Metrics</button>
+        <button class="nav-link"        data-view="imports" onclick="showApp('imports')">Imports</button>
+        <button class="nav-link"        data-view="users"   onclick="showApp('users')">Users</button>
+      </nav>
+    </div>
+
+    <!-- Landing actions -->
+    <div class="nav-right" id="landing-actions">
+      <button class="btn btn-ghost btn-sm" onclick="showApp('queue')">Sign in</button>
+      <button class="btn btn-primary btn-sm" onclick="showApp('queue')">Get started</button>
+    </div>
+
+    <!-- App actions -->
+    <div class="nav-right hidden" id="app-actions">
+      <button class="icon-btn" aria-label="Notifications" title="3 unread">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="bell-dot" aria-hidden="true"></span>
+      </button>
+      <span class="avatar" onclick="showLanding()" title="Sign out">MG</span>
+    </div>
+  </div>
+</header>
+
+<!-- ============================== LANDING ============================== -->
+<div id="landing">
+  <main>
+    <!-- Hero -->
+    <section class="container-app hero">
+      <div>
+        <span class="badge" style="background:var(--color-accent-soft);color:var(--color-accent-strong)">
+          <span class="dot" style="background:var(--color-accent)" aria-hidden="true"></span>
+          Medical coding, end to end
+        </span>
+        <h1 class="mt-5">Code charts faster with <em class="accent" style="font-style:normal">confidence</em> built in.</h1>
+        <p class="mt-5 muted" style="max-width:36rem;font-size:17px">
+          SmarCoders moves every chart from intake to audit in one workflow: queue assignment,
+          code with rationale, real-time validation, and supervisor QA — so your team submits
+          clean, defensible codes the first time.
+        </p>
+        <div class="mt-6 row" style="flex-wrap:wrap;gap:12px">
+          <button class="btn btn-primary" onclick="showApp('queue')">Start free</button>
+          <button class="btn btn-ghost" onclick="showApp('queue')">Sign in</button>
+        </div>
+        <dl class="hero-stats">
+          <div><dt>&lt;8 min</dt><dd>Avg. time to code</dd></div>
+          <div><dt>95%+</dt><dd>First-pass audit rate</dd></div>
+          <div><dt>0</dt><dd>Charts lost in handoff</dd></div>
+        </dl>
+      </div>
+
+      <!-- Product mockup -->
+      <div class="card" style="box-shadow:var(--shadow-lg)" aria-hidden="true">
+        <div class="row mb-4" style="justify-content:space-between">
+          <span class="mono" style="border-radius:var(--radius-sm);background:var(--color-surface-2);padding:4px 8px;font-size:12px;font-weight:500;color:var(--color-muted)">CHART · GERIATRICS-4821</span>
+          <span class="badge" style="background:var(--color-accent-soft);color:var(--color-accent-strong)">In progress</span>
+        </div>
+        <div class="grid gap-4" style="grid-template-columns:.9fr 1.1fr">
+          <div class="note-box">
+            <p class="stat-label">Clinical note</p>
+            <p class="mt-2" style="font-size:13px;line-height:1.6">68F presents for follow-up. BP 148/92. A1c 8.1%. eGFR 47. Continues insulin glargine. Assessment: HTN, T2DM with CKD stage 3.</p>
+          </div>
+          <div class="stack gap-2">
+            <div class="code-row"><div><span class="mono" style="font-weight:600">I10</span> <span class="muted" style="font-size:12px">Essential hypertension</span></div><span class="badge" style="background:var(--color-success-soft);color:var(--color-success)">Validated</span></div>
+            <div class="code-row"><div><span class="mono" style="font-weight:600">E11.9</span> <span class="muted" style="font-size:12px">Type 2 diabetes mellitus</span></div><span class="badge" style="background:var(--color-success-soft);color:var(--color-success)">Validated</span></div>
+            <div class="code-row"><div><span class="mono" style="font-weight:600">N18.3</span> <span class="muted" style="font-size:12px">CKD, stage 3</span></div><span class="badge" style="background:var(--color-warning-soft);color:var(--color-warning)">Doc gap</span></div>
+            <div class="code-row"><div><span class="mono" style="font-weight:600">Z79.4</span> <span class="muted" style="font-size:12px">Long term insulin use</span></div><span class="badge" style="background:var(--color-accent-soft);color:var(--color-accent-strong)">Secondary</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Trust strip -->
+    <section class="container-app">
+      <div class="trust">
+        <div><p class="stat">100%</p><p class="mt-1 muted" style="font-size:12px">Synthetic data (Synthea)</p></div>
+        <div><p class="stat">−30%</p><p class="mt-1 muted" style="font-size:12px">Rework from returns</p></div>
+        <div><p class="stat">8×</p><p class="mt-1 muted" style="font-size:12px">Faster supervisor review</p></div>
+        <div><p class="stat">4h / 8h</p><p class="mt-1 muted" style="font-size:12px">Audit SLA, day &amp; night</p></div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="container-app" style="padding:96px 0">
+      <div class="mb-5" style="max-width:42rem">
+        <h2>One workflow, four moving parts.</h2>
+        <p class="mt-3 muted" style="font-size:16px">Built for coders, supervisors, and managers — each role sees exactly the work that is theirs.</p>
+      </div>
+      <div class="features-grid">
+        <div class="card" id="workflow"><span class="mono accent" style="font-weight:600">01</span><h3 class="mt-3" style="font-size:22px">Intake &amp; queue</h3><p class="mt-2 muted" style="font-size:15px">Import FHIR bundles or synthetic Synthea charts. Auto-assign work to coders and keep every chart visible from intake to sign-off.</p></div>
+        <div class="card" id="coding"><span class="mono accent" style="font-weight:600">02</span><h3 class="mt-3" style="font-size:22px">Code with rationale</h3><p class="mt-2 muted" style="font-size:15px">Search a live code reference, attach a rationale to each code, flag documentation gaps, and mark the principal diagnosis.</p></div>
+        <div class="card" id="validation"><span class="mono accent" style="font-weight:600">03</span><h3 class="mt-3" style="font-size:22px">Real-time validation</h3><p class="mt-2 muted" style="font-size:15px">Rules run as you code. Blocking errors and warnings map straight to the offending code row so nothing reaches audit broken.</p></div>
+        <div class="card" id="audit"><span class="mono accent" style="font-weight:600">04</span><h3 class="mt-3" style="font-size:22px">Supervisor audit</h3><p class="mt-2 muted" style="font-size:15px">Score charts, record findings, leave training feedback, and approve or return — with a tamper-evident audit log for every action.</p></div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="container-app" id="metrics" style="padding-bottom:96px">
+      <div class="cta">
+        <div style="position:relative">
+          <h2 style="color:#fff">See coded charts move in real time.</h2>
+          <p class="mt-3" style="margin-left:auto;margin-right:auto;max-width:36rem;font-size:16px;color:#cdd7ea">Live metrics stream throughput, audit pass rate, and queue health as your team works. Export to CSV or PDF anytime.</p>
+          <div class="mt-6 row" style="flex-wrap:wrap;justify-content:center;gap:12px">
+            <button class="btn btn-primary" onclick="showApp('metrics')">Create an account</button>
+            <button class="btn" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,.3)" onclick="showApp('queue')">Sign in</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site">
+    <div class="container-app foot-row">
+      <span class="logo"><span class="logo-mark" style="width:24px;height:24px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m8 18 4-12 4 12"/><path d="M3 12h3M18 12h3"/></svg></span><span class="logo-word" style="font-size:17px">SmarCoders</span></span>
+      <p class="muted" style="font-size:12px;text-align:center">All patient data is synthetic, generated with Synthea. No real PHI.<br>© 2026 SmarCoders.</p>
+    </div>
+  </footer>
+</div>
+
+<!-- ============================== APP ============================== -->
+<div id="app" class="hidden">
+  <main class="container-app" style="padding-top:32px;padding-bottom:48px">
+
+    <!-- QUEUE -->
+    <section data-view="queue">
+      <div class="page-header">
+        <div>
+          <h2 class="title">Work queue</h2>
+          <p class="desc">Every chart across your workspace. Assign work and track it to sign-off.</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-ghost btn-sm">Assign unassigned</button>
+          <button class="btn btn-primary btn-sm" onclick="showApp('imports')">Import charts</button>
+        </div>
+      </div>
+      <div class="filter-bar">
+        <label class="row gap-2" style="font-size:14px;font-weight:600;color:var(--color-muted)">Status
+          <select class="input" style="width:176px;min-height:40px">
+            <option>All statuses</option><option>Draft</option><option>Pending audit</option><option>Completed</option><option>Returned</option>
+          </select>
+        </label>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Chart</th><th>Specialty</th><th>Status</th><th>Assignee</th><th class="text-right">Codes</th><th>Updated</th></tr></thead>
+          <tbody id="queue-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- CODING -->
+    <section data-view="coding" class="hidden">
+      <div class="page-header">
+        <div>
+          <button class="nav-link" style="padding-left:0;height:auto;color:var(--color-accent)" onclick="showApp('queue')">← Back to queue</button>
+          <h2 class="title mt-1">Chart <span class="mono">GERIATRICS-4821</span></h2>
+          <p class="desc">Geriatrics · assigned to you · ICD-10-CM</p>
+        </div>
+        <div class="header-actions">
+          <span class="badge" style="background:var(--color-accent-soft);color:var(--color-accent-strong)"><span class="dot" style="background:var(--color-accent-strong)"></span>Draft</span>
+          <button class="btn btn-ghost btn-sm">Save draft</button>
+          <button class="btn btn-primary btn-sm">Submit for audit</button>
+        </div>
+      </div>
+
+      <div class="coding-grid">
+        <!-- chart document -->
+        <div class="card">
+          <h3 class="mb-4">Clinical documentation</h3>
+          <div class="note-box">
+            <p class="stat-label">Encounter — follow-up visit</p>
+            <p class="mt-2" style="font-size:14px;line-height:1.65">
+              68-year-old female presents for routine follow-up of chronic conditions.
+              Vitals: BP 148/92, HR 76. Labs: A1c 8.1%, eGFR 47 mL/min.
+              Continues insulin glargine 20 units nightly. <br><br>
+              <strong>Assessment &amp; plan:</strong> Essential hypertension — adjust amlodipine.
+              Type 2 diabetes mellitus, uncontrolled. Chronic kidney disease, stage 3 secondary
+              to diabetic nephropathy — monitor renal function, nephrology referral.
+            </p>
+          </div>
+          <div class="mt-4 alert alert-warning">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span><strong>1 documentation gap.</strong> CKD stage not explicitly linked to a lab value in the note — confirm staging before submit.</span>
+          </div>
+        </div>
+
+        <!-- coding panel -->
+        <div class="card">
+          <h3 class="mb-4">Codes</h3>
+          <label class="field-label" for="code-search">Add ICD-10-CM code</label>
+          <input id="code-search" class="input" placeholder="Search code or description… e.g. E11.9" />
+
+          <div class="stack gap-3 mt-4" id="coding-rows"></div>
+
+          <div class="mt-5 alert alert-success">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><path d="M20 6 9 17l-5-5"/></svg>
+            <span><strong>3 of 4 codes validated.</strong> Resolve the warning above to clear the chart for audit.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AUDIT -->
+    <section data-view="audit" class="hidden">
+      <div class="page-header">
+        <div>
+          <h2 class="title">Audit queue</h2>
+          <p class="desc">Charts submitted for quality review. Open one to score, leave findings, and approve or return it.</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Chart</th><th>Specialty</th><th>Status</th><th>Coder</th><th class="text-right">Codes</th><th>Updated</th></tr></thead>
+          <tbody id="audit-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- METRICS -->
+    <section data-view="metrics" class="hidden">
+      <div class="page-header">
+        <div>
+          <h2 class="title">Metrics</h2>
+          <p class="desc">Live operational health across your coding workflow.</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-ghost btn-sm">Export CSV</button>
+          <button class="btn btn-ghost btn-sm">Export PDF</button>
+        </div>
+      </div>
+      <div class="live-row"><span class="live-dot" style="background:var(--color-success)"></span> Live — streaming updates</div>
+
+      <div class="stack gap-5">
+        <div class="stat-grid">
+          <div class="card stat-card"><p class="stat-label">Unassigned</p><p class="stat-value" style="color:var(--color-fg)">7</p></div>
+          <div class="card stat-card"><p class="stat-label">In progress</p><p class="stat-value" style="color:var(--color-accent)">12</p></div>
+          <div class="card stat-card"><p class="stat-label">Pending audit</p><p class="stat-value" style="color:var(--color-warning)">9</p></div>
+          <div class="card stat-card"><p class="stat-label">Completed</p><p class="stat-value" style="color:var(--color-success)">148</p></div>
+          <div class="card stat-card"><p class="stat-label">Returned</p><p class="stat-value" style="color:var(--color-error)">5</p></div>
+          <div class="card stat-card"><p class="stat-label">Total charts</p><p class="stat-value" style="color:var(--color-fg)">181</p></div>
+        </div>
+
+        <div class="rate-grid">
+          <div class="card">
+            <p class="stat-label">Audit pass rate</p>
+            <p class="stat-value" style="font-size:40px;color:var(--color-success)">96%</p>
+            <div class="progress"><div style="width:96%;background:var(--color-success)"></div></div>
+          </div>
+          <div class="card">
+            <p class="stat-label">Avg. audit score</p>
+            <p class="stat-value" style="font-size:40px;color:var(--color-accent)">92</p>
+            <div class="progress"><div style="width:92%;background:var(--color-accent)"></div></div>
+          </div>
+          <div class="card">
+            <p class="stat-label">Throughput</p>
+            <p class="stat-value" style="font-size:40px;color:var(--color-fg)">34</p>
+            <p class="mt-2 muted" style="font-size:12px">charts completed in window</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="mb-4">Queue distribution</h3>
+          <div class="stack gap-3" id="dist-body"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- IMPORTS -->
+    <section data-view="imports" class="hidden">
+      <div class="page-header">
+        <div>
+          <h2 class="title">Imports</h2>
+          <p class="desc">Bring in synthetic Synthea charts or FHIR bundles. Jobs run on the worker and land in the queue.</p>
+        </div>
+      </div>
+      <div class="card" style="border-style:dashed;text-align:center;padding:48px">
+        <div class="logo-mark" style="width:44px;height:44px;margin:0 auto;background:var(--color-accent-soft);color:var(--color-accent-strong)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <h3 class="mt-4">Drop a FHIR bundle or Synthea export</h3>
+        <p class="mt-2 muted" style="font-size:14px">Files are validated and de-duplicated before charts enter the queue.</p>
+        <div class="mt-5"><button class="btn btn-primary">Choose file</button></div>
+      </div>
+      <div class="table-wrap mt-5">
+        <table>
+          <thead><tr><th>Job</th><th>Source</th><th>Status</th><th class="text-right">Charts</th><th>Started</th></tr></thead>
+          <tbody>
+            <tr><td class="mono accent" style="font-weight:600">imp_8f31</td><td>synthea_geriatrics.ndjson</td><td><span class="badge" style="background:var(--color-success-soft);color:var(--color-success)"><span class="dot" style="background:var(--color-success)"></span>Completed</span></td><td class="text-right mono">42</td><td class="muted">Jun 3, 2026</td></tr>
+            <tr><td class="mono accent" style="font-weight:600">imp_7a02</td><td>fhir_bundle_cardiology.json</td><td><span class="badge" style="background:var(--color-warning-soft);color:var(--color-warning)"><span class="dot" style="background:var(--color-warning)"></span>Processing</span></td><td class="text-right mono">18</td><td class="muted">Jun 3, 2026</td></tr>
+            <tr><td class="mono accent" style="font-weight:600">imp_69c1</td><td>synthea_pulmonary.ndjson</td><td><span class="badge" style="background:var(--color-success-soft);color:var(--color-success)"><span class="dot" style="background:var(--color-success)"></span>Completed</span></td><td class="text-right mono">31</td><td class="muted">Jun 2, 2026</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- USERS -->
+    <section data-view="users" class="hidden">
+      <div class="page-header">
+        <div>
+          <h2 class="title">Users</h2>
+          <p class="desc">Manage coders, supervisors, and managers in your workspace.</p>
+        </div>
+        <div class="header-actions"><button class="btn btn-primary btn-sm">Invite user</button></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Charts</th></tr></thead>
+          <tbody>
+            <tr><td style="font-weight:600">Maria González</td><td class="muted">manager@smartcoders.local</td><td><span class="badge" style="background:var(--color-accent-soft);color:var(--color-accent-strong)">Manager</span></td><td><span class="badge" style="background:var(--color-success-soft);color:var(--color-success)">Active</span></td><td class="mono">—</td></tr>
+            <tr><td style="font-weight:600">Sam Whitfield</td><td class="muted">supervisor@smartcoders.local</td><td><span class="badge" style="background:var(--color-surface-2);color:var(--color-muted)">Supervisor</span></td><td><span class="badge" style="background:var(--color-success-soft);color:var(--color-success)">Active</span></td><td class="mono">63</td></tr>
+            <tr><td style="font-weight:600">Devon Carter</td><td class="muted">coder@smartcoders.local</td><td><span class="badge" style="background:var(--color-surface-2);color:var(--color-muted)">Coder</span></td><td><span class="badge" style="background:var(--color-success-soft);color:var(--color-success)">Active</span></td><td class="mono">128</td></tr>
+            <tr><td style="font-weight:600">Priya Nair</td><td class="muted">priya@smartcoders.local</td><td><span class="badge" style="background:var(--color-surface-2);color:var(--color-muted)">Coder</span></td><td><span class="badge" style="background:var(--color-warning-soft);color:var(--color-warning)">Invited</span></td><td class="mono">0</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  // ----- demo data -----
+  var TONE = {
+    draft:        ['var(--color-accent-soft)','var(--color-accent-strong)','Draft'],
+    pending_audit:['var(--color-warning-soft)','var(--color-warning)','Pending audit'],
+    completed:    ['var(--color-success-soft)','var(--color-success)','Completed'],
+    returned:     ['var(--color-error-soft)','var(--color-error)','Returned'],
+  };
+  function badge(status){
+    var t = TONE[status] || ['var(--color-surface-2)','var(--color-muted)',status];
+    return '<span class="badge" style="background:'+t[0]+';color:'+t[1]+'"><span class="dot" style="background:'+t[1]+'"></span>'+t[2]+'</span>';
+  }
+
+  var CHARTS = [
+    ['GERIATRICS-4821','Geriatrics','draft','Devon Carter',4,'Jun 3, 2026'],
+    ['CARDIO-3310','Cardiology','pending_audit','Devon Carter',6,'Jun 3, 2026'],
+    ['PULM-2204','Pulmonary','pending_audit','Priya Nair',5,'Jun 2, 2026'],
+    ['ENDO-1190','Endocrinology','completed','Devon Carter',3,'Jun 2, 2026'],
+    ['NEPHRO-0875','Nephrology','returned','Priya Nair',7,'Jun 1, 2026'],
+    ['ORTHO-5562','Orthopedics','draft','Unassigned',0,'Jun 1, 2026'],
+  ];
+
+  var queueBody = document.getElementById('queue-body');
+  CHARTS.forEach(function(c){
+    var tr = document.createElement('tr');
+    tr.className = 'interactive';
+    tr.onclick = function(){ showApp('coding'); };
+    tr.innerHTML =
+      '<td><span class="mono accent" style="font-weight:600">'+c[0]+'</span></td>'+
+      '<td>'+c[1]+'</td>'+
+      '<td>'+badge(c[2])+'</td>'+
+      '<td class="muted">'+c[3]+'</td>'+
+      '<td class="text-right mono">'+c[4]+'</td>'+
+      '<td class="muted">'+c[5]+'</td>';
+    queueBody.appendChild(tr);
+  });
+
+  var auditBody = document.getElementById('audit-body');
+  CHARTS.filter(function(c){return c[2]==='pending_audit'||c[2]==='returned';}).forEach(function(c){
+    var tr = document.createElement('tr');
+    tr.className = 'interactive';
+    tr.onclick = function(){ showApp('coding'); };
+    tr.innerHTML =
+      '<td><span class="mono accent" style="font-weight:600">'+c[0]+'</span></td>'+
+      '<td>'+c[1]+'</td>'+
+      '<td>'+badge(c[2])+'</td>'+
+      '<td class="muted">'+c[3]+'</td>'+
+      '<td class="text-right mono">'+c[4]+'</td>'+
+      '<td class="muted">'+c[5]+'</td>';
+    auditBody.appendChild(tr);
+  });
+
+  // coding rows
+  var CODES = [
+    ['I10','Essential hypertension','success','Validated','Principal'],
+    ['E11.9','Type 2 diabetes mellitus without complications','success','Validated',''],
+    ['N18.3','Chronic kidney disease, stage 3 (moderate)','warning','Doc gap',''],
+    ['Z79.4','Long term (current) use of insulin','accent','Secondary',''],
+  ];
+  var toneVar = {
+    success:['var(--color-success-soft)','var(--color-success)'],
+    warning:['var(--color-warning-soft)','var(--color-warning)'],
+    accent:['var(--color-accent-soft)','var(--color-accent-strong)'],
+  };
+  var cr = document.getElementById('coding-rows');
+  CODES.forEach(function(r){
+    var t = toneVar[r[2]];
+    var princ = r[4] ? '<span class="badge" style="background:var(--color-accent-soft);color:var(--color-accent-strong)">'+r[4]+'</span>' : '';
+    var div = document.createElement('div');
+    div.className = 'code-row';
+    div.style.padding = '12px';
+    div.innerHTML =
+      '<div style="min-width:0"><div class="row gap-2"><span class="mono" style="font-weight:600;font-size:15px">'+r[0]+'</span>'+princ+'</div>'+
+      '<div class="muted" style="font-size:13px;margin-top:2px">'+r[1]+'</div></div>'+
+      '<span class="badge" style="background:'+t[0]+';color:'+t[1]+'">'+r[3]+'</span>';
+    cr.appendChild(div);
+  });
+
+  // distribution bars
+  var DIST = [['Unassigned',7,'var(--color-fg)'],['In progress',12,'var(--color-accent)'],['Pending audit',9,'var(--color-warning)'],['Completed',148,'var(--color-success)'],['Returned',5,'var(--color-error)']];
+  var total = 181, db = document.getElementById('dist-body');
+  DIST.forEach(function(d){
+    var pct = (d[1]/total*100).toFixed(0);
+    var el = document.createElement('div');
+    el.innerHTML =
+      '<div class="row" style="justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="font-weight:500">'+d[0]+'</span><span class="muted">'+d[1]+'</span></div>'+
+      '<div class="progress" style="margin-top:0;height:10px"><div style="width:'+pct+'%;background:'+d[2]+'"></div></div>';
+    db.appendChild(el);
+  });
+
+  // ----- navigation -----
+  function setActiveNav(view){
+    document.querySelectorAll('#app-nav .nav-link').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-view') === view);
+    });
+  }
+  function showApp(view){
+    document.getElementById('landing').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    document.getElementById('landing-nav').classList.add('hidden');
+    document.getElementById('landing-actions').classList.add('hidden');
+    document.getElementById('app-nav').classList.remove('hidden');
+    document.getElementById('app-actions').classList.remove('hidden');
+    document.querySelectorAll('#app section[data-view]').forEach(function(s){
+      s.classList.toggle('hidden', s.getAttribute('data-view') !== view);
+    });
+    setActiveNav(view === 'coding' ? 'queue' : view);
+    window.scrollTo(0,0);
+  }
+  function showLanding(){
+    document.getElementById('app').classList.add('hidden');
+    document.getElementById('landing').classList.remove('hidden');
+    document.getElementById('landing-nav').classList.remove('hidden');
+    document.getElementById('landing-actions').classList.remove('hidden');
+    document.getElementById('app-nav').classList.add('hidden');
+    document.getElementById('app-actions').classList.add('hidden');
+    window.scrollTo(0,0);
+  }
+  window.showApp = showApp;
+  window.showLanding = showLanding;
+</script>
+</body>
+</html>

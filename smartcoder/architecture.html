@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SmarCoders — Architecture &amp; Buildout</title>
+<meta name="description" content="Architecture and application buildout for SmarCoders: a medical coding workflow & QA training platform on synthetic (Synthea) data. NestJS + Next.js + Postgres + Redis, HIPAA-grade controls." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --color-bg: #f4f7fb; --color-surface: #ffffff; --color-surface-2: #eef2f9;
+    --color-fg: #0d1626; --color-muted: #5a6a82; --color-border: #e3e9f2;
+    --color-accent: #2563eb; --color-accent-strong: #1d4ed8; --color-accent-soft: #e7eefe;
+    --color-success: #15803d; --color-success-soft: #e3f3e8;
+    --color-warning: #b45309; --color-warning-soft: #fbeedd;
+    --color-error: #dc2626; --color-error-soft: #fce8e8;
+    --font-display: "Manrope", sans-serif; --font-body: "Inter", sans-serif; --font-mono: "JetBrains Mono", monospace;
+    --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:24px; --space-6:32px; --space-7:48px; --space-8:64px; --space-9:96px;
+    --radius-sm:6px; --radius-md:12px; --radius-lg:20px; --radius-pill:999px;
+    --shadow-sm: 0 1px 2px rgba(13,22,38,.06), 0 1px 3px rgba(13,22,38,.04);
+    --shadow-md: 0 6px 16px rgba(13,22,38,.08), 0 2px 6px rgba(13,22,38,.05);
+    --shadow-lg: 0 24px 56px rgba(13,22,38,.16), 0 8px 20px rgba(13,22,38,.08);
+    --focus-ring: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-accent);
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  * { border-color: var(--color-border); }
+  html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; scroll-behavior: smooth; }
+  body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-family: var(--font-body); line-height: 1.55; min-height: 100vh; }
+  h1,h2,h3,h4 { font-family: var(--font-display); color: var(--color-fg); margin: 0; }
+  h1 { font-size: clamp(34px, 4vw, 50px); font-weight: 800; line-height: 1.05; letter-spacing: -.02em; }
+  h2 { font-size: clamp(24px, 2.6vw, 32px); font-weight: 800; line-height: 1.15; letter-spacing: -.01em; }
+  h3 { font-size: 19px; font-weight: 700; line-height: 1.3; }
+  h4 { font-size: 15px; font-weight: 700; }
+  p { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+  :focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--radius-sm); }
+  ::selection { background: var(--color-accent-soft); color: var(--color-accent-strong); }
+
+  .container { max-width: 1180px; margin: 0 auto; width: 100%; padding: 0 var(--space-5); }
+  .mono { font-family: var(--font-mono); }
+  .muted { color: var(--color-muted); }
+  .accent { color: var(--color-accent); }
+  .card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: var(--space-6); }
+  .badge { display: inline-flex; align-items: center; gap: var(--space-1); padding: 3px 10px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 600; line-height: 1.4; white-space: nowrap; }
+  .badge .dot { height: 6px; width: 6px; border-radius: 999px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; border-radius: var(--radius-md); padding: 10px 18px; font-weight: 600; font-size: 14px; min-height: 40px; cursor: pointer; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-fg); transition: background .15s, transform .12s, border-color .15s; }
+  .btn:hover { background: var(--color-surface-2); border-color: var(--color-muted); transform: translateY(-1px); }
+  .btn-primary { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+  .btn-primary:hover { background: var(--color-accent-strong); border-color: var(--color-accent-strong); }
+
+  /* header */
+  header.site { position: sticky; top: 0; z-index: 40; background: rgba(255,255,255,.78); backdrop-filter: saturate(180%) blur(14px); -webkit-backdrop-filter: saturate(180%) blur(14px); border-bottom: 1px solid var(--color-border); }
+  .nav-row { display: flex; height: 64px; align-items: center; justify-content: space-between; gap: 16px; }
+  .logo { display: inline-flex; align-items: center; gap: 8px; }
+  .logo-mark { display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); width: 28px; height: 28px; background: var(--color-accent); color: #fff; }
+  .logo-word { font-family: var(--font-display); font-size: 19px; font-weight: 800; letter-spacing: -.02em; }
+
+  /* hero */
+  .hero { padding: 56px 0 32px; }
+  .kicker { display: inline-flex; align-items: center; gap: 8px; }
+  .meta-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+  .chip { font-family: var(--font-mono); font-size: 12px; font-weight: 500; padding: 5px 10px; border-radius: var(--radius-sm); background: var(--color-surface-2); color: var(--color-muted); }
+
+  /* layout with sidebar toc */
+  .shell { display: grid; gap: 32px; padding: 8px 0 96px; }
+  @media (min-width: 1000px) { .shell { grid-template-columns: 220px 1fr; align-items: start; } }
+  .toc { display: none; }
+  @media (min-width: 1000px) {
+    .toc { display: block; position: sticky; top: 88px; font-size: 13px; }
+    .toc a { display: block; padding: 6px 10px; border-radius: var(--radius-sm); color: var(--color-muted); font-weight: 500; border-left: 2px solid transparent; }
+    .toc a:hover { background: var(--color-surface-2); color: var(--color-fg); }
+    .toc a.active { color: var(--color-accent-strong); border-left-color: var(--color-accent); background: var(--color-accent-soft); }
+  }
+  section.block { scroll-margin-top: 84px; margin-bottom: 40px; }
+  section.block > h2 { margin-bottom: 6px; }
+  section.block > .lead { color: var(--color-muted); font-size: 15px; max-width: 70ch; margin-bottom: 20px; }
+  .sec-num { font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--color-accent); }
+
+  /* tables */
+  .table-wrap { overflow-x: auto; border-radius: var(--radius-lg); border: 1px solid var(--color-border); background: var(--color-surface); box-shadow: var(--shadow-sm); }
+  table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13.5px; }
+  thead { background: var(--color-surface-2); color: var(--color-muted); }
+  th { padding: 11px 14px; font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+  td { padding: 11px 14px; vertical-align: top; border-top: 1px solid var(--color-border); }
+  td.mono, td .mono { font-family: var(--font-mono); }
+
+  /* diagram */
+  .diagram { display: flex; flex-direction: column; gap: 16px; }
+  .tier { border-radius: var(--radius-md); border: 1px solid var(--color-border); padding: 16px; background: var(--color-surface); }
+  .tier-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--color-muted); margin-bottom: 10px; }
+  .nodes { display: flex; flex-wrap: wrap; gap: 10px; }
+  .node { border-radius: var(--radius-sm); border: 1px solid var(--color-border); background: var(--color-surface-2); padding: 8px 12px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; }
+  .node small { font-weight: 500; color: var(--color-muted); font-family: var(--font-mono); font-size: 11px; }
+  .node.accent { background: var(--color-accent-soft); color: var(--color-accent-strong); border-color: transparent; }
+  .node.fg { background: var(--color-fg); color: #fff; border-color: transparent; }
+  .arrow { text-align: center; color: var(--color-muted); font-size: 18px; line-height: 1; }
+  .arrow small { display: block; font-size: 11px; font-family: var(--font-mono); margin-top: 2px; }
+
+  .grid2 { display: grid; gap: 16px; }
+  @media (min-width: 720px) { .grid2 { grid-template-columns: 1fr 1fr; } }
+  .grid3 { display: grid; gap: 16px; }
+  @media (min-width: 720px) { .grid3 { grid-template-columns: repeat(3, 1fr); } }
+
+  .pattern { padding: 20px; }
+  .pattern h3 { display: flex; align-items: center; gap: 8px; }
+  .pattern .steps { margin: 12px 0 0; padding-left: 18px; font-size: 13.5px; color: var(--color-muted); }
+  .pattern .steps li { margin-bottom: 6px; }
+  .pattern .steps strong { color: var(--color-fg); }
+
+  .inv-id { font-family: var(--font-mono); font-weight: 600; color: var(--color-accent-strong); white-space: nowrap; }
+  .tag { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: var(--radius-pill); background: var(--color-surface-2); color: var(--color-muted); white-space: nowrap; }
+
+  .wave { padding: 18px; }
+  .wave .wnum { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--color-accent); }
+  .wave ul { margin: 10px 0 0; padding-left: 18px; font-size: 13.5px; color: var(--color-muted); }
+  .wave ul strong { color: var(--color-fg); font-family: var(--font-mono); font-size: 12px; }
+
+  pre { margin: 0; background: var(--color-fg); color: #e7edf6; border-radius: var(--radius-md); padding: 18px; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.6; }
+  .precaption { font-size: 12px; color: var(--color-muted); margin-bottom: 8px; }
+
+  footer.site { border-top: 1px solid var(--color-border); background: var(--color-surface); }
+  .foot { display: flex; flex-direction: column; gap: 12px; padding: 28px 0; align-items: center; text-align: center; }
+  @media (min-width: 640px) { .foot { flex-direction: row; justify-content: space-between; text-align: left; } }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="container nav-row">
+    <span class="logo">
+      <span class="logo-mark" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m8 18 4-12 4 12"/><path d="M3 12h3M18 12h3"/></svg></span>
+      <span class="logo-word">SmarCoders</span>
+      <span class="badge" style="background:var(--color-surface-2);color:var(--color-muted);margin-left:6px">Architecture</span>
+    </span>
+    <a class="btn" href="index.html">← Back to site</a>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <span class="kicker badge" style="background:var(--color-accent-soft);color:var(--color-accent-strong)">
+      <span class="dot" style="background:var(--color-accent)"></span> Architecture &amp; application buildout
+    </span>
+    <h1 style="margin-top:20px;max-width:20ch">How SmarCoders is built, layer by layer.</h1>
+    <p class="muted" style="margin-top:16px;font-size:17px;max-width:75ch">
+      A containerized monorepo: a NestJS 11 API + worker, a Next.js 15 frontend, PostgreSQL 17 and
+      Redis 7 behind an nginx TLS proxy. All clinical data is Synthea-synthetic, yet the platform
+      enforces HIPAA-grade access control, append-only audit logging, anti-enumeration auth and
+      rate limiting throughout.
+    </p>
+    <div class="meta-chips">
+      <span class="chip">Archetype · SaaS</span>
+      <span class="chip">Protocol · HTTPS only</span>
+      <span class="chip">Security baseline · HIPAA</span>
+      <span class="chip">Build depth · comprehensive</span>
+      <span class="chip">14 architectural invariants</span>
+      <span class="chip">v1 · ICD-10-CM</span>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+<div class="shell">
+
+  <!-- TOC -->
+  <nav class="toc" id="toc" aria-label="Contents">
+    <a href="#overview">1 · System overview</a>
+    <a href="#diagram">2 · Component map</a>
+    <a href="#layers">3 · Layers &amp; data flow</a>
+    <a href="#stack">4 · Stack &amp; dependencies</a>
+    <a href="#reliability">5 · Reliability patterns</a>
+    <a href="#data">6 · Data model</a>
+    <a href="#decisions">7 · Key decisions (ADRs)</a>
+    <a href="#invariants">8 · Invariants</a>
+    <a href="#security">9 · Threat model</a>
+    <a href="#buildout">10 · Buildout waves</a>
+    <a href="#deploy">11 · Deployment</a>
+  </nav>
+
+  <main>
+
+    <!-- 1. OVERVIEW -->
+    <section class="block" id="overview">
+      <span class="sec-num">01</span>
+      <h2>System overview</h2>
+      <p class="lead">A local-first Docker stack (cloud-portable) that moves every chart from intake to audit in one workflow.</p>
+      <div class="grid3">
+        <div class="card">
+          <h3>The workflow</h3>
+          <p class="muted" style="font-size:14px;margin-top:8px">Coders code synthetic charts (ICD-10-CM diagnoses + procedures). The system validates against format / sequencing / comorbidity rules. Supervisors audit and return structured feedback. Managers watch a live queue/metrics dashboard.</p>
+        </div>
+        <div class="card">
+          <h3>Three roles</h3>
+          <p class="muted" style="font-size:14px;margin-top:8px">Default-deny RBAC. <strong style="color:var(--color-fg)">Coders</strong> see assigned charts and code them; <strong style="color:var(--color-fg)">supervisors</strong> audit and give feedback; <strong style="color:var(--color-fg)">managers</strong> import, assign, and watch metrics. Tenant scope is always applied on top of role.</p>
+        </div>
+        <div class="card">
+          <h3>Synthetic, yet HIPAA-grade</h3>
+          <p class="muted" style="font-size:14px;margin-top:8px">All patient data is generated by Synthea — no real PHI. The platform still enforces access control, audit logging, anti-enumeration auth, rate limiting and at-rest encryption posture for PHI-equivalent handling.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. DIAGRAM -->
+    <section class="block" id="diagram">
+      <span class="sec-num">02</span>
+      <h2>Component map</h2>
+      <p class="lead">Request path top to bottom: browser → TLS proxy → API / SSR → data &amp; jobs.</p>
+      <div class="card">
+        <div class="diagram">
+          <div class="tier">
+            <div class="tier-label">Client</div>
+            <div class="nodes">
+              <span class="node accent">Browser <small>Next.js 15 · React 19</small></span>
+              <span class="node">TanStack Query v5</span>
+              <span class="node">SSE live dashboard</span>
+            </div>
+          </div>
+          <div class="arrow">▼<small>HTTPS · REST + SSE · httpOnly cookie (JWT)</small></div>
+          <div class="tier">
+            <div class="tier-label">Edge</div>
+            <div class="nodes">
+              <span class="node fg">nginx 1.27 <small>TLS · HSTS · HTTP→HTTPS · header buffers</small></span>
+            </div>
+          </div>
+          <div class="arrow">▼<small>/api/* &nbsp;·&nbsp; / (static / SSR)</small></div>
+          <div class="tier">
+            <div class="tier-label">Application</div>
+            <div class="nodes">
+              <span class="node accent">NestJS 11 API <small>auth · users · charts · coding · validation · audit · queue · metrics · imports · webhooks · audit-log · notifications · health</small></span>
+              <span class="node">Next.js server <small>SSR</small></span>
+            </div>
+          </div>
+          <div class="arrow">▼<small>enqueue jobs &nbsp;·&nbsp; pg (parameterized, scoped)</small></div>
+          <div class="tier">
+            <div class="tier-label">Data &amp; async</div>
+            <div class="nodes">
+              <span class="node fg">PostgreSQL 17 <small>encrypted volume · JSONB charts</small></span>
+              <span class="node accent">Redis 7 <small>BullMQ · SSE cache</small></span>
+              <span class="node">Worker <small>import · outbox-relay · email · metrics</small></span>
+            </div>
+          </div>
+          <div class="arrow">▼<small>placeholder-gated · degrade gracefully</small></div>
+          <div class="tier">
+            <div class="tier-label">External (gated)</div>
+            <div class="nodes">
+              <span class="node">Resend <small>email</small></span>
+              <span class="node">Datadog <small>APM</small></span>
+              <span class="node">Sentry <small>errors</small></span>
+              <span class="node">AWS Secrets Manager</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. LAYERS -->
+    <section class="block" id="layers">
+      <span class="sec-num">03</span>
+      <h2>Layers &amp; data flow</h2>
+      <p class="lead">Controllers stay thin; services hold logic; only the server layer touches Postgres.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Layer</th><th>Location</th><th>Responsibility</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Presentation</strong></td><td class="mono">apps/web</td><td>Server Components for first paint of queue/metrics; Client Components + TanStack Query for live data; SSE subscription for the dashboard (&lt;1s). All design values come from <span class="mono">packages/tokens</span>.</td></tr>
+            <tr><td><strong>API</strong></td><td class="mono">apps/api/src/modules</td><td>NestJS controllers → services. Cross-cutting via guards/interceptors: <span class="mono">AuthGuard</span> (JWT cookie), <span class="mono">RolesGuard</span> (RBAC), <span class="mono">RateLimitGuard</span>, <span class="mono">AuditInterceptor</span>, <span class="mono">SentryGlobalFilter</span>.</td></tr>
+            <tr><td><strong>Data access</strong></td><td class="mono">apps/api/src/server</td><td>The <em>only</em> layer permitted to import the <span class="mono">pg</span> pool. Every scoped query goes through <span class="mono">withOrgScope(orgId, fn)</span> / <span class="mono">withUserScope(userId, fn)</span> (INV-1).</td></tr>
+            <tr><td><strong>Persistence</strong></td><td class="mono">db/migrations</td><td>PostgreSQL 17. Forward-only numbered SQL migrations. JSONB for stored FHIR chart payloads.</td></tr>
+            <tr><td><strong>Async / jobs</strong></td><td class="mono">apps/api/src/jobs</td><td>BullMQ on Redis. Processors: <span class="mono">import</span> (Synthea bundle → charts), <span class="mono">outbox-relay</span> (publish events), <span class="mono">email</span> (drain pending), <span class="mono">metrics</span> (recompute rollups).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h3>Coding-loop request path</h3>
+        <p class="muted" style="font-size:14px;margin-top:8px">A coder opens an assigned chart → enters codes with rationale → validation rules run (format / sequencing / comorbidity) and map errors back to the offending row → coder submits → chart enters the supervisor audit queue → supervisor scores, leaves findings + training feedback, and approves or returns. Every state-changing action writes an append-only, hash-chained <span class="mono">audit_log</span> row.</p>
+      </div>
+    </section>
+
+    <!-- 4. STACK -->
+    <section class="block" id="stack">
+      <span class="sec-num">04</span>
+      <h2>Stack &amp; dependencies</h2>
+      <p class="lead">Pinned versions; external SaaS is placeholder-gated and degrades gracefully when keys are absent.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Dependency</th><th>Version</th><th>Role</th></tr></thead>
+          <tbody>
+            <tr><td>Node.js</td><td class="mono">22 LTS</td><td>Runtime</td></tr>
+            <tr><td>Next.js / React</td><td class="mono">15.x / 19.x</td><td>Frontend (App Router) + UI</td></tr>
+            <tr><td>@tanstack/react-query</td><td class="mono">5.x</td><td>Data fetching / cache</td></tr>
+            <tr><td>Tailwind CSS</td><td class="mono">3.4.x</td><td>Styling (token-bound)</td></tr>
+            <tr><td>NestJS</td><td class="mono">11.x</td><td>Backend framework</td></tr>
+            <tr><td>@nestjs/bullmq + bullmq</td><td class="mono">11.x / 5.x</td><td>Background jobs</td></tr>
+            <tr><td>pg</td><td class="mono">8.x</td><td>Postgres driver (raw, parameterized)</td></tr>
+            <tr><td>ioredis</td><td class="mono">5.x</td><td>Redis client</td></tr>
+            <tr><td>zod</td><td class="mono">3.x</td><td>Validation (shared schemas)</td></tr>
+            <tr><td>argon2</td><td class="mono">0.41.x</td><td>Password hashing (native; never substitute — INV-14)</td></tr>
+            <tr><td>jose</td><td class="mono">5.x</td><td>JWT sign/verify</td></tr>
+            <tr><td>pino</td><td class="mono">9.x</td><td>Structured JSON logging</td></tr>
+            <tr><td>PostgreSQL / Redis / Nginx</td><td class="mono">17 / 7 / 1.27</td><td>Database / queue+cache / TLS proxy</td></tr>
+            <tr><td>Playwright</td><td class="mono">1.x</td><td>E2E — one spec per workflow</td></tr>
+            <tr><td>resend · dd-trace · @sentry/* · aws-sdk</td><td class="mono">gated</td><td>Email / APM / errors / secrets — placeholder-gated</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 5. RELIABILITY -->
+    <section class="block" id="reliability">
+      <span class="sec-num">05</span>
+      <h2>Reliability patterns</h2>
+      <p class="lead">Dual-writes, inbound webhooks and email all avoid the "wrote one side, lost the other" failure mode.</p>
+      <div class="grid3">
+        <div class="card pattern">
+          <h3>Transactional outbox <span class="tag">INV-5</span></h3>
+          <ol class="steps">
+            <li>A domain mutation <strong>and</strong> its <span class="mono">outbox_events</span> row are written in one DB transaction.</li>
+            <li>The <span class="mono">outbox-relay</span> worker publishes <strong>at-least-once</strong>.</li>
+            <li>Consumers are <strong>idempotent</strong>, so replays are safe.</li>
+          </ol>
+        </div>
+        <div class="card pattern">
+          <h3>Webhook verify-first <span class="tag">INV-4 · INV-6</span></h3>
+          <ol class="steps">
+            <li>Verify <strong>HMAC-SHA256</strong> over the raw body <strong>before any DB read</strong>.</li>
+            <li>Dedupe via <span class="mono">processed_events</span> <span class="mono">UNIQUE(event_id)</span>.</li>
+            <li>Only then dispatch to the service.</li>
+          </ol>
+        </div>
+        <div class="card pattern">
+          <h3>Email outbox <span class="tag">guaranteed-delivery</span></h3>
+          <ol class="steps">
+            <li>Never sync-send inside a request handler.</li>
+            <li>Insert into <span class="mono">pending_emails</span> in the triggering txn.</li>
+            <li>Drain with capped backoff → DLQ on repeated failure.</li>
+          </ol>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h3>Worker topology</h3>
+        <p class="muted" style="font-size:14px;margin-top:8px">No LLM agents at runtime — "orchestration" is the BullMQ worker topology. The <strong>API process</strong> enqueues jobs and never blocks a request on email/import. The <strong>worker process</strong> (separate container, same image) runs all processors plus the outbox/email relays on a fixed interval. <strong>SSE</strong> streams queue counters from the API, backed by a short-TTL Redis cache refreshed by the <span class="mono">metrics</span> job.</p>
+      </div>
+    </section>
+
+    <!-- 6. DATA MODEL -->
+    <section class="block" id="data">
+      <span class="sec-num">06</span>
+      <h2>Data model</h2>
+      <p class="lead">FKs scoped by <span class="mono">org_id</span> throughout. Authoritative DDL lives in <span class="mono">db/migrations</span>.</p>
+      <div class="precaption">Core tables</div>
+      <pre>organizations
+users                 role: manager | supervisor | coder · UNIQUE(lower(email))  [INV-3]
+charts                synthetic encounter · JSONB payload · specialty · difficulty · status · assignee
+                      status: draft | pending_audit | completed | returned        [ADR-016]
+chart_codes           ICD-10 dx/proc · rationale · sequence · is_principal
+validation_results    format / sequencing / comorbidity rule outcomes
+audits                supervisor review · score · decision
+audit_findings        structured findings on an audit
+feedback              training feedback to the coder
+audit_log             append-only · hash-chained (prev_hash + row_hash)          [INV-12]
+outbox_events         transactional outbox for dual-write                        [INV-5]
+processed_events      inbound webhook idempotency · UNIQUE(event_id)             [INV-4]
+pending_emails        email outbox (drain with backoff → DLQ)
+import_jobs           Synthea / FHIR import job tracking
+code_reference        ICD-10-CM seed (public-domain descriptors)</pre>
+    </section>
+
+    <!-- 7. DECISIONS -->
+    <section class="block" id="decisions">
+      <span class="sec-num">07</span>
+      <h2>Key decisions (ADRs)</h2>
+      <p class="lead">The choices that shaped the buildout, with the alternative that was rejected and why.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Decision</th><th>Choice</th><th>Alternative</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td>Code set, v1</td><td>ICD-10-CM only (procedures by code)</td><td>Full CPT descriptors</td><td>CPT is AMA license-restricted — bundling descriptors would breach the license <span class="tag">ADR-002</span></td></tr>
+            <tr><td>DB access</td><td>Raw <span class="mono">pg</span> + params + scope wrappers</td><td>Prisma / TypeORM</td><td>Keeps the tenant-scope boundary mechanically lintable <span class="tag">ADR-003</span></td></tr>
+            <tr><td>Real-time</td><td>SSE</td><td>WebSocket</td><td>Push is one-way (server→client); simpler over existing HTTPS <span class="tag">ADR-004</span></td></tr>
+            <tr><td>Dual-write</td><td>Transactional outbox + polling relay</td><td>Debezium CDC</td><td>No extra infra at medium scale <span class="tag">ADR-005</span></td></tr>
+            <tr><td>Password hash</td><td>argon2id (native)</td><td>bcryptjs</td><td>Native primitive, no substitution <span class="tag">ADR-006</span></td></tr>
+            <tr><td>Sessions</td><td>httpOnly cookie JWT (jose), CSRF-guarded</td><td>Header bearer tokens</td><td>Avoids JS-readable token theft <span class="tag">ADR-007</span></td></tr>
+            <tr><td>Deploy</td><td>Local Docker stack (cloud-portable)</td><td>Direct cloud</td><td>Externals unprovisioned at build time; gated + graceful <span class="tag">ADR-008</span></td></tr>
+            <tr><td>Monorepo PM</td><td>npm workspaces</td><td>pnpm</td><td>pnpm absent in build env; Node 22 + npm 10 present <span class="tag">ADR-012</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="grid2" style="margin-top:16px">
+        <div class="card">
+          <h4 class="accent mono">ADR-016 — fixed read-only coding panel</h4>
+          <p class="muted" style="font-size:13.5px;margin-top:6px">UI e2e exposed invented statuses (<span class="mono">in_progress</span>, <span class="mono">unassigned</span>) where the schema uses <span class="mono">draft|pending_audit|completed|returned</span>. <span class="mono">canEdit</span> never matched a coder's draft → permanent read-only panel. Fixed to <span class="mono">isCoder &amp;&amp; (draft|returned)</span>.</p>
+        </div>
+        <div class="card">
+          <h4 class="accent mono">ADR-015 — ambiguous org_id 500</h4>
+          <p class="muted" style="font-size:13.5px;margin-top:6px">Charts-list query <span class="mono">LEFT JOIN users</span>; <span class="mono">org_id</span> on both tables made <span class="mono">WHERE org_id = $1</span> ambiguous → Postgres error → 500 on the coder queue. Fixed by aliasing every filter column with <span class="mono">c.</span>.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. INVARIANTS -->
+    <section class="block" id="invariants">
+      <span class="sec-num">08</span>
+      <h2>Architectural invariants</h2>
+      <p class="lead">14 rules — 12 machine-checked by <span class="mono">scripts/invariant-lint.mjs</span>, 2 boundary-audited at the Drift Detection Gate. Changing a rule means amending §9 + <span class="mono">invariants.json</span> + an ADR together; never disabling one to pass a gate.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Rule</th><th>Check</th></tr></thead>
+          <tbody>
+            <tr><td class="inv-id">INV-1</td><td>No raw pg pool construction/use (<span class="mono">getPool(</span>/<span class="mono">new Pool(</span>/<span class="mono">pool.query(</span>) outside <span class="mono">apps/api/src/server/**</span>. Modules use server-layer helpers + the txn client from <span class="mono">withTransaction</span>.</td><td><span class="tag">forbidden-pattern</span></td></tr>
+            <tr><td class="inv-id">INV-2</td><td>A design-token file is the single source of color/type/spacing, copied verbatim from DESIGN-TEMPLATE.</td><td><span class="tag">required-file</span></td></tr>
+            <tr><td class="inv-id">INV-3</td><td><span class="mono">users</span> enforces unique (case-insensitive) email to prevent duplicate-account enumeration.</td><td><span class="tag">unique-constraint</span></td></tr>
+            <tr><td class="inv-id">INV-4</td><td>Webhook <span class="mono">processed_events</span> has <span class="mono">UNIQUE(event_id)</span> so replays are idempotent.</td><td><span class="tag">unique-constraint</span></td></tr>
+            <tr><td class="inv-id">INV-5</td><td><span class="mono">outbox_events</span> table exists (transactional outbox for dual-write).</td><td><span class="tag">required-file</span></td></tr>
+            <tr><td class="inv-id">INV-6</td><td>In every webhook controller, signature verification precedes any DB read.</td><td><span class="tag">boundary-order</span></td></tr>
+            <tr><td class="inv-id">INV-7</td><td>Auth rate-limit guard precedes the password-hash compare in the login path.</td><td><span class="tag">boundary-order</span></td></tr>
+            <tr><td class="inv-id">INV-8</td><td>No hard-coded secrets / placeholder credentials committed in source.</td><td><span class="tag">forbidden-pattern</span></td></tr>
+            <tr><td class="inv-id">INV-9</td><td><span class="mono">.env.example</span> exists and enumerates every env var.</td><td><span class="tag">required-file</span></td></tr>
+            <tr><td class="inv-id">INV-10</td><td>UI coverage: every screen route renders, every non-internal endpoint is referenced by UI source, every workflow has an e2e spec to its terminal step.</td><td><span class="tag">ui-coverage</span></td></tr>
+            <tr><td class="inv-id">INV-11</td><td>Health endpoint exists and reports dependency status.</td><td><span class="tag">required-file</span></td></tr>
+            <tr><td class="inv-id">INV-12</td><td>Audit log is append-only &amp; hash-chained; no <span class="mono">UPDATE</span>/<span class="mono">DELETE</span> on <span class="mono">audit_log</span> anywhere.</td><td><span class="tag">forbidden-pattern</span></td></tr>
+            <tr><td class="inv-id">INV-13</td><td>Reverse proxy + Node header-buffer sizing present (nginx <span class="mono">large_client_header_buffers</span> / Node <span class="mono">max-http-header-size</span>).</td><td><span class="tag">manual</span></td></tr>
+            <tr><td class="inv-id">INV-14</td><td>argon2 (not bcryptjs/argon2-browser) is the password hash primitive; no substitution.</td><td><span class="tag">forbidden-pattern</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 9. SECURITY -->
+    <section class="block" id="security">
+      <span class="sec-num">09</span>
+      <h2>Threat model</h2>
+      <p class="lead">STRIDE per trust boundary — the mitigation is wired into the architecture, not bolted on.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Boundary</th><th>Threat</th><th>Mitigation</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Auth</strong></td><td>Spoofing / repudiation</td><td>Anti-enumeration (uniform shape + timing), rate-limit fires <em>before</em> hash compare (INV-7), audit-logged</td></tr>
+            <tr><td><strong>Chart access</strong></td><td>Elevation / disclosure</td><td>Default-deny tenant + role guards; cross-tenant isolation tests</td></tr>
+            <tr><td><strong>Audit log</strong></td><td>Tampering</td><td>Append-only, hash-chained (<span class="mono">prev_hash</span> + <span class="mono">row_hash</span>), verified by a job (INV-12)</td></tr>
+            <tr><td><strong>Webhook ingress</strong></td><td>Spoofing / replay</td><td>HMAC verify-first + <span class="mono">processed_events</span> idempotency (INV-4, INV-6)</td></tr>
+            <tr><td><strong>Outbox</strong></td><td>Consistency / dual-write</td><td>Single-txn write + idempotent consumers (INV-5)</td></tr>
+            <tr><td><strong>Secrets / at-rest</strong></td><td>Disclosure</td><td>Secrets Manager / KMS, TLS-only, encrypted Postgres volume</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h4 class="accent mono">Security Audit Gate (ADR-014)</h4>
+        <p class="muted" style="font-size:13.5px;margin-top:6px"><strong style="color:var(--color-fg)">AUTH-1 (critical, fixed)</strong> — registration with an existing email no longer authenticates as the existing account; it returns a shape-identical 201 with no session, preserving anti-enumeration without account takeover. <strong style="color:var(--color-fg)">CFG-1 (fixed)</strong> — <span class="mono">assertProdSecrets()</span> blocks production boot on weak/missing <span class="mono">JWT_SECRET</span>/<span class="mono">WEBHOOK_SIGNING_SECRET</span>. <strong style="color:var(--color-fg)">DEP-1 (accepted)</strong> — transitive postcss XSS is dev-toolchain only, not runtime-reachable; tracked for the next Next.js bump.</p>
+      </div>
+    </section>
+
+    <!-- 10. BUILDOUT -->
+    <section class="block" id="buildout">
+      <span class="sec-num">10</span>
+      <h2>Buildout waves</h2>
+      <p class="lead">Built as a single orchestrated run across 5 dependency-ordered waves (ADR-011) — one consistent contract layer authored centrally, each feature run as its own iteration.</p>
+      <div class="grid2">
+        <div class="card wave">
+          <span class="wnum">Wave 0 — Foundation</span>
+          <ul>
+            <li><strong>F-01</strong> scaffold, config, health, migrations</li>
+            <li><strong>F-02</strong> tokens, app shell, landing</li>
+            <li><span class="mono">packages/shared</span> + <span class="mono">packages/tokens</span></li>
+          </ul>
+        </div>
+        <div class="card wave">
+          <span class="wnum">Wave 1 — Identity &amp; ingress (parallel)</span>
+          <ul>
+            <li><strong>F-03</strong> Auth + RBAC</li>
+            <li><strong>F-04</strong> Users + seed</li>
+            <li><strong>F-05</strong> Synthea import</li>
+          </ul>
+        </div>
+        <div class="card wave">
+          <span class="wnum">Wave 2 — Core coding loop (seq on W1)</span>
+          <ul>
+            <li><strong>F-06</strong> Queue + assign</li>
+            <li><strong>F-07</strong> Chart + coding panel</li>
+            <li><strong>F-08</strong> Validation engine</li>
+          </ul>
+        </div>
+        <div class="card wave">
+          <span class="wnum">Wave 3 — Review &amp; observability (parallel on W2)</span>
+          <ul>
+            <li><strong>F-09</strong> Audit + feedback</li>
+            <li><strong>F-10</strong> Metrics / SSE / export</li>
+            <li><strong>F-11</strong> Notifications · <strong>F-12</strong> Audit-log</li>
+          </ul>
+        </div>
+        <div class="card wave">
+          <span class="wnum">Wave 4 — Reliability &amp; handoff (seq)</span>
+          <ul>
+            <li><strong>F-13</strong> Outbox + webhooks</li>
+            <li><strong>F-14</strong> invariant-lint + smoke + Claude scaffold</li>
+          </ul>
+        </div>
+        <div class="card wave" style="background:var(--color-accent-soft);border-color:transparent">
+          <span class="wnum">Quality gates</span>
+          <ul style="color:var(--color-accent-strong)">
+            <li><strong style="color:var(--color-accent-strong)">lint:invariants</strong> must pass</li>
+            <li><strong style="color:var(--color-accent-strong)">npm test</strong> validation engine + signatures</li>
+            <li><strong style="color:var(--color-accent-strong)">smoke-test.sh</strong> full workflow matrix</li>
+            <li>Playwright e2e per workflow</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11. DEPLOY -->
+    <section class="block" id="deploy">
+      <span class="sec-num">11</span>
+      <h2>Deployment</h2>
+      <p class="lead">One <span class="mono">docker compose up</span> brings the whole stack to <span class="mono">https://localhost</span>.</p>
+      <div class="grid2">
+        <div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Service</th><th>Image</th><th>Role</th></tr></thead>
+              <tbody>
+                <tr><td class="mono">db</td><td class="mono">postgres:17-alpine</td><td>Database (encrypted volume <span class="mono">pgdata</span>)</td></tr>
+                <tr><td class="mono">redis</td><td class="mono">redis:7-alpine</td><td>Queue + SSE cache</td></tr>
+                <tr><td class="mono">api</td><td class="mono">(build)</td><td>NestJS REST + SSE</td></tr>
+                <tr><td class="mono">worker</td><td class="mono">(same image)</td><td>import · outbox · email · metrics</td></tr>
+                <tr><td class="mono">web</td><td class="mono">(build)</td><td>Next.js SSR</td></tr>
+                <tr><td class="mono">nginx</td><td class="mono">nginx:1.27-alpine</td><td>TLS termination / reverse proxy</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <div class="precaption">Bring it up</div>
+          <pre>npm install
+npm run build -w @smartcoders/shared
+bash scripts/gen-certs.sh
+docker compose up -d --build
+# → https://localhost
+bash scripts/smoke-test.sh</pre>
+          <p class="muted" style="font-size:13px;margin-top:12px">Required env: <span class="mono">DATABASE_URL</span>, <span class="mono">REDIS_URL</span>, <span class="mono">JWT_SECRET</span>, <span class="mono">SESSION_COOKIE_NAME</span>, <span class="mono">APP_URL</span>, <span class="mono">WEBHOOK_SIGNING_SECRET</span>. Optional/gated: <span class="mono">RESEND_API_KEY</span>, <span class="mono">SENTRY_DSN</span>, <span class="mono">DD_*</span>, <span class="mono">AWS_*</span>. Every var is enumerated in <span class="mono">.env.example</span>.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+</div>
+
+<footer class="site">
+  <div class="container foot">
+    <span class="logo"><span class="logo-mark" style="width:24px;height:24px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m8 18 4-12 4 12"/><path d="M3 12h3M18 12h3"/></svg></span><span class="logo-word" style="font-size:17px">SmarCoders</span></span>
+    <p class="muted" style="font-size:12px">Architecture &amp; buildout · sourced from ARCHITECTURE.md, DECISIONS.md &amp; invariants.json.<br>All patient data is synthetic (Synthea). No real PHI. © 2026 SmarCoders.</p>
+  </div>
+</footer>
+
+<script>
+  // active TOC highlight
+  var links = Array.prototype.slice.call(document.querySelectorAll('#toc a'));
+  var sections = links.map(function(a){ return document.getElementById(a.getAttribute('href').slice(1)); });
+  function onScroll(){
+    var pos = window.scrollY + 120, idx = 0;
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i] && sections[i].offsetTop <= pos) idx = i;
+    }
+    links.forEach(function(a,i){ a.classList.toggle('active', i === idx); });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+</script>
+</body>
+</html>

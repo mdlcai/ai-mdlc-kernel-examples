@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pulse — Real-time infrastructure monitoring (preview)</title>
+<meta name="description" content="Self-contained preview of Pulse: landing page + key application screens." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  /* ── Design tokens (copied verbatim from DESIGN-TEMPLATE.html :root) ─────── */
+  :root{
+    --color-bg:#f5f7fb; --color-surface:#ffffff; --color-surface-2:#fbfcfe; --color-fg:#0d1526;
+    --color-muted:#5b6b85; --color-border:#e4e9f2; --color-accent:#2563eb; --color-accent-2:#1d4ed8;
+    --color-accent-soft:#eaf1ff; --color-success:#15a35b; --color-warning:#d98307; --color-error:#dc2b3d;
+    --color-ink:#0a1020; --color-ink-2:#111a30; --color-ink-line:#1e2a45; --color-ink-muted:#8a99b8;
+    --color-accent-soft-2:#dde9ff; --color-error-soft:#fff1f2; --color-ink-fg:#e8edf7; --color-ink-sub:#b9c4dc;
+    --font-display:"Manrope",sans-serif; --font-body:"Inter",sans-serif; --font-mono:"JetBrains Mono",monospace;
+    --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:24px;--space-6:32px;--space-7:48px;--space-8:64px;--space-9:96px;
+    --radius-sm:6px;--radius-md:12px;--radius-lg:20px;--radius-pill:999px;
+    --shadow-sm:0 1px 2px rgba(13,21,38,.05),0 1px 1px rgba(13,21,38,.04);
+    --shadow-md:0 8px 24px -8px rgba(13,21,38,.14),0 2px 6px rgba(13,21,38,.05);
+    --shadow-lg:0 40px 80px -32px rgba(10,16,32,.45),0 12px 32px -12px rgba(13,21,38,.22);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:var(--font-body);background:var(--color-bg);color:var(--color-fg);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  h1,h2,h3,h4{font-family:var(--font-display);margin:0;letter-spacing:-.02em;text-wrap:balance}
+  a{color:inherit;text-decoration:none}
+  .mono{font-family:var(--font-mono)}
+  .wrap{width:min(1200px,100% - var(--space-7));margin-inline:auto}
+  :focus-visible{outline:none;box-shadow:0 0 0 4px var(--color-accent-soft)}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  /* ── Preview switcher chrome ─────────────────────────────────────────────── */
+  .switcher{position:fixed;z-index:200;top:14px;right:14px;display:flex;gap:4px;padding:5px;background:rgba(255,255,255,.9);
+    backdrop-filter:blur(12px);border:1px solid var(--color-border);border-radius:var(--radius-pill);box-shadow:var(--shadow-md)}
+  .switcher button{font-family:var(--font-mono);font-size:11.5px;font-weight:500;letter-spacing:.02em;color:var(--color-muted);
+    background:transparent;border:0;padding:7px 12px;border-radius:var(--radius-pill);cursor:pointer;transition:.15s}
+  .switcher button:hover{color:var(--color-fg);background:var(--color-accent-soft)}
+  .switcher button[aria-current="true"]{background:var(--color-accent);color:#fff}
+  @media (max-width:760px){.switcher{left:14px;right:14px;justify-content:center;flex-wrap:wrap}}
+
+  .page{display:none}
+  .page.active{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  /* ── Buttons ─────────────────────────────────────────────────────────────── */
+  .btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-display);font-weight:700;font-size:15px;
+    padding:12px 22px;border-radius:var(--radius-md);border:1px solid transparent;cursor:pointer;transition:.18s;text-decoration:none}
+  .btn-sm{padding:8px 14px;font-size:13.5px}
+  .btn-primary{background:var(--color-accent);color:#fff;box-shadow:0 6px 16px -6px rgba(37,99,235,.55)}
+  .btn-primary:hover{background:var(--color-accent-2);transform:translateY(-2px);box-shadow:0 10px 22px -8px rgba(37,99,235,.6)}
+  .btn-ghost{background:var(--color-surface);border-color:var(--color-border);box-shadow:var(--shadow-sm);color:var(--color-fg)}
+  .btn-ghost:hover{border-color:var(--color-accent);color:var(--color-accent);transform:translateY(-2px)}
+  .btn-ink{background:var(--color-ink-2);color:#fff;border-color:var(--color-ink-line)}
+  .btn-ink:hover{background:var(--color-accent);transform:translateY(-2px)}
+
+  .eyebrow{font-family:var(--font-mono);font-size:11.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent)}
+
+  /* ── Status pills / badges ───────────────────────────────────────────────── */
+  .badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11.5px;font-weight:600;
+    padding:3px 10px;border-radius:var(--radius-pill);border:1px solid transparent;text-transform:uppercase;letter-spacing:.04em}
+  .dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+  .s-up{background:rgba(21,163,91,.12);color:var(--color-success);border-color:rgba(21,163,91,.25)}
+  .s-up .dot{background:var(--color-success)}
+  .s-degraded{background:rgba(217,131,7,.12);color:var(--color-warning);border-color:rgba(217,131,7,.25)}
+  .s-degraded .dot{background:var(--color-warning)}
+  .s-down{background:rgba(220,43,61,.1);color:var(--color-error);border-color:rgba(220,43,61,.25)}
+  .s-down .dot{background:var(--color-error)}
+  .s-paused{background:rgba(91,107,133,.12);color:var(--color-muted);border-color:rgba(91,107,133,.22)}
+  .s-paused .dot{background:var(--color-muted)}
+  .pulse-dot{position:relative}
+  .pulse-dot::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid currentColor;opacity:.5;animation:ping 1.8s cubic-bezier(0,0,.2,1) infinite}
+  @keyframes ping{0%{transform:scale(.6);opacity:.6}80%,100%{transform:scale(1.8);opacity:0}}
+
+  /* ── Cards / tables ──────────────────────────────────────────────────────── */
+  .card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm)}
+  .card-head{padding:18px var(--space-5);border-bottom:1px solid var(--color-border);display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .card-head h3{font-size:17px;font-weight:700}
+  .card-head .sub{font-family:var(--font-mono);font-size:11.5px;color:var(--color-muted);text-transform:uppercase;letter-spacing:.08em}
+  table{width:100%;border-collapse:collapse;text-align:left}
+  thead th{font-family:var(--font-mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--color-muted);
+    padding:12px var(--space-5);border-bottom:1px solid var(--color-border);background:var(--color-surface-2)}
+  tbody td{padding:14px var(--space-5);border-bottom:1px solid var(--color-border);font-size:14.5px}
+  tbody tr:last-child td{border-bottom:0}
+  tbody tr:hover{background:var(--color-surface-2)}
+  .t-name{font-weight:600}
+  .t-sub{font-family:var(--font-mono);font-size:11.5px;color:var(--color-muted)}
+
+  /* ════════════════════ LANDING ════════════════════ */
+  .nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);background:rgba(245,247,251,.82);border-bottom:1px solid var(--color-border)}
+  .nav-in{display:flex;align-items:center;justify-content:space-between;height:66px}
+  .brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:800;font-size:19px;letter-spacing:-.02em}
+  .brand-mark{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--color-accent),#5b8bf5);display:grid;place-items:center;box-shadow:0 4px 12px -3px rgba(37,99,235,.5)}
+  .nav-links{display:flex;gap:4px}
+  .nav-links a{font-size:14px;color:var(--color-muted);padding:8px 12px;border-radius:var(--radius-sm);transition:.15s}
+  .nav-links a:hover{color:var(--color-fg);background:var(--color-accent-soft)}
+  .nav-cta{display:flex;align-items:center;gap:8px}
+  .nav-signin{font-size:14px;font-weight:600;color:var(--color-fg);padding:8px 12px}
+  @media (max-width:880px){.nav-links{display:none}}
+
+  .hero{padding:var(--space-9) 0 var(--space-8)}
+  .hero-grid{display:grid;grid-template-columns:minmax(0,.92fr) minmax(0,1.18fr);gap:var(--space-8);align-items:center}
+  @media (max-width:980px){.hero-grid{grid-template-columns:1fr;gap:var(--space-7)}}
+  .status-chip{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:12px;color:var(--color-success);
+    background:rgba(21,163,91,.08);border:1px solid rgba(21,163,91,.2);padding:5px 12px;border-radius:var(--radius-pill);margin-bottom:var(--space-5)}
+  .hero h1{font-size:clamp(40px,5vw,58px);line-height:1.05;letter-spacing:-.035em;font-weight:800}
+  .hero h1 .accent{color:var(--color-accent)}
+  .hero-sub{font-size:18.5px;line-height:1.55;color:var(--color-muted);margin:var(--space-5) 0 var(--space-6);max-width:52ch}
+  .hero-actions{display:flex;gap:12px;flex-wrap:wrap}
+  .hero-proof{display:flex;gap:var(--space-7);margin-top:var(--space-7)}
+  .proof-num{font-family:var(--font-display);font-weight:800;font-size:26px}
+  .proof-lbl{font-family:var(--font-mono);font-size:11px;color:var(--color-muted);text-transform:uppercase;letter-spacing:.08em}
+
+  /* Console mockup */
+  .console{position:relative;background:var(--color-ink);border:1px solid var(--color-ink-line);border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-lg);overflow:hidden;transform:perspective(2000px) rotateY(-7deg) rotateX(2deg)}
+  @media (max-width:980px){.console{transform:none}}
+  .console-bar{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--color-ink-line);background:var(--color-ink-2)}
+  .dots{display:flex;gap:6px}.dots i{width:11px;height:11px;border-radius:50%;display:block}
+  .dots i:nth-child(1){background:#ff5f57}.dots i:nth-child(2){background:#febc2e}.dots i:nth-child(3){background:#28c840}
+  .console-tabs{display:flex;gap:4px;margin-left:8px}
+  .console-tabs span{font-family:var(--font-mono);font-size:11.5px;color:var(--color-ink-muted);padding:4px 10px;border-radius:6px}
+  .console-tabs span.on{background:var(--color-ink-line);color:#fff}
+  .console-body{display:grid;grid-template-columns:1.55fr 1fr;gap:14px;padding:16px}
+  @media (max-width:560px){.console-body{grid-template-columns:1fr}}
+  .panel{background:var(--color-ink-2);border:1px solid var(--color-ink-line);border-radius:var(--radius-md);padding:14px}
+  .panel-tag{font-family:var(--font-mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--color-success);
+    background:rgba(21,163,91,.14);border:1px solid rgba(21,163,91,.25);padding:2px 7px;border-radius:5px}
+  .metric{display:flex;justify-content:space-between;align-items:center;margin:10px 0}
+  .metric-lbl{font-family:var(--font-mono);font-size:11.5px;color:var(--color-ink-muted)}
+  .metric-val{font-family:var(--font-display);font-weight:700;font-size:18px;color:#fff}
+  .metric-bar{height:5px;border-radius:3px;background:var(--color-ink-line);overflow:hidden;margin-top:4px}
+  .metric-bar>i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--color-accent),#5b8bf5)}
+  .wave-wrap{margin-top:12px;height:64px;position:relative;overflow:hidden;border-radius:8px;background:rgba(37,99,235,.05)}
+  .wave-line{stroke:var(--color-accent);stroke-width:2;fill:none;filter:drop-shadow(0 0 6px rgba(37,99,235,.6));animation:scrollwave 6s linear infinite}
+  @keyframes scrollwave{from{transform:translateX(0)}to{transform:translateX(-300px)}}
+  .alert{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border-radius:8px;border-left:3px solid;margin-bottom:8px;background:rgba(255,255,255,.02)}
+  .alert.crit{border-color:var(--color-error)}.alert.warn{border-color:var(--color-warning)}.alert.ok{border-color:var(--color-success)}
+  .alert .ico{width:24px;height:24px;border-radius:6px;display:grid;place-items:center;flex:none;font-size:12px}
+  .alert.crit .ico{background:rgba(220,43,61,.16);color:#ff8a96}
+  .alert.warn .ico{background:rgba(217,131,7,.16);color:#f5b557}
+  .alert.ok .ico{background:rgba(21,163,91,.16);color:#5fd99a}
+  .alert .t{font-size:12.5px;color:#fff;font-weight:600}
+  .alert .m{font-family:var(--font-mono);font-size:10.5px;color:var(--color-ink-muted);margin-top:2px}
+  .console-glow{position:absolute;inset:auto -20% -40% 30%;height:60%;background:radial-gradient(closest-side,rgba(37,99,235,.4),transparent);filter:blur(40px);z-index:-1}
+
+  .trust{padding:var(--space-6) 0;border-block:1px solid var(--color-border)}
+  .trust-in{display:flex;align-items:center;gap:var(--space-7);flex-wrap:wrap;justify-content:center}
+  .trust-lbl{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--color-muted)}
+  .trust-logo{font-family:var(--font-display);font-weight:800;font-size:17px;color:#aeb8ca;letter-spacing:-.01em}
+
+  .features{padding:var(--space-9) 0}
+  .section-head{text-align:center;max-width:640px;margin:0 auto var(--space-7)}
+  .section-head h2{font-size:clamp(28px,3.4vw,38px);line-height:1.08;letter-spacing:-.03em}
+  .section-head p{font-size:18px;color:var(--color-muted);margin-top:var(--space-3)}
+  .bento{display:grid;grid-template-columns:repeat(6,1fr);grid-auto-rows:1fr;gap:18px}
+  @media (max-width:980px){.bento{grid-template-columns:1fr}}
+  .feature{grid-column:span 2;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);
+    padding:var(--space-6);box-shadow:var(--shadow-sm);transition:.2s}
+  .feature.span-3{grid-column:span 3}
+  @media (max-width:980px){.feature,.feature.span-3{grid-column:auto}}
+  .feature:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border-color:#c9d6ee}
+  .f-icon{width:42px;height:42px;border-radius:11px;background:var(--color-accent-soft);color:var(--color-accent);display:grid;place-items:center;margin-bottom:14px}
+  .feature h3{font-size:20px;font-weight:700;letter-spacing:-.02em}
+  .feature p{font-size:15.5px;color:var(--color-muted);margin-top:8px}
+  .channels{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+  .chan{font-family:var(--font-mono);font-size:11.5px;color:var(--color-muted);background:var(--color-surface-2);border:1px solid var(--color-border);padding:4px 10px;border-radius:var(--radius-pill)}
+
+  .cta-block{padding:0 0 var(--space-9)}
+  .cta-inner{position:relative;overflow:hidden;background:var(--color-ink);border-radius:var(--radius-lg);padding:var(--space-9) var(--space-6);text-align:center;box-shadow:var(--shadow-lg)}
+  .cta-inner::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% -20%,rgba(37,99,235,.45),transparent 60%)}
+  .cta-inner h2{position:relative;color:#fff;font-size:clamp(30px,3.6vw,42px);letter-spacing:-.03em}
+  .cta-inner p{position:relative;color:var(--color-ink-sub);font-size:18px;margin:var(--space-4) auto var(--space-6);max-width:46ch}
+  .cta-actions{position:relative;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+  .footer{border-top:1px solid var(--color-border);padding:var(--space-8) 0 var(--space-6)}
+  .footer-top{display:grid;grid-template-columns:1.4fr repeat(3,1fr);gap:var(--space-6)}
+  @media (max-width:760px){.footer-top{grid-template-columns:1fr 1fr}}
+  .footer-col h4{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--color-muted);margin-bottom:14px}
+  .footer-col a{display:block;font-size:14px;color:var(--color-muted);padding:5px 0}
+  .footer-col a:hover{color:var(--color-accent)}
+  .footer-blurb{font-size:14px;color:var(--color-muted);max-width:30ch;margin-top:12px}
+  .footer-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:var(--space-7);padding-top:var(--space-5);border-top:1px solid var(--color-border);font-size:13px;color:var(--color-muted);flex-wrap:wrap;gap:12px}
+
+  /* ════════════════════ APP SHELL ════════════════════ */
+  .shell{display:grid;grid-template-columns:248px 1fr;min-height:100vh;background:var(--color-bg)}
+  @media (max-width:880px){.shell{grid-template-columns:1fr}.sidebar{display:none}}
+  .sidebar{background:var(--color-ink);color:var(--color-ink-sub);padding:18px 14px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh}
+  .sidebar .brand{color:#fff;padding:6px 8px 16px}
+  .nav-section{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--color-ink-muted);padding:14px 10px 6px}
+  .side-link{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:9px;font-size:14px;font-weight:500;color:var(--color-ink-sub);cursor:pointer;transition:.15s}
+  .side-link:hover{background:var(--color-ink-2);color:#fff}
+  .side-link.on{background:linear-gradient(90deg,rgba(37,99,235,.25),rgba(37,99,235,.05));color:#fff;box-shadow:inset 2px 0 0 var(--color-accent)}
+  .side-link .ico{width:18px;height:18px;flex:none;opacity:.9}
+  .side-foot{margin-top:auto;display:flex;align-items:center;gap:10px;padding:10px;border-top:1px solid var(--color-ink-line)}
+  .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#5b8bf5,var(--color-accent));display:grid;place-items:center;color:#fff;font-weight:700;font-size:13px;font-family:var(--font-display)}
+
+  .main{display:flex;flex-direction:column;min-width:0}
+  .topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px var(--space-6);
+    background:rgba(245,247,251,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--color-border)}
+  .topbar .crumbs{display:flex;flex-direction:column}
+  .topbar h1{font-size:21px;font-weight:800;letter-spacing:-.02em}
+  .topbar .sub{font-family:var(--font-mono);font-size:11.5px;color:var(--color-muted)}
+  .topbar-actions{display:flex;gap:10px;align-items:center}
+  .content{padding:var(--space-6);display:flex;flex-direction:column;gap:var(--space-5)}
+
+  .kpis{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:18px}
+  @media (max-width:980px){.kpis{grid-template-columns:1fr 1fr}}
+  .kpi{padding:var(--space-5);position:relative;overflow:hidden}
+  .kpi .lbl{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--color-muted)}
+  .kpi .val{font-family:var(--font-display);font-weight:800;font-size:38px;letter-spacing:-.03em;margin-top:6px;line-height:1}
+  .kpi .delta{font-size:12.5px;margin-top:8px;display:inline-flex;gap:5px;align-items:center}
+  .kpi.lead{background:linear-gradient(135deg,var(--color-ink),var(--color-ink-2));border-color:var(--color-ink-line);color:#fff}
+  .kpi.lead .lbl{color:var(--color-ink-muted)} .kpi.lead .val{color:#fff}
+  .up{color:var(--color-success)} .down{color:var(--color-error)} .warn{color:var(--color-warning)}
+
+  .grid-2{display:grid;grid-template-columns:1.6fr 1fr;gap:var(--space-5)}
+  @media (max-width:980px){.grid-2{grid-template-columns:1fr}}
+  .spark{width:100%;height:140px}
+  .legend{display:flex;gap:16px;font-family:var(--font-mono);font-size:11.5px;color:var(--color-muted);padding:12px var(--space-5) 0}
+  .legend i{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:5px;vertical-align:middle}
+
+  .filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .chip-filter{font-family:var(--font-mono);font-size:12px;padding:7px 13px;border-radius:var(--radius-pill);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-muted);cursor:pointer}
+  .chip-filter.on{background:var(--color-accent-soft);border-color:var(--color-accent);color:var(--color-accent)}
+  .search{flex:1;min-width:160px;display:flex;align-items:center;gap:8px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:9px 12px}
+  .search input{border:0;outline:0;background:transparent;font-family:var(--font-mono);font-size:13px;color:var(--color-fg);width:100%}
+  .row-act{font-family:var(--font-mono);font-size:11.5px;color:var(--color-muted);border:1px solid var(--color-border);background:var(--color-surface);padding:4px 9px;border-radius:6px;cursor:pointer}
+  .row-act:hover{border-color:var(--color-accent);color:var(--color-accent)}
+
+  .gauges{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:var(--space-5)}
+  .gauge{text-align:center}
+  .gauge .ring{position:relative;width:96px;height:96px;margin:0 auto}
+  .gauge .g-val{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--font-display);font-weight:800;font-size:20px}
+  .gauge .g-lbl{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--color-muted);margin-top:10px}
+
+  .timeline{padding:var(--space-5);display:flex;flex-direction:column;gap:0}
+  .tl-item{display:grid;grid-template-columns:auto 1fr;gap:14px;padding-bottom:18px;position:relative}
+  .tl-item:not(:last-child)::before{content:"";position:absolute;left:7px;top:18px;bottom:0;width:2px;background:var(--color-border)}
+  .tl-dot{width:16px;height:16px;border-radius:50%;border:3px solid var(--color-surface);box-shadow:0 0 0 1px var(--color-border);z-index:1}
+  .tl-dot.crit{background:var(--color-error)}.tl-dot.note{background:var(--color-accent)}.tl-dot.ack{background:var(--color-warning)}.tl-dot.ok{background:var(--color-success)}
+  .tl-body .t{font-weight:600;font-size:14px}
+  .tl-body .m{font-size:13.5px;color:var(--color-muted);margin-top:2px}
+  .tl-body .ts{font-family:var(--font-mono);font-size:11px;color:var(--color-muted);margin-top:3px}
+
+  .empty{padding:var(--space-8);text-align:center}
+  .empty .ico{width:54px;height:54px;border-radius:14px;background:var(--color-accent-soft);color:var(--color-accent);display:grid;place-items:center;margin:0 auto 14px}
+  .empty h3{font-size:18px}.empty p{color:var(--color-muted);margin:8px auto 18px;max-width:42ch}
+
+  .note-banner{font-size:12.5px;color:var(--color-muted);text-align:center;padding:10px;background:var(--color-accent-soft);border-bottom:1px solid var(--color-border);font-family:var(--font-mono)}
+</style>
+</head>
+<body>
+
+<div class="note-banner">Static preview — design tokens &amp; screens from the deployed Pulse app. Use the switcher (top-right) to browse pages.</div>
+
+<nav class="switcher" aria-label="Preview pages">
+  <button data-go="home" aria-current="true">Home</button>
+  <button data-go="dashboard">Dashboard</button>
+  <button data-go="monitors">Monitors</button>
+  <button data-go="detail">Monitor</button>
+  <button data-go="incidents">Incidents</button>
+  <button data-go="reports">Reports</button>
+</nav>
+
+<!-- ══════════════════════ HOME / LANDING ══════════════════════ -->
+<section class="page active" id="home">
+  <header class="nav">
+    <div class="wrap nav-in">
+      <div class="brand">
+        <span class="brand-mark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 12h4l2-7 4 14 2-7h6" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        Pulse
+      </div>
+      <div class="nav-links">
+        <a href="#">Platform</a><a href="#">Monitoring</a><a href="#">Alerting</a><a href="#">Docs</a>
+      </div>
+      <div class="nav-cta">
+        <a class="nav-signin" href="#">Sign in</a>
+        <a class="btn btn-primary btn-sm" href="#">Start free</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <section class="hero">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <span class="status-chip"><span class="dot pulse-dot" style="background:var(--color-success);color:var(--color-success)"></span> All systems operational</span>
+          <h1>Know the instant<br>infrastructure <span class="accent">breaks.</span></h1>
+          <p class="hero-sub">Real-time monitoring for servers, networks, and services — multi-protocol checks, a flap-resistant alert engine, and guaranteed-delivery notifications. Sub-minute detection, zero alert fatigue.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#">Start monitoring free →</a>
+            <a class="btn btn-ghost" href="#">Book a demo</a>
+          </div>
+          <div class="hero-proof">
+            <div><div class="proof-num">&lt;30s</div><div class="proof-lbl">Detection</div></div>
+            <div><div class="proof-num">40%</div><div class="proof-lbl">Lower MTTR</div></div>
+            <div><div class="proof-num">70%</div><div class="proof-lbl">Less noise</div></div>
+          </div>
+        </div>
+
+        <div class="hero-visual">
+          <div class="console">
+            <div class="console-glow"></div>
+            <div class="console-bar">
+              <div class="dots"><i></i><i></i><i></i></div>
+              <div class="console-tabs"><span class="on">Overview</span><span>Topology</span><span>Alerts</span></div>
+            </div>
+            <div class="console-body">
+              <div class="panel">
+                <span class="panel-tag">● Live · us-east-1</span>
+                <div class="metric"><div><div class="metric-lbl">CPU · web-01</div><div class="metric-bar"><i style="width:38%"></i></div></div><div class="metric-val">38%</div></div>
+                <div class="metric"><div><div class="metric-lbl">Memory · web-01</div><div class="metric-bar"><i style="width:61%"></i></div></div><div class="metric-val">61%</div></div>
+                <div class="metric"><div><div class="metric-lbl">Disk · web-01</div><div class="metric-bar"><i style="width:73%;background:linear-gradient(90deg,var(--color-warning),#f0a23a)"></i></div></div><div class="metric-val">73%</div></div>
+                <div class="wave-wrap">
+                  <svg width="100%" height="64" viewBox="0 0 300 64" preserveAspectRatio="none">
+                    <path class="wave-line" d="M0,40 L20,38 L35,30 L50,44 L70,20 L90,46 L110,34 L130,40 L150,26 L170,48 L190,30 L210,42 L230,22 L250,44 L270,32 L300,40 L320,38 L335,30 L350,44 L370,20 L390,46 L410,34 L430,40 L450,26 L470,48 L490,30 L510,42 L530,22 L550,44 L570,32 L600,40"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="panel">
+                <span class="panel-tag" style="color:#ff8a96;background:rgba(220,43,61,.14);border-color:rgba(220,43,61,.3)">▲ 2 active incidents</span>
+                <div style="margin-top:12px">
+                  <div class="alert crit"><div class="ico">!</div><div><div class="t">api-gateway down</div><div class="m">HTTPS · timeout · 3 checks</div></div></div>
+                  <div class="alert warn"><div class="ico">▲</div><div><div class="t">db-primary degraded</div><div class="m">latency 840ms &gt; 500ms</div></div></div>
+                  <div class="alert ok"><div class="ico">✓</div><div><div class="t">cdn-edge recovered</div><div class="m">resolved · 41s ago</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="trust"><div class="wrap trust-in">
+    <span class="trust-lbl">Trusted by operations teams at</span>
+    <span class="trust-logo">Northwind</span><span class="trust-logo">Helix Cloud</span><span class="trust-logo">Arclight MSP</span><span class="trust-logo">Vantage IX</span>
+  </div></div>
+
+  <div class="wrap">
+    <section class="features">
+      <div class="section-head">
+        <span class="eyebrow">The platform</span>
+        <h2>Everything you need to keep the fleet alive</h2>
+        <p>Multi-protocol checks, real-time dashboards, and alerting that distinguishes signal from noise — without the cost and complexity of legacy tools.</p>
+      </div>
+      <div class="bento">
+        <div class="feature span-3">
+          <div class="f-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 12h3l2-6 4 12 2-6h7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h3>Real-time health monitoring</h3>
+          <p>ICMP, TCP, HTTPS, DNS and push checks every 10 seconds. Latency, uptime and OS metrics stream to your dashboard over WebSocket — detect degradation within 30 seconds.</p>
+          <div class="channels"><span class="chan">ICMP</span><span class="chan">TCP</span><span class="chan">HTTPS</span><span class="chan">DNS</span><span class="chan">push</span></div>
+        </div>
+        <div class="feature span-3">
+          <div class="f-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3v0a7 7 0 0 0-7 7c0 4-2 5-2 5h18s-2-1-2-5a7 7 0 0 0-7-7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 19a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+          <h3>Guaranteed-delivery alerting</h3>
+          <p>A flap-detecting state machine cuts false positives 70%. Route incidents to the right team across five channels with retries, dead-lettering and idempotency.</p>
+          <div class="channels"><span class="chan">Email</span><span class="chan">SMS</span><span class="chan">Slack</span><span class="chan">Teams</span><span class="chan">Webhooks</span></div>
+        </div>
+        <div class="feature">
+          <div class="f-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h3>Auto-discovery</h3>
+          <p>Inventory servers, devices and services in 15 minutes — no spreadsheets.</p>
+        </div>
+        <div class="feature">
+          <div class="f-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 19V5m6 14V9m6 10V3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+          <h3>Root-cause in &lt;5 min</h3>
+          <p>Metrics, trends and a full incident timeline in a single pane of glass.</p>
+        </div>
+        <div class="feature">
+          <div class="f-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M9 21V9" stroke="currentColor" stroke-width="2"/></svg></div>
+          <h3>Multi-tenant by design</h3>
+          <p>Per-customer isolation, RBAC and audit logging. SOC2 / OWASP baseline.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="wrap cta-block">
+    <div class="cta-inner">
+      <h2>Start monitoring in minutes</h2>
+      <p>Spin up the stack, add your first check, and watch the fleet go green. No credit card to start.</p>
+      <div class="cta-actions">
+        <a class="btn btn-primary" href="#">Create your workspace</a>
+        <a class="btn btn-ink" href="#">Read the docs</a>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer"><div class="wrap">
+    <div class="footer-top">
+      <div>
+        <div class="brand"><span class="brand-mark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 12h4l2-7 4 14 2-7h6" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Pulse</div>
+        <p class="footer-blurb">Real-time infrastructure monitoring that keeps operations teams ahead of the next outage.</p>
+      </div>
+      <div class="footer-col"><h4>Platform</h4><a href="#">Monitors</a><a href="#">Alerting</a><a href="#">Dashboards</a><a href="#">Topology</a></div>
+      <div class="footer-col"><h4>Solutions</h4><a href="#">NOC teams</a><a href="#">MSPs</a><a href="#">Enterprise</a><a href="#">SRE</a></div>
+      <div class="footer-col"><h4>Resources</h4><a href="#">Docs</a><a href="#">API</a><a href="#">Status</a><a href="#">Changelog</a></div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Pulse — built with the MDLC pipeline.</span>
+      <span style="display:inline-flex;gap:8px;align-items:center"><span class="dot pulse-dot" style="background:var(--color-success);color:var(--color-success)"></span> All systems operational</span>
+    </div>
+  </div></footer>
+</section>
+
+<!-- ══════════════════════ DASHBOARD ══════════════════════ -->
+<section class="page" id="dashboard"><div class="shell">
+  <aside class="sidebar" id="sb-dashboard"></aside>
+  <div class="main">
+    <div class="topbar">
+      <div class="crumbs"><h1>Fleet overview</h1><span class="sub">acme-noc · 24 monitors · live</span></div>
+      <div class="topbar-actions"><a class="btn btn-ghost btn-sm" href="#">Last 24h ▾</a><a class="btn btn-primary btn-sm" href="#">+ New monitor</a></div>
+    </div>
+    <div class="content">
+      <div class="kpis">
+        <div class="card kpi lead">
+          <div class="lbl">Most urgent</div>
+          <div class="val">2 <span style="font-size:18px;font-weight:600;color:#ff8a96">down</span></div>
+          <div class="delta"><span style="color:var(--color-ink-sub)">1 degraded · 21 up · 0 paused</span></div>
+        </div>
+        <div class="card kpi"><div class="lbl">Uptime (24h)</div><div class="val">99.94%</div><div class="delta up">▲ 0.03% vs yesterday</div></div>
+        <div class="card kpi"><div class="lbl">Avg latency</div><div class="val">142<span style="font-size:18px">ms</span></div><div class="delta up">▼ 18ms faster</div></div>
+        <div class="card kpi"><div class="lbl">Open incidents</div><div class="val">2</div><div class="delta down">▲ 1 in last hour</div></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head"><h3>Fleet latency</h3><span class="sub">p50 · p95 · last 24h</span></div>
+          <div class="legend"><span><i style="background:var(--color-accent)"></i>p50</span><span><i style="background:#9db8f0"></i>p95</span></div>
+          <svg class="spark" viewBox="0 0 600 140" preserveAspectRatio="none">
+            <defs><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(37,99,235,.22)"/><stop offset="1" stop-color="rgba(37,99,235,0)"/></linearGradient></defs>
+            <path d="M0,95 C60,90 90,70 140,80 C200,92 240,60 300,72 C360,84 400,55 460,66 C520,76 560,70 600,74 L600,140 L0,140 Z" fill="url(#ga)"/>
+            <path d="M0,95 C60,90 90,70 140,80 C200,92 240,60 300,72 C360,84 400,55 460,66 C520,76 560,70 600,74" fill="none" stroke="var(--color-accent)" stroke-width="2.5"/>
+            <path d="M0,70 C60,66 90,40 140,52 C200,66 240,30 300,46 C360,60 400,28 460,40 C520,52 560,44 600,48" fill="none" stroke="#9db8f0" stroke-width="2" stroke-dasharray="4 4"/>
+          </svg>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>Recent incidents</h3><a class="sub" href="#" data-go="incidents" style="color:var(--color-accent)">View all →</a></div>
+          <div style="padding:8px 0">
+            <div style="display:flex;gap:12px;align-items:center;padding:12px var(--space-5);border-bottom:1px solid var(--color-border)"><span class="badge s-down"><span class="dot"></span>down</span><div style="flex:1"><div class="t-name">api-gateway is down</div><div class="t-sub">opened 4m ago · HTTPS</div></div></div>
+            <div style="display:flex;gap:12px;align-items:center;padding:12px var(--space-5);border-bottom:1px solid var(--color-border)"><span class="badge s-degraded"><span class="dot"></span>degraded</span><div style="flex:1"><div class="t-name">db-primary slow</div><div class="t-sub">opened 12m ago · TCP</div></div></div>
+            <div style="display:flex;gap:12px;align-items:center;padding:12px var(--space-5)"><span class="badge s-up"><span class="dot"></span>resolved</span><div style="flex:1"><div class="t-name">cdn-edge recovered</div><div class="t-sub">resolved 41s ago · auto</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>Monitors needing attention</h3><span class="sub">3 of 24</span></div>
+        <table>
+          <thead><tr><th>Monitor</th><th>Type</th><th>Status</th><th>Latency</th><th>Uptime 24h</th><th>Region</th></tr></thead>
+          <tbody>
+            <tr><td><div class="t-name">api-gateway</div><div class="t-sub">https://api.acme.io/health</div></td><td class="mono">HTTPS</td><td><span class="badge s-down"><span class="dot"></span>down</span></td><td class="mono">timeout</td><td class="mono">97.1%</td><td class="mono">us-east-1</td></tr>
+            <tr><td><div class="t-name">db-primary</div><div class="t-sub">db.acme.io:5432</div></td><td class="mono">TCP</td><td><span class="badge s-degraded"><span class="dot"></span>degraded</span></td><td class="mono">842ms</td><td class="mono">99.4%</td><td class="mono">us-east-1</td></tr>
+            <tr><td><div class="t-name">edge-node-03</div><div class="t-sub">10.0.3.21</div></td><td class="mono">ICMP</td><td><span class="badge s-degraded"><span class="dot"></span>degraded</span></td><td class="mono">211ms</td><td class="mono">99.8%</td><td class="mono">eu-west-1</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ══════════════════════ MONITORS ══════════════════════ -->
+<section class="page" id="monitors"><div class="shell">
+  <aside class="sidebar" id="sb-monitors"></aside>
+  <div class="main">
+    <div class="topbar">
+      <div class="crumbs"><h1>Monitors</h1><span class="sub">24 monitors · 21 up · 1 down · 2 degraded</span></div>
+      <div class="topbar-actions"><a class="btn btn-ghost btn-sm" href="#">Bulk pause</a><a class="btn btn-primary btn-sm" href="#" data-go="detail">+ New monitor</a></div>
+    </div>
+    <div class="content">
+      <div class="filters">
+        <div class="search"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="var(--color-muted)" stroke-width="2"/><path d="m20 20-3-3" stroke="var(--color-muted)" stroke-width="2" stroke-linecap="round"/></svg><input placeholder="Search monitors…" value=""></div>
+        <span class="chip-filter on">All</span><span class="chip-filter">Up</span><span class="chip-filter">Down</span><span class="chip-filter">Degraded</span><span class="chip-filter">Paused</span>
+      </div>
+      <div class="card">
+        <table>
+          <thead><tr><th>Name</th><th>Type</th><th>Target</th><th>Status</th><th>Latency</th><th>Interval</th><th></th></tr></thead>
+          <tbody>
+            <tr><td class="t-name" data-go="detail" style="cursor:pointer;color:var(--color-accent)">api-gateway</td><td class="mono">HTTPS</td><td class="t-sub">api.acme.io/health</td><td><span class="badge s-down"><span class="dot"></span>down</span></td><td class="mono">—</td><td class="mono">30s</td><td><span class="row-act">Pause</span></td></tr>
+            <tr><td class="t-name">db-primary</td><td class="mono">TCP</td><td class="t-sub">db.acme.io:5432</td><td><span class="badge s-degraded"><span class="dot"></span>degraded</span></td><td class="mono">842ms</td><td class="mono">15s</td><td><span class="row-act">Pause</span></td></tr>
+            <tr><td class="t-name">web-01</td><td class="mono">HTTPS</td><td class="t-sub">acme.io</td><td><span class="badge s-up"><span class="dot"></span>up</span></td><td class="mono">128ms</td><td class="mono">30s</td><td><span class="row-act">Pause</span></td></tr>
+            <tr><td class="t-name">checkout-svc</td><td class="mono">HTTPS</td><td class="t-sub">checkout.acme.io</td><td><span class="badge s-up"><span class="dot"></span>up</span></td><td class="mono">96ms</td><td class="mono">30s</td><td><span class="row-act">Pause</span></td></tr>
+            <tr><td class="t-name">dns-primary</td><td class="mono">DNS</td><td class="t-sub">acme.io · A</td><td><span class="badge s-up"><span class="dot"></span>up</span></td><td class="mono">22ms</td><td class="mono">60s</td><td><span class="row-act">Pause</span></td></tr>
+            <tr><td class="t-name">edge-node-03</td><td class="mono">ICMP</td><td class="t-sub">10.0.3.21</td><td><span class="badge s-degraded"><span class="dot"></span>degraded</span></td><td class="mono">211ms</td><td class="mono">30s</td><td><span class="row-act">Pause</span></td></tr>
+            <tr><td class="t-name">worker-host-01</td><td class="mono">Push</td><td class="t-sub">worker-01</td><td><span class="badge s-up"><span class="dot"></span>up</span></td><td class="mono">—</td><td class="mono">60s</td><td><span class="row-act">Pause</span></td></tr>
+            <tr><td class="t-name">legacy-billing</td><td class="mono">HTTPS</td><td class="t-sub">billing.acme.io</td><td><span class="badge s-paused"><span class="dot"></span>paused</span></td><td class="mono">—</td><td class="mono">—</td><td><span class="row-act">Resume</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ══════════════════════ MONITOR DETAIL ══════════════════════ -->
+<section class="page" id="detail"><div class="shell">
+  <aside class="sidebar" id="sb-detail"></aside>
+  <div class="main">
+    <div class="topbar">
+      <div class="crumbs"><h1>web-01</h1><span class="sub">HTTPS · acme.io · us-east-1</span></div>
+      <div class="topbar-actions"><span class="badge s-up"><span class="dot"></span>up</span><a class="btn btn-ghost btn-sm" href="#">Pause</a><a class="btn btn-ghost btn-sm" href="#">Edit</a></div>
+    </div>
+    <div class="content">
+      <div class="kpis">
+        <div class="card kpi"><div class="lbl">Status</div><div class="val up" style="font-size:30px">Up</div><div class="delta"><span class="t-sub">checked 6s ago</span></div></div>
+        <div class="card kpi"><div class="lbl">Uptime 24h</div><div class="val">99.98%</div><div class="delta up">▲ 0.01%</div></div>
+        <div class="card kpi"><div class="lbl">Latency</div><div class="val">128<span style="font-size:18px">ms</span></div><div class="delta up">▼ 12ms</div></div>
+        <div class="card kpi"><div class="lbl">Checks 24h</div><div class="val">2,876</div><div class="delta"><span class="t-sub">every 30s</span></div></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head"><h3>Latency</h3><span class="sub">recent check results · ms</span></div>
+          <svg class="spark" viewBox="0 0 600 140" preserveAspectRatio="none">
+            <defs><linearGradient id="gd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(37,99,235,.22)"/><stop offset="1" stop-color="rgba(37,99,235,0)"/></linearGradient></defs>
+            <path d="M0,90 C50,86 80,92 120,84 C170,74 210,96 260,82 C320,66 360,90 420,80 C480,70 540,86 600,78 L600,140 L0,140 Z" fill="url(#gd)"/>
+            <path d="M0,90 C50,86 80,92 120,84 C170,74 210,96 260,82 C320,66 360,90 420,80 C480,70 540,86 600,78" fill="none" stroke="var(--color-accent)" stroke-width="2.5"/>
+          </svg>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>Resource utilization</h3><span class="sub">latest agent metrics</span></div>
+          <div class="gauges">
+            <div class="gauge"><div class="ring">
+              <svg width="96" height="96" viewBox="0 0 96 96"><circle cx="48" cy="48" r="40" fill="none" stroke="var(--color-border)" stroke-width="9"/><circle cx="48" cy="48" r="40" fill="none" stroke="var(--color-accent)" stroke-width="9" stroke-linecap="round" stroke-dasharray="251" stroke-dashoffset="156" transform="rotate(-90 48 48)"/></svg>
+              <div class="g-val">38%</div></div><div class="g-lbl">CPU</div></div>
+            <div class="gauge"><div class="ring">
+              <svg width="96" height="96" viewBox="0 0 96 96"><circle cx="48" cy="48" r="40" fill="none" stroke="var(--color-border)" stroke-width="9"/><circle cx="48" cy="48" r="40" fill="none" stroke="var(--color-accent)" stroke-width="9" stroke-linecap="round" stroke-dasharray="251" stroke-dashoffset="98" transform="rotate(-90 48 48)"/></svg>
+              <div class="g-val">61%</div></div><div class="g-lbl">Memory</div></div>
+            <div class="gauge"><div class="ring">
+              <svg width="96" height="96" viewBox="0 0 96 96"><circle cx="48" cy="48" r="40" fill="none" stroke="var(--color-border)" stroke-width="9"/><circle cx="48" cy="48" r="40" fill="none" stroke="var(--color-warning)" stroke-width="9" stroke-linecap="round" stroke-dasharray="251" stroke-dashoffset="68" transform="rotate(-90 48 48)"/></svg>
+              <div class="g-val">73%</div></div><div class="g-lbl">Disk</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>Recent check results</h3><span class="sub">last 8</span></div>
+        <table>
+          <thead><tr><th>Time</th><th>Status</th><th>Latency</th><th>Code</th><th>Region</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">12:04:58</td><td><span class="badge s-up"><span class="dot"></span>up</span></td><td class="mono">128ms</td><td class="mono">200</td><td class="mono">us-east-1</td></tr>
+            <tr><td class="mono">12:04:28</td><td><span class="badge s-up"><span class="dot"></span>up</span></td><td class="mono">131ms</td><td class="mono">200</td><td class="mono">us-east-1</td></tr>
+            <tr><td class="mono">12:03:58</td><td><span class="badge s-up"><span class="dot"></span>up</span></td><td class="mono">119ms</td><td class="mono">200</td><td class="mono">us-east-1</td></tr>
+            <tr><td class="mono">12:03:28</td><td><span class="badge s-degraded"><span class="dot"></span>degraded</span></td><td class="mono">512ms</td><td class="mono">200</td><td class="mono">us-east-1</td></tr>
+            <tr><td class="mono">12:02:58</td><td><span class="badge s-up"><span class="dot"></span>up</span></td><td class="mono">124ms</td><td class="mono">200</td><td class="mono">us-east-1</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ══════════════════════ INCIDENTS ══════════════════════ -->
+<section class="page" id="incidents"><div class="shell">
+  <aside class="sidebar" id="sb-incidents"></aside>
+  <div class="main">
+    <div class="topbar">
+      <div class="crumbs"><h1>Incidents</h1><span class="sub">outages and degradations across your fleet</span></div>
+      <div class="topbar-actions"><a class="btn btn-ghost btn-sm" href="#">All ▾</a></div>
+    </div>
+    <div class="content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head"><h3>Open &amp; recent</h3><span class="sub">2 open · 1 acknowledged</span></div>
+          <table>
+            <thead><tr><th>Incident</th><th>Status</th><th>Opened</th><th>Resolved</th></tr></thead>
+            <tbody>
+              <tr><td><div class="t-name">api-gateway is down</div><div class="t-sub">api-gateway · HTTPS</div></td><td><span class="badge s-down"><span class="dot"></span>open</span></td><td class="mono">4m ago</td><td class="mono">—</td></tr>
+              <tr><td><div class="t-name">db-primary is degraded</div><div class="t-sub">db-primary · TCP</div></td><td><span class="badge s-degraded"><span class="dot"></span>ack</span></td><td class="mono">12m ago</td><td class="mono">—</td></tr>
+              <tr><td><div class="t-name">cdn-edge was down</div><div class="t-sub">cdn-edge · HTTPS</div></td><td><span class="badge s-up"><span class="dot"></span>resolved</span></td><td class="mono">31m ago</td><td class="mono">41s ago</td></tr>
+              <tr><td><div class="t-name">dns-primary was degraded</div><div class="t-sub">dns-primary · DNS</div></td><td><span class="badge s-up"><span class="dot"></span>resolved</span></td><td class="mono">2h ago</td><td class="mono">1h ago</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>api-gateway is down</h3><span class="badge s-down"><span class="dot"></span>open</span></div>
+          <div style="padding:14px var(--space-5);display:flex;gap:10px;border-bottom:1px solid var(--color-border)">
+            <a class="btn btn-ghost btn-sm" href="#">Acknowledge</a><a class="btn btn-primary btn-sm" href="#">Resolve incident</a>
+          </div>
+          <div class="timeline">
+            <div class="tl-item"><span class="tl-dot crit"></span><div class="tl-body"><div class="t">Incident opened</div><div class="m">3 consecutive failed checks · HTTPS timeout</div><div class="ts">12:04:31 · system</div></div></div>
+            <div class="tl-item"><span class="tl-dot note"></span><div class="tl-body"><div class="t">Notification delivered</div><div class="m">Slack #noc-critical · PagerDuty webhook</div><div class="ts">12:04:33 · notifier</div></div></div>
+            <div class="tl-item"><span class="tl-dot ack"></span><div class="tl-body"><div class="t">Acknowledged by Ada Okafor</div><div class="m">“Investigating — looks like the LB target group.”</div><div class="ts">12:06:02 · ada@acme.io</div></div></div>
+            <div class="tl-item"><span class="tl-dot note"></span><div class="tl-body"><div class="t">Note added</div><div class="m">Failover to us-west-2 initiated.</div><div class="ts">12:07:48 · ada@acme.io</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ══════════════════════ REPORTS ══════════════════════ -->
+<section class="page" id="reports"><div class="shell">
+  <aside class="sidebar" id="sb-reports"></aside>
+  <div class="main">
+    <div class="topbar">
+      <div class="crumbs"><h1>Reports</h1><span class="sub">uptime &amp; incidents · last 30 days</span></div>
+      <div class="topbar-actions"><a class="btn btn-ghost btn-sm" href="#">⭳ Export JSON</a><a class="btn btn-primary btn-sm" href="#">⭳ Export CSV</a></div>
+    </div>
+    <div class="content">
+      <div class="kpis">
+        <div class="card kpi"><div class="lbl">Fleet uptime</div><div class="val">99.93%</div><div class="delta up">▲ 0.05% MoM</div></div>
+        <div class="card kpi"><div class="lbl">Incidents</div><div class="val">37</div><div class="delta down">▲ 6 vs last month</div></div>
+        <div class="card kpi"><div class="lbl">MTTD</div><div class="val">38<span style="font-size:18px">s</span></div><div class="delta up">▼ under target</div></div>
+        <div class="card kpi"><div class="lbl">MTTR</div><div class="val">11<span style="font-size:18px">m</span></div><div class="delta up">▼ 40% YoY</div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Uptime by monitor</h3><span class="sub">30-day window</span></div>
+        <table>
+          <thead><tr><th>Monitor</th><th>Type</th><th>Checks</th><th>Uptime %</th><th>Avg latency</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td class="t-name">web-01</td><td class="mono">HTTPS</td><td class="mono">86,400</td><td class="mono">99.98%</td><td class="mono">128ms</td><td><span class="badge s-up"><span class="dot"></span>up</span></td></tr>
+            <tr><td class="t-name">checkout-svc</td><td class="mono">HTTPS</td><td class="mono">86,400</td><td class="mono">99.96%</td><td class="mono">96ms</td><td><span class="badge s-up"><span class="dot"></span>up</span></td></tr>
+            <tr><td class="t-name">db-primary</td><td class="mono">TCP</td><td class="mono">172,800</td><td class="mono">99.40%</td><td class="mono">842ms</td><td><span class="badge s-degraded"><span class="dot"></span>degraded</span></td></tr>
+            <tr><td class="t-name">api-gateway</td><td class="mono">HTTPS</td><td class="mono">86,400</td><td class="mono">97.10%</td><td class="mono">—</td><td><span class="badge s-down"><span class="dot"></span>down</span></td></tr>
+            <tr><td class="t-name">dns-primary</td><td class="mono">DNS</td><td class="mono">43,200</td><td class="mono">99.99%</td><td class="mono">22ms</td><td><span class="badge s-up"><span class="dot"></span>up</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<script>
+  // ── Sidebar template (shared across app pages) ──────────────────────────────
+  const ICON = {
+    dashboard:'<path d="M3 13h8V3H3v10Zm10 8h8V3h-8v18ZM3 21h8v-6H3v6Z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/>',
+    monitors:'<path d="M3 12h3l2-6 4 12 2-6h7" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+    incidents:'<path d="M12 4 3 20h18L12 4Z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/><path d="M12 10v4m0 3v.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    channels:'<path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    map:'<path d="m9 4 6 2 6-2v14l-6 2-6-2-6 2V6l6-2Zm0 0v14m6-12v14" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/>',
+    reports:'<path d="M5 19V9m5 10V5m5 14v-7m5 7V11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    keys:'<circle cx="8" cy="14" r="4" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="m11 11 8-8m-3 0 3 0 0 3" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+  };
+  const NAV = [
+    ['dashboard','Dashboard','dashboard'],
+    ['monitors','Monitors','monitors'],
+    ['incidents','Incidents','incidents'],
+    ['__channels','Channels','channels'],
+    ['__map','Map','map'],
+    ['reports','Reports','reports'],
+  ];
+  function sidebar(active){
+    const link = (go,label,icon,on)=>`<div class="side-link ${on?'on':''}" ${go.startsWith('__')?'':`data-go="${go}"`}><span class="ico"><svg width="18" height="18" viewBox="0 0 24 24">${ICON[icon]}</svg></span>${label}</div>`;
+    return `
+      <div class="brand"><span class="brand-mark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 12h4l2-7 4 14 2-7h6" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Pulse</div>
+      <div class="nav-section">Operate</div>
+      ${NAV.map(([go,label,icon])=>link(go,label,icon, go===active || (active==='detail'&&go==='monitors'))).join('')}
+      <div class="nav-section">Settings</div>
+      ${link('__keys','API keys','keys',false)}
+      ${link('__audit','Audit log','channels',false)}
+      <div class="side-foot"><span class="avatar">AO</span><div><div style="color:#fff;font-size:13px;font-weight:600;font-family:var(--font-display)">Ada Okafor</div><div style="font-family:var(--font-mono);font-size:10.5px;color:var(--color-ink-muted)">owner · acme-noc</div></div></div>
+    `;
+  }
+  ['dashboard','monitors','detail','incidents','reports'].forEach(p=>{
+    document.getElementById('sb-'+p).innerHTML = sidebar(p);
+  });
+
+  // ── Page routing ────────────────────────────────────────────────────────────
+  function go(id){
+    document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active', p.id===id));
+    document.querySelectorAll('.switcher button').forEach(b=>b.setAttribute('aria-current', String(b.dataset.go===id)));
+    window.scrollTo({top:0,behavior:'instant'});
+    location.hash = id;
+  }
+  document.addEventListener('click', e=>{
+    const t = e.target.closest('[data-go]');
+    if(t){ e.preventDefault(); go(t.dataset.go); }
+  });
+  // honor deep link
+  const start = location.hash.replace('#','');
+  if(['home','dashboard','monitors','detail','incidents','reports'].includes(start)) go(start);
+</script>
+</body>
+</html>

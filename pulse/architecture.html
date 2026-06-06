@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pulse — System Architecture</title>
+<meta name="description" content="Self-contained architecture overview for Pulse: components, data flow, stack, data model, invariants, and deployment." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --color-bg:#f5f7fb; --color-surface:#ffffff; --color-surface-2:#fbfcfe; --color-fg:#0d1526;
+    --color-muted:#5b6b85; --color-border:#e4e9f2; --color-accent:#2563eb; --color-accent-2:#1d4ed8;
+    --color-accent-soft:#eaf1ff; --color-success:#15a35b; --color-warning:#d98307; --color-error:#dc2b3d;
+    --color-ink:#0a1020; --color-ink-2:#111a30; --color-ink-line:#1e2a45; --color-ink-muted:#8a99b8;
+    --font-display:"Manrope",sans-serif; --font-body:"Inter",sans-serif; --font-mono:"JetBrains Mono",monospace;
+    --space-3:12px;--space-4:16px;--space-5:24px;--space-6:32px;--space-7:48px;--space-8:64px;--space-9:96px;
+    --radius-sm:6px;--radius-md:12px;--radius-lg:20px;--radius-pill:999px;
+    --shadow-sm:0 1px 2px rgba(13,21,38,.05),0 1px 1px rgba(13,21,38,.04);
+    --shadow-md:0 8px 24px -8px rgba(13,21,38,.14),0 2px 6px rgba(13,21,38,.05);
+    --shadow-lg:0 40px 80px -32px rgba(10,16,32,.45),0 12px 32px -12px rgba(13,21,38,.22);
+  }
+  *{box-sizing:border-box} html,body{margin:0}
+  body{font-family:var(--font-body);background:var(--color-bg);color:var(--color-fg);line-height:1.6;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,h4{font-family:var(--font-display);letter-spacing:-.02em;margin:0;text-wrap:balance}
+  .mono{font-family:var(--font-mono)}
+  .wrap{width:min(1140px,100% - var(--space-7));margin-inline:auto}
+  a{color:var(--color-accent);text-decoration:none}
+
+  /* Header */
+  header{background:var(--color-ink);color:#fff;position:relative;overflow:hidden;border-bottom:1px solid var(--color-ink-line)}
+  header::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 80% -30%,rgba(37,99,235,.4),transparent 55%)}
+  .head-in{position:relative;padding:var(--space-8) 0 var(--space-7)}
+  .brand{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:800;font-size:18px;margin-bottom:var(--space-5)}
+  .brand-mark{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--color-accent),#5b8bf5);display:grid;place-items:center}
+  header h1{font-size:clamp(30px,4vw,44px);line-height:1.08;letter-spacing:-.03em}
+  header p{color:var(--color-ink-muted);font-size:18px;max-width:60ch;margin-top:14px}
+  .meta-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:var(--space-5)}
+  .tag{font-family:var(--font-mono);font-size:11.5px;color:var(--color-ink-fg);background:var(--color-ink-2);border:1px solid var(--color-ink-line);padding:5px 11px;border-radius:var(--radius-pill)}
+  .tag.accent{color:#bcd2ff;border-color:rgba(37,99,235,.4);background:rgba(37,99,235,.14)}
+
+  section.block{padding:var(--space-8) 0}
+  .eyebrow{font-family:var(--font-mono);font-size:11.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent)}
+  .block h2{font-size:clamp(24px,3vw,32px);letter-spacing:-.02em;margin:8px 0 6px}
+  .block .lede{color:var(--color-muted);font-size:17px;max-width:70ch;margin-bottom:var(--space-6)}
+
+  /* ── Architecture diagram (swimlane tiers) ─────────────────────────────── */
+  .diagram{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);padding:var(--space-6);overflow:hidden}
+  .tier{display:grid;grid-template-columns:120px 1fr;gap:var(--space-5);align-items:stretch;padding:var(--space-3) 0}
+  .tier-label{font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--color-muted);display:flex;align-items:center}
+  .tier-row{display:flex;gap:14px;flex-wrap:wrap}
+  @media (max-width:760px){.tier{grid-template-columns:1fr}.tier-label{margin-bottom:4px}}
+
+  .node{flex:1;min-width:170px;border-radius:var(--radius-md);padding:14px 16px;border:1px solid var(--color-border);background:var(--color-surface-2);position:relative}
+  .node h4{font-size:15px;display:flex;align-items:center;gap:8px}
+  .node .desc{font-size:12.5px;color:var(--color-muted);margin-top:5px}
+  .node .stack{font-family:var(--font-mono);font-size:10.5px;color:var(--color-accent);margin-top:8px}
+  .node .ndot{width:9px;height:9px;border-radius:50%;flex:none}
+  .node.client{background:var(--color-accent-soft);border-color:#cdddfb}
+  .node.edge{background:#fff}
+  .node.api{background:linear-gradient(135deg,#eef3ff,#fff);border-color:#cdddfb}
+  .node.ink{background:var(--color-ink);color:#fff;border-color:var(--color-ink-line)}
+  .node.ink .desc{color:var(--color-ink-muted)} .node.ink .stack{color:#9db8f0}
+  .node.data{background:#fff}
+  .node.ext{background:var(--color-surface-2);border-style:dashed}
+
+  .flow-arrow{display:flex;align-items:center;justify-content:center;gap:8px;padding:4px 0;color:var(--color-muted);font-family:var(--font-mono);font-size:10.5px}
+  .flow-arrow svg{color:var(--color-accent)}
+  .conn-legend{display:flex;flex-wrap:wrap;gap:18px;margin-top:var(--space-5);padding-top:var(--space-4);border-top:1px solid var(--color-border);font-family:var(--font-mono);font-size:11.5px;color:var(--color-muted)}
+  .conn-legend span{display:inline-flex;align-items:center;gap:7px}
+  .ln{width:22px;height:0;border-top:2px solid}
+  .ln.https{border-color:var(--color-accent)} .ln.queue{border-color:var(--color-warning);border-top-style:dashed} .ln.sql{border-color:var(--color-success)} .ln.ws{border-color:#8b5cf6;border-top-style:dotted}
+
+  /* ── Generic cards / grids ─────────────────────────────────────────────── */
+  .grid{display:grid;gap:18px}
+  .g3{grid-template-columns:repeat(3,1fr)} .g4{grid-template-columns:repeat(4,1fr)} .g2{grid-template-columns:repeat(2,1fr)}
+  @media (max-width:880px){.g3,.g4{grid-template-columns:1fr 1fr}} @media (max-width:560px){.g3,.g4,.g2{grid-template-columns:1fr}}
+  .card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:var(--space-5)}
+  .card h3{font-size:16px;margin-bottom:6px}
+  .card p,.card li{font-size:14px;color:var(--color-muted)}
+  .card .pill{font-family:var(--font-mono);font-size:11px;color:var(--color-accent);background:var(--color-accent-soft);padding:3px 9px;border-radius:var(--radius-pill);display:inline-block;margin-bottom:10px}
+
+  /* ── Flow steps ────────────────────────────────────────────────────────── */
+  .steps{counter-reset:s;display:grid;gap:14px}
+  .step{display:grid;grid-template-columns:40px 1fr;gap:16px;align-items:start;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px 18px}
+  .step::before{counter-increment:s;content:counter(s);font-family:var(--font-display);font-weight:800;font-size:16px;width:32px;height:32px;border-radius:9px;background:var(--color-accent);color:#fff;display:grid;place-items:center}
+  .step h4{font-size:15px} .step p{font-size:13.5px;color:var(--color-muted);margin:3px 0 0}
+  .step code{font-family:var(--font-mono);font-size:12px;background:var(--color-accent-soft);color:var(--color-accent-2);padding:1px 6px;border-radius:5px}
+
+  /* ── Tables ────────────────────────────────────────────────────────────── */
+  table{width:100%;border-collapse:collapse;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);overflow:hidden}
+  th{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--color-muted);text-align:left;padding:12px var(--space-5);background:var(--color-surface-2);border-bottom:1px solid var(--color-border)}
+  td{padding:12px var(--space-5);border-bottom:1px solid var(--color-border);font-size:13.5px;vertical-align:top}
+  tr:last-child td{border-bottom:0}
+  td .k{font-family:var(--font-mono);font-weight:600;color:var(--color-fg)}
+  .chk{font-family:var(--font-mono);font-size:10.5px;padding:2px 8px;border-radius:var(--radius-pill);border:1px solid}
+  .chk.m{color:var(--color-accent);border-color:#cdddfb;background:var(--color-accent-soft)}
+  .chk.man{color:var(--color-muted);border-color:var(--color-border);background:var(--color-surface-2)}
+
+  .badge{font-family:var(--font-mono);font-size:11px;padding:3px 9px;border-radius:var(--radius-pill);border:1px solid}
+  .b-sql{color:var(--color-success);border-color:rgba(21,163,91,.3);background:rgba(21,163,91,.08)}
+  .b-q{color:var(--color-warning);border-color:rgba(217,131,7,.3);background:rgba(217,131,7,.08)}
+  .b-uniq{color:#8b5cf6;border-color:rgba(139,92,246,.3);background:rgba(139,92,246,.08)}
+
+  footer{border-top:1px solid var(--color-border);padding:var(--space-7) 0;color:var(--color-muted);font-size:13px;text-align:center}
+  .legend-dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap head-in">
+    <div class="brand"><span class="brand-mark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 12h4l2-7 4 14 2-7h6" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Pulse</div>
+    <h1>System Architecture</h1>
+    <p>A multi-tenant, real-time infrastructure-monitoring SaaS. Four runtime surfaces over PostgreSQL + Redis, with tenant isolation, a flap-detecting alert engine, and guaranteed-delivery notifications.</p>
+    <div class="meta-row">
+      <span class="tag accent">Archetype · SaaS</span>
+      <span class="tag">Node 22 · TypeScript</span>
+      <span class="tag">Express 5 · Socket.IO</span>
+      <span class="tag">PostgreSQL · Drizzle</span>
+      <span class="tag">BullMQ · Redis</span>
+      <span class="tag">React · Vite · Tailwind</span>
+      <span class="tag">SOC2 · OWASP Top 10</span>
+    </div>
+  </div>
+</header>
+
+<!-- ── COMPONENT DIAGRAM ─────────────────────────────────────────────────── -->
+<section class="block"><div class="wrap">
+  <span class="eyebrow">Components</span>
+  <h2>Runtime topology</h2>
+  <p class="lede">A monorepo of npm workspaces. The browser talks only to the TLS-terminating web tier, which proxies REST and WebSocket to the API. Background work flows through Redis to a stateless worker pool. PostgreSQL is the single source of truth, reached exclusively through a tenant-scoping wrapper.</p>
+
+  <div class="diagram">
+    <!-- Client -->
+    <div class="tier">
+      <div class="tier-label">Client</div>
+      <div class="tier-row">
+        <div class="node client"><h4><span class="ndot" style="background:var(--color-accent)"></span>Web SPA</h4><div class="desc">15 screens · landing + authenticated app shell · realtime dashboards, tables, forms.</div><div class="stack">apps/web · React · Vite · Tailwind · TanStack Query · Recharts</div></div>
+      </div>
+    </div>
+    <div class="flow-arrow"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 4v16m0 0-6-6m6 6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> HTTPS · WSS (HSTS, SameSite cookie)</div>
+
+    <!-- Edge -->
+    <div class="tier">
+      <div class="tier-label">Edge</div>
+      <div class="tier-row">
+        <div class="node edge"><h4><span class="ndot" style="background:var(--color-fg)"></span>Web tier — nginx</h4><div class="desc">TLS termination · HTTP→HTTPS 301 · HSTS · 16KB header buffers · serves static SPA · proxies <span class="mono">/v1 /api /socket.io</span>.</div><div class="stack">deploy/nginx.conf</div></div>
+      </div>
+    </div>
+    <div class="flow-arrow"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 4v16m0 0-6-6m6 6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> reverse proxy → api:4000</div>
+
+    <!-- App -->
+    <div class="tier">
+      <div class="tier-label">Application</div>
+      <div class="tier-row">
+        <div class="node api"><h4><span class="ndot" style="background:var(--color-accent)"></span>API — Express + Socket.IO</h4><div class="desc">REST <span class="mono">/v1</span> (auth, monitors, incidents, channels, rules, reports, api-keys, ingest, webhooks, audit, health). Middleware: requestId → logger → helmet → HTTPS → rate-limit → session → CSRF → Zod → handler → RFC 9457 errors. WebSocket rooms-per-tenant.</div><div class="stack">apps/api</div></div>
+      </div>
+    </div>
+
+    <!-- Messaging + Worker -->
+    <div class="tier">
+      <div class="tier-label">Messaging · Jobs</div>
+      <div class="tier-row">
+        <div class="node ink"><h4><span class="ndot" style="background:var(--color-warning)"></span>Redis / Valkey</h4><div class="desc">BullMQ queues (<span class="mono">schedule · checks · notifications</span>) · token-bucket rate limits · Socket.IO pub/sub fan-out (<span class="mono">pulse:events</span>).</div><div class="stack">queues · rate-limit · realtime bus</div></div>
+        <div class="node ink"><h4><span class="ndot" style="background:#5b8bf5"></span>Worker pool</h4><div class="desc"><b style="color:#fff">scheduler</b> (repeatable jobs + jitter) · <b style="color:#fff">checker</b> (http/tcp/icmp/dns/push) · <b style="color:#fff">evaluator</b> (flap state machine + incidents) · <b style="color:#fff">notifier</b> (5 adapters, retries/DLQ, idempotency).</div><div class="stack">apps/worker · stateless · horizontally scalable</div></div>
+      </div>
+    </div>
+    <div class="flow-arrow"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 4v16m0 0-6-6m6 6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> scopedDb(orgId) · parameterized SQL</div>
+
+    <!-- Data -->
+    <div class="tier">
+      <div class="tier-label">Data</div>
+      <div class="tier-row">
+        <div class="node data"><h4><span class="ndot" style="background:var(--color-success)"></span>PostgreSQL 16</h4><div class="desc">14 org-scoped tables + Row-Level Security · partition-ready time-series (check_results, metrics) · UNIQUE constraints enforce idempotency &amp; identity.</div><div class="stack">packages/db · Drizzle ORM · SQL migrations</div></div>
+      </div>
+    </div>
+
+    <!-- External -->
+    <div class="tier">
+      <div class="tier-label">External</div>
+      <div class="tier-row">
+        <div class="node ext"><h4>Monitored targets</h4><div class="desc">Servers, devices, services probed via ICMP · TCP · HTTPS · DNS, plus push-ingested OS metrics.</div></div>
+        <div class="node ext"><h4>Notification channels</h4><div class="desc">Email (SMTP) · SMS (Twilio) · Slack · Teams (Power Automate) · custom webhooks (HMAC-signed, SSRF-guarded).</div></div>
+        <div class="node ext"><h4>Inbound webhooks</h4><div class="desc">Twilio SMS-status callbacks — signature verified before any DB write.</div></div>
+      </div>
+    </div>
+
+    <div class="conn-legend">
+      <span><i class="ln https"></i> HTTPS / REST</span>
+      <span><i class="ln ws"></i> WebSocket (realtime)</span>
+      <span><i class="ln queue"></i> Queue (BullMQ)</span>
+      <span><i class="ln sql"></i> SQL (scoped + RLS)</span>
+    </div>
+  </div>
+</div></section>
+
+<!-- ── DATA FLOW ─────────────────────────────────────────────────────────── -->
+<section class="block" style="background:var(--color-surface-2);border-block:1px solid var(--color-border)"><div class="wrap">
+  <span class="eyebrow">Data flow</span>
+  <h2>Anatomy of a check cycle</h2>
+  <p class="lede">From a scheduled probe to a delivered alert and a live dashboard update — the path every monitor result travels.</p>
+  <div class="steps">
+    <div class="step"><div><h4>Scheduler enqueues a jittered check</h4><p>The worker reconciles each enabled monitor into a BullMQ repeatable job (<code>every: interval</code> + jitter) on the <code>checks</code> queue — spreading load across 50k+ monitors.</p></div></div>
+    <div class="step"><div><h4>Checker runs the protocol probe</h4><p>HTTP/TCP/ICMP/DNS/push probe with timeout + assertions. Writes a <code>check_results</code> row, updates <code>monitors.status</code>, and publishes <code>check:result</code>.</p></div></div>
+    <div class="step"><div><h4>Evaluator runs the flap-detecting state machine</h4><p><code>up → degraded → down</code> with N-consecutive / failure-ratio hysteresis. A confirmed transition to <b>down</b> opens an incident + timeline entry.</p></div></div>
+    <div class="step"><div><h4>Notifier fans out — once per rule × channel</h4><p>Each delivery is a row keyed by a deterministic <code>idempotency_key</code> (UNIQUE) → enqueued with retries + exponential backoff; exhausted attempts dead-letter, never silently drop.</p></div></div>
+    <div class="step"><div><h4>Realtime reaches the browser</h4><p>The worker publishes to Redis <code>pulse:events</code>; the API re-emits to the <code>org:&lt;id&gt;</code> Socket.IO room; the dashboard updates within ~2s — no reload.</p></div></div>
+  </div>
+</div></section>
+
+<!-- ── STACK ─────────────────────────────────────────────────────────────── -->
+<section class="block"><div class="wrap">
+  <span class="eyebrow">Stack</span>
+  <h2>Technology &amp; rationale</h2>
+  <p class="lede">Each subsystem chosen for a reason recorded in <span class="mono">DECISIONS.md</span>.</p>
+  <div class="grid g4">
+    <div class="card"><span class="pill">API</span><h3>Express 5 + Socket.IO</h3><p>REST with <span class="mono">/v1</span> path versioning; realtime rooms-per-tenant with a Redis adapter for horizontal scale.</p></div>
+    <div class="card"><span class="pill">Data</span><h3>PostgreSQL + Drizzle</h3><p>SQL-transparent migrations (auditable for SOC2), no engine binary, clean tenant-scoping wrapper.</p></div>
+    <div class="card"><span class="pill">Jobs</span><h3>BullMQ + Redis</h3><p>Repeatable jobs power the scheduler; retries + dead-letter give guaranteed-delivery notifications.</p></div>
+    <div class="card"><span class="pill">Web</span><h3>React + Vite + Tailwind</h3><p>TanStack Query for server state, Recharts for latency, design tokens copied verbatim from the brand template.</p></div>
+    <div class="card"><span class="pill">Auth</span><h3>Argon2id sessions</h3><p>Server-side opaque sessions in an <span class="mono">HttpOnly</span> cookie — revocable, XSS-safe; lockout + anti-enumeration.</p></div>
+    <div class="card"><span class="pill">Validation</span><h3>Zod (shared)</h3><p>One schema set shared API↔web; RFC 9457 <span class="mono">problem+json</span> errors with field-level detail.</p></div>
+    <div class="card"><span class="pill">Crypto</span><h3>AES-256-GCM · HMAC</h3><p>Channel secrets encrypted at rest; outbound webhooks HMAC-signed; inbound signatures verified.</p></div>
+    <div class="card"><span class="pill">Ops</span><h3>Docker · GitHub Actions</h3><p>5-service compose stack; CI runs lint, typecheck, tests, build, audit, and the invariant lint.</p></div>
+  </div>
+</div></section>
+
+<!-- ── DATA MODEL ────────────────────────────────────────────────────────── -->
+<section class="block" style="background:var(--color-surface-2);border-block:1px solid var(--color-border)"><div class="wrap">
+  <span class="eyebrow">Data model</span>
+  <h2>Core tables</h2>
+  <p class="lede">Every tenant table carries an indexed <span class="mono">org_id</span> and is reached only through <span class="mono">scopedDb(orgId)</span>, with Row-Level Security underneath as defense-in-depth.</p>
+  <table>
+    <thead><tr><th style="width:200px">Table</th><th>Purpose</th><th style="width:230px">Key constraints</th></tr></thead>
+    <tbody>
+      <tr><td><span class="k">organizations</span></td><td>Tenant root.</td><td><span class="badge b-uniq">UNIQUE slug</span></td></tr>
+      <tr><td><span class="k">users</span></td><td>Members + role (owner/admin/operator/viewer); lockout fields.</td><td><span class="badge b-uniq">UNIQUE email</span></td></tr>
+      <tr><td><span class="k">sessions</span> · <span class="k">api_keys</span></td><td>Opaque hashed session tokens; org-scoped ingest keys.</td><td><span class="badge b-uniq">UNIQUE token_hash</span></td></tr>
+      <tr><td><span class="k">monitors</span></td><td>Health checks (type, target, interval, assertions, status).</td><td><span class="badge b-sql">idx org_id, status</span></td></tr>
+      <tr><td><span class="k">check_results</span> · <span class="k">metrics</span></td><td>Time-series probe results &amp; pushed OS metrics.</td><td><span class="badge b-sql">partition-ready</span></td></tr>
+      <tr><td><span class="k">incidents</span> · <span class="k">incident_events</span></td><td>Incident lifecycle + timeline (open→ack→resolve).</td><td><span class="badge b-sql">idx org_id, status</span></td></tr>
+      <tr><td><span class="k">notification_channels</span> · <span class="k">alert_rules</span></td><td>Channels (AES-GCM secrets) + routing rules.</td><td><span class="badge b-sql">FK channel_id</span></td></tr>
+      <tr><td><span class="k">notifications</span></td><td>Guaranteed-delivery outbox (pending/sent/failed/dead).</td><td><span class="badge b-uniq">UNIQUE idempotency_key</span></td></tr>
+      <tr><td><span class="k">audit_logs</span> · <span class="k">webhook_events</span></td><td>SOC2 audit trail; idempotent inbound webhook receipts.</td><td><span class="badge b-uniq">UNIQUE provider,external_id</span></td></tr>
+    </tbody>
+  </table>
+</div></section>
+
+<!-- ── INVARIANTS ────────────────────────────────────────────────────────── -->
+<section class="block"><div class="wrap">
+  <span class="eyebrow">Governance</span>
+  <h2>Architectural invariants (§9)</h2>
+  <p class="lede">Machine-checkable rules enforced by <span class="mono">scripts/invariant-lint.mjs</span> in CI, the Verification Gate, and the Drift Detection Gate. <span class="chk man">manual</span> rules are prose-audited.</p>
+  <table>
+    <thead><tr><th style="width:64px">ID</th><th>Rule</th><th style="width:150px">Check</th></tr></thead>
+    <tbody>
+      <tr><td><span class="k">INV-1</span></td><td>All tenant DB access goes through <span class="mono">scopedDb(orgId)</span>; the raw client is confined to <span class="mono">packages/db</span>.</td><td><span class="chk m">forbidden-pattern</span></td></tr>
+      <tr><td><span class="k">INV-2</span></td><td><span class="mono">notifications.idempotency_key</span> is UNIQUE — guaranteed delivery, no double-send.</td><td><span class="chk m">unique-constraint</span></td></tr>
+      <tr><td><span class="k">INV-3</span></td><td><span class="mono">users.email</span> is UNIQUE — anti-duplicate, single-lookup login.</td><td><span class="chk m">unique-constraint</span></td></tr>
+      <tr><td><span class="k">INV-4</span></td><td>Inbound webhooks verify the signature <em>before</em> any DB write.</td><td><span class="chk m">boundary-order</span></td></tr>
+      <tr><td><span class="k">INV-5</span></td><td>Auth login rate-limits <em>before</em> the password compare.</td><td><span class="chk m">boundary-order</span></td></tr>
+      <tr><td><span class="k">INV-10</span></td><td>Backend services use the structured logger, never <span class="mono">console.log</span>.</td><td><span class="chk m">forbidden-pattern</span></td></tr>
+      <tr><td><span class="k">INV-11</span></td><td>Every UI screen is routable and every workflow has a UI e2e to its terminal step.</td><td><span class="chk m">ui-coverage</span></td></tr>
+      <tr><td><span class="k">INV-12</span></td><td>Colors/type/spacing come from the design-token layer, not ad-hoc values.</td><td><span class="chk man">manual</span></td></tr>
+      <tr><td><span class="k">INV-13</span></td><td>Production enforces HTTPS-only + HSTS with an HTTP→HTTPS redirect.</td><td><span class="chk man">manual</span></td></tr>
+      <tr><td><span class="k">INV-14</span></td><td>Channel secrets are AES-256-GCM encrypted at rest and never logged.</td><td><span class="chk man">manual</span></td></tr>
+      <tr><td><span class="k">INV-15</span></td><td>Outbound custom-webhook delivery passes an SSRF egress guard before fetch.</td><td><span class="chk man">manual</span></td></tr>
+    </tbody>
+  </table>
+</div></section>
+
+<!-- ── SECURITY / TRUST BOUNDARIES ──────────────────────────────────────── -->
+<section class="block" style="background:var(--color-ink);color:#fff"><div class="wrap">
+  <span class="eyebrow" style="color:#9db8f0">Security</span>
+  <h2 style="color:#fff">Trust boundaries</h2>
+  <p class="lede" style="color:var(--color-ink-muted)">STRIDE-modeled boundaries mapped to OWASP Top 10. Controls layer defense-in-depth around every crossing.</p>
+  <div class="grid g3">
+    <div class="card" style="background:var(--color-ink-2);border-color:var(--color-ink-line)"><h3 style="color:#fff">B1 · Anonymous → API</h3><p style="color:var(--color-ink-muted)">Argon2id + lockout + anti-enumeration, per-(org,ip) rate limits, Zod validation, body limits. <span class="mono" style="color:#9db8f0">A03 · A05 · A07</span></p></div>
+    <div class="card" style="background:var(--color-ink-2);border-color:var(--color-ink-line)"><h3 style="color:#fff">B2 · Tenant → other tenants</h3><p style="color:var(--color-ink-muted)">scopedDb + Row-Level Security; cross-tenant access returns 404 (no existence leak). <span class="mono" style="color:#9db8f0">A01</span></p></div>
+    <div class="card" style="background:var(--color-ink-2);border-color:var(--color-ink-line)"><h3 style="color:#fff">B3 · Inbound webhooks</h3><p style="color:var(--color-ink-muted)">Signature verified before write; idempotent on <span class="mono">(provider, external_id)</span>. <span class="mono" style="color:#9db8f0">A08</span></p></div>
+    <div class="card" style="background:var(--color-ink-2);border-color:var(--color-ink-line)"><h3 style="color:#fff">B4 · Outbound targets</h3><p style="color:var(--color-ink-muted)">SSRF egress guard (https-only, blocks private/loopback/link-local); HMAC-signed payloads; TLS. <span class="mono" style="color:#9db8f0">A10</span></p></div>
+    <div class="card" style="background:var(--color-ink-2);border-color:var(--color-ink-line)"><h3 style="color:#fff">B5 · Worker → DB</h3><p style="color:var(--color-ink-muted)">Least-privilege creds, parameterized writes, validated external responses, Pino redaction. <span class="mono" style="color:#9db8f0">A03 · A05</span></p></div>
+    <div class="card" style="background:var(--color-ink-2);border-color:var(--color-ink-line)"><h3 style="color:#fff">Cross-cutting</h3><p style="color:var(--color-ink-muted)">Env-var secrets + AES-GCM at rest, HTTPS+HSTS, audit logging, CI dependency scanning. <span class="mono" style="color:#9db8f0">A02 · A06</span></p></div>
+  </div>
+</div></section>
+
+<!-- ── DEPLOYMENT ────────────────────────────────────────────────────────── -->
+<section class="block"><div class="wrap">
+  <span class="eyebrow">Deployment</span>
+  <h2>Local-stack topology</h2>
+  <p class="lede">One <span class="mono">docker compose up -d --build</span> brings up five services. HTTPS-only at the edge; the API and worker stay on the internal network.</p>
+  <div class="grid g3">
+    <div class="card"><span class="pill">edge · :8443/:8080</span><h3>web</h3><p>nginx — TLS, HTTP→HTTPS redirect, HSTS, header buffers, serves the SPA + proxies the API.</p></div>
+    <div class="card"><span class="pill">app · internal</span><h3>api</h3><p>Express + Socket.IO; runs migrations on boot; <span class="mono">/api/health</span> checks db + redis.</p></div>
+    <div class="card"><span class="pill">app · internal</span><h3>worker</h3><p>BullMQ scheduler / checker / evaluator / notifier; stateless &amp; horizontally scalable.</p></div>
+    <div class="card"><span class="pill">data</span><h3>db — postgres:16</h3><p>Healthchecked; named volume; the single source of truth.</p></div>
+    <div class="card"><span class="pill">data</span><h3>redis</h3><p>Queues, rate-limit buckets, and the realtime pub/sub bus.</p></div>
+    <div class="card"><span class="pill">verified</span><h3>Smoke + e2e</h3><p>21/21 functional smoke + 6/6 Playwright workflows green against the running HTTPS deploy.</p></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  Pulse · System Architecture — generated from <span class="mono">ARCHITECTURE.md</span>, <span class="mono">SPEC.md</span> &amp; <span class="mono">invariants.json</span>. Built with the MDLC pipeline. · <a href="index.html">View UI preview →</a>
+</div></footer>
+
+</body>
+</html>

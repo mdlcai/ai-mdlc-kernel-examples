@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Recon — Continuous Attack Surface Monitoring</title>
+<meta name="description" content="Recon continuously monitors your external attack surface — discovering exposed assets, detecting changes, and routing alerts before attackers do." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  /* ===== Design tokens — copied verbatim from DESIGN-TEMPLATE.html (ADR-010) ===== */
+  :root{
+    --color-bg:#f4f7fb; --color-surface:#ffffff; --color-surface-2:#eef2f8;
+    --color-fg:#0c1424; --color-muted:#586173; --color-border:#e1e7f0;
+    --color-accent:#2563eb; --color-accent-2:#1d4fd8; --color-accent-soft:#e1ebfe;
+    --color-success:#15803d; --color-success-soft:#dcfce7;
+    --color-warning:#b45309; --color-warning-soft:#fef0d6;
+    --color-error:#dc2626; --color-error-soft:#fde8e8; --color-ink:#070b14;
+    --font-display:'Manrope',system-ui,sans-serif; --font-body:'Inter',system-ui,sans-serif; --font-mono:'JetBrains Mono',ui-monospace,monospace;
+    --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:24px;
+    --space-6:32px; --space-7:48px; --space-8:64px; --space-9:96px;
+    --radius-sm:6px; --radius-md:11px; --radius-lg:18px;
+    --shadow-sm:0 1px 2px rgba(12,20,36,.06),0 1px 1px rgba(12,20,36,.04);
+    --shadow-md:0 6px 16px -6px rgba(12,20,36,.12),0 2px 6px -2px rgba(12,20,36,.08);
+    --shadow-lg:0 28px 60px -24px rgba(12,20,36,.28),0 10px 24px -12px rgba(12,20,36,.14);
+    --sidebar:224px; --maxw:1440px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  html{scroll-behavior:smooth;scroll-padding-top:84px}
+  body{font-family:var(--font-body);background:var(--color-bg);color:var(--color-fg);-webkit-font-smoothing:antialiased;line-height:1.5}
+  h1,h2,h3,h4{font-family:var(--font-display);margin:0;letter-spacing:-.02em;line-height:1.15}
+  a{color:inherit;text-decoration:none}
+  .mono{font-family:var(--font-mono)}
+  ::selection{background:var(--color-accent-soft)}
+  :focus-visible{outline:3px solid var(--color-accent-soft);outline-offset:2px;border-radius:var(--radius-sm)}
+
+  /* buttons */
+  .btn{font-family:var(--font-body);font-weight:600;font-size:15px;border-radius:var(--radius-md);
+    padding:var(--space-3) var(--space-5);border:1px solid transparent;cursor:pointer;display:inline-flex;
+    align-items:center;gap:8px;transition:transform .15s,box-shadow .15s,background .15s,color .15s,border-color .15s}
+  .btn-primary{background:var(--color-accent);color:#fff;box-shadow:0 1px 0 rgba(255,255,255,.18) inset,var(--shadow-sm)}
+  .btn-primary:hover{background:var(--color-accent-2);box-shadow:var(--shadow-md);transform:translateY(-1px)}
+  .btn-ghost{background:var(--color-surface);color:var(--color-fg);border-color:var(--color-border);box-shadow:var(--shadow-sm)}
+  .btn-ghost:hover{border-color:var(--color-accent);color:var(--color-accent)}
+  .btn-on-dark{background:var(--color-accent);color:#fff}
+  .btn-on-dark:hover{background:#fff;color:var(--color-ink);box-shadow:var(--shadow-md)}
+  .btn-sm{padding:7px 14px;font-size:13px}
+
+  /* badges */
+  .badge{font-family:var(--font-mono);font-size:10.5px;font-weight:500;letter-spacing:.04em;
+    padding:3px var(--space-2);border-radius:var(--radius-sm);display:inline-flex;align-items:center;gap:6px;text-transform:uppercase}
+  .badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+  .badge.ok{color:var(--color-success);background:var(--color-success-soft)}
+  .badge.watch{color:var(--color-muted);background:var(--color-surface-2)}
+  .badge.new{color:var(--color-warning);background:var(--color-warning-soft)}
+  .badge.crit{color:var(--color-error);background:var(--color-error-soft)}
+  .badge.info{color:var(--color-accent);background:var(--color-accent-soft)}
+
+  .pill{font-family:var(--font-mono);font-size:11px;border-radius:999px;padding:5px 12px;display:inline-flex;align-items:center;gap:8px;
+    border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-muted)}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--color-success);box-shadow:0 0 0 0 rgba(21,128,61,.5);animation:pulse 2s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(21,128,61,.45)}70%{box-shadow:0 0 0 8px rgba(21,128,61,0)}100%{box-shadow:0 0 0 0 rgba(21,128,61,0)}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  /* cards / tables */
+  .card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm)}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  thead th{font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--color-muted);
+    text-align:left;padding:var(--space-3) var(--space-5);background:var(--color-surface-2);border-bottom:1px solid var(--color-border)}
+  tbody td{padding:var(--space-3) var(--space-5);border-bottom:1px solid var(--color-border)}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr{transition:background .12s}
+  tbody tr:hover{background:var(--color-surface-2)}
+  .row-flag{position:relative}
+  .row-flag td:first-child{box-shadow:inset 3px 0 0 var(--color-warning)}
+
+  /* ===================== LANDING ===================== */
+  #view-home{display:none}
+  body[data-route="home"] #view-home{display:block}
+  body[data-route="home"] #app{display:none}
+
+  .nav-primary{position:sticky;top:0;z-index:30;backdrop-filter:saturate(160%) blur(10px);
+    background:color-mix(in srgb,var(--color-bg) 84%,transparent);border-bottom:1px solid var(--color-border)}
+  .nav-inner{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:14px var(--space-6)}
+  .brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:800;font-size:20px;letter-spacing:-.02em}
+  .brand-mark{width:28px;height:28px;border-radius:8px;background:var(--color-accent);display:grid;place-items:center;color:#fff;box-shadow:var(--shadow-sm)}
+  .nav-links{display:flex;gap:var(--space-6);align-items:center}
+  .nav-links a{color:var(--color-muted);font-size:14px;font-weight:500}
+  .nav-links a:hover{color:var(--color-fg)}
+
+  .hero{max-width:var(--maxw);margin:0 auto;padding:var(--space-9) var(--space-6) var(--space-8);
+    display:grid;grid-template-columns:1.05fr .95fr;gap:var(--space-8);align-items:center}
+  .eyebrow{display:inline-flex}
+  .mono-label{font-family:var(--font-mono);font-size:12px;color:var(--color-muted);letter-spacing:.04em;margin:18px 0 14px;text-transform:uppercase}
+  .hero h1{font-size:clamp(34px,4.4vw,56px);font-weight:800}
+  .hl{color:var(--color-accent)}
+  .hero-sub{color:var(--color-muted);font-size:18px;max-width:60ch;margin:20px 0 28px}
+  .hero-actions{display:flex;gap:12px;flex-wrap:wrap}
+  .hero-stats{display:flex;gap:var(--space-7);margin-top:var(--space-7)}
+  .stat .n{font-family:var(--font-display);font-weight:800;font-size:24px}
+  .stat .l{color:var(--color-muted);font-size:13px}
+
+  /* console mock */
+  .console{position:relative;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-lg);overflow:hidden}
+  .console-top{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--color-border);background:var(--color-surface-2)}
+  .wd{width:11px;height:11px;border-radius:50%;background:var(--color-border)}
+  .console-search{flex:1;margin-left:8px;font-family:var(--font-mono);font-size:11px;color:var(--color-muted);
+    background:var(--color-surface);border:1px solid var(--color-border);border-radius:999px;padding:5px 12px}
+  .console-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 8px}
+  .console-bar h4{font-size:14px}
+  .asset-head,.asset-row{display:grid;grid-template-columns:1.5fr 1fr .7fr .9fr;gap:12px;padding:11px 18px;align-items:center;font-size:13px}
+  .asset-head{font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;color:var(--color-muted);background:var(--color-surface-2)}
+  .asset-row{border-top:1px solid var(--color-border)}
+  .asset-row .mono{font-size:12.5px}
+  .console-foot{padding:12px 18px;border-top:1px solid var(--color-border);font-family:var(--font-mono);font-size:11.5px;color:var(--color-muted);
+    display:flex;gap:18px}
+  .delta-add{color:var(--color-success)} .delta-rm{color:var(--color-error)}
+  .alert-card{position:absolute;right:-18px;bottom:-22px;width:248px;background:var(--color-surface);border:1px solid var(--color-border);
+    border-radius:var(--radius-md);box-shadow:var(--shadow-lg);padding:var(--space-4)}
+  .alert-card .t{font-family:var(--font-display);font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px}
+  .alert-card .b{color:var(--color-muted);font-size:12px;margin-top:6px}
+
+  .features{max-width:var(--maxw);margin:0 auto;padding:var(--space-8) var(--space-6)}
+  .features h2{font-size:clamp(26px,3vw,36px);max-width:18ch}
+  .bento{display:grid;grid-template-columns:repeat(12,1fr);gap:var(--space-5);margin-top:var(--space-6)}
+  .feature{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);
+    padding:var(--space-6);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:14px;transition:transform .15s,box-shadow .15s,border-color .15s}
+  .feature:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:color-mix(in srgb,var(--color-accent) 32%,var(--color-border))}
+  .f-lg{grid-column:span 7} .f-sm{grid-column:span 5}
+  .f-ico{width:44px;height:44px;border-radius:var(--radius-md);background:var(--color-accent-soft);color:var(--color-accent);display:grid;place-items:center}
+  .feature h3{font-size:18px} .feature p{color:var(--color-muted);font-size:14px;margin:0}
+  .f-link{font-family:var(--font-mono);font-size:12px;color:var(--color-accent);margin-top:auto}
+  .mini-diff{font-family:var(--font-mono);font-size:12px;background:var(--color-surface-2);border:1px solid var(--color-border);
+    border-radius:var(--radius-sm);padding:10px 12px;margin-top:6px}
+
+  .cta-block{max-width:var(--maxw);margin:0 auto var(--space-9);padding:0 var(--space-6)}
+  .cta-inner{background:var(--color-ink);border-radius:var(--radius-lg);padding:var(--space-8);color:#fff;position:relative;overflow:hidden;
+    background-image:radial-gradient(900px 320px at 80% -10%,rgba(37,99,235,.45),transparent 60%),
+      linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);
+    background-size:auto,28px 28px,28px 28px}
+  .cta-inner h2{font-size:clamp(26px,3vw,38px);max-width:20ch}
+  .cta-inner p{color:#c4cbd8;max-width:56ch;margin:16px 0 26px}
+  .footer-meta{max-width:var(--maxw);margin:0 auto;padding:var(--space-7) var(--space-6);border-top:1px solid var(--color-border);
+    display:flex;justify-content:space-between;align-items:center;color:var(--color-muted);font-size:13px;flex-wrap:wrap;gap:16px}
+  .footer-meta .links{display:flex;gap:var(--space-5);flex-wrap:wrap}
+
+  /* ===================== APP SHELL ===================== */
+  #app{display:none}
+  body:not([data-route="home"]) #app{display:grid;grid-template-columns:var(--sidebar) 1fr;min-height:100vh}
+  .sidebar{background:var(--color-surface);border-right:1px solid var(--color-border);padding:var(--space-5) var(--space-3);
+    display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh}
+  .sidebar .brand{padding:6px 10px var(--space-5);font-size:18px}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius-md);color:var(--color-muted);
+    font-size:14px;font-weight:500;cursor:pointer;transition:background .12s,color .12s}
+  .nav-item:hover{background:var(--color-surface-2);color:var(--color-fg)}
+  .nav-item.active{background:var(--color-accent-soft);color:var(--color-accent);font-weight:600}
+  .nav-item svg{width:17px;height:17px;flex:none}
+  .nav-sep{height:1px;background:var(--color-border);margin:10px 6px}
+  .side-foot{margin-top:auto;font-family:var(--font-mono);font-size:11px;color:var(--color-muted);padding:0 10px}
+
+  .main{display:flex;flex-direction:column;min-width:0}
+  .topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:16px;
+    padding:14px var(--space-6);border-bottom:1px solid var(--color-border);background:color-mix(in srgb,var(--color-bg) 86%,transparent);backdrop-filter:blur(8px)}
+  .topbar .crumbs{display:flex;align-items:center;gap:10px}
+  .topbar h2{font-size:20px}
+  .org{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--color-muted)}
+  .org .avatar{width:28px;height:28px;border-radius:50%;background:var(--color-accent);color:#fff;display:grid;place-items:center;font-family:var(--font-display);font-weight:700;font-size:12px}
+  .content{padding:var(--space-6);max-width:1200px;width:100%}
+  .page{display:none} .page.active{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  .metrics{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:var(--space-5);margin-bottom:var(--space-6)}
+  .metric{padding:var(--space-5)}
+  .metric .k{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--color-muted)}
+  .metric .v{font-family:var(--font-display);font-weight:800;font-size:34px;margin-top:8px;line-height:1}
+  .metric.lead{background:linear-gradient(135deg,var(--color-accent),var(--color-accent-2));color:#fff;border:none}
+  .metric.lead .k{color:rgba(255,255,255,.8)}
+  .metric .trend{font-size:12px;margin-top:10px;color:var(--color-success)} .metric .trend.down{color:var(--color-error)}
+  .metric.lead .trend{color:#dcfce7}
+  .grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:var(--space-5)}
+  .panel-h{display:flex;align-items:center;justify-content:space-between;padding:var(--space-4) var(--space-5);border-bottom:1px solid var(--color-border)}
+  .panel-h h3{font-size:15px}
+  .panel-h .pill{font-size:10.5px}
+  .section-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-5);gap:16px;flex-wrap:wrap}
+  .section-h h2{font-size:24px}
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:var(--space-4)}
+  .input{font-family:var(--font-body);font-size:13px;padding:8px 12px;border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface);color:var(--color-fg);min-width:200px}
+  .select{font-family:var(--font-body);font-size:13px;padding:8px 12px;border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface);color:var(--color-muted)}
+  .muted{color:var(--color-muted)} .small{font-size:12.5px}
+  .kv{display:grid;grid-template-columns:140px 1fr;gap:10px 16px;font-size:14px}
+  .kv .k{color:var(--color-muted);font-family:var(--font-mono);font-size:12px}
+  .empty{padding:var(--space-8);text-align:center;color:var(--color-muted)}
+  .empty .ico{width:48px;height:48px;border-radius:var(--radius-md);background:var(--color-surface-2);display:grid;place-items:center;margin:0 auto var(--space-4)}
+  .skel{background:linear-gradient(90deg,var(--color-surface-2),#e7edf6,var(--color-surface-2));background-size:200% 100%;animation:sh 1.2s infinite;border-radius:6px;height:12px}
+  @keyframes sh{to{background-position:-200% 0}}
+  .grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--space-5)}
+  .ch-detail{display:flex;gap:var(--space-5)} .ch-col{flex:1;background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:var(--space-4)}
+  .ch-col h4{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;color:var(--color-muted);margin-bottom:10px}
+  .codeblock{font-family:var(--font-mono);font-size:12.5px;background:var(--color-ink);color:#cdd6e6;border-radius:var(--radius-md);padding:var(--space-4);overflow:auto}
+  .tag{font-family:var(--font-mono);font-size:11px;color:var(--color-muted)}
+  .severity-high{color:var(--color-error)} .severity-medium{color:var(--color-warning)} .severity-low{color:var(--color-muted)}
+  .banner{display:flex;gap:12px;align-items:flex-start;padding:var(--space-4) var(--space-5);border-radius:var(--radius-md);
+    background:var(--color-warning-soft);color:var(--color-warning);font-size:13px;margin-bottom:var(--space-5)}
+  .banner.okb{background:var(--color-success-soft);color:var(--color-success)}
+
+  @media (max-width:900px){
+    .hero{grid-template-columns:1fr;padding-top:var(--space-7)} .alert-card{display:none}
+    .bento{grid-template-columns:1fr} .f-lg,.f-sm{grid-column:auto}
+    .nav-links{display:none}
+    body:not([data-route="home"]) #app{grid-template-columns:1fr} .sidebar{display:none}
+    .metrics{grid-template-columns:1fr 1fr} .grid2{grid-template-columns:1fr} .ch-detail{flex-direction:column}
+  }
+</style>
+</head>
+<body data-route="home">
+
+<!-- ============================== HOME / LANDING ============================== -->
+<div id="view-home">
+  <header class="nav-primary">
+    <div class="nav-inner">
+      <a class="brand" href="#home">
+        <span class="brand-mark">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        </span>Recon
+      </a>
+      <nav class="nav-links">
+        <a href="#dashboard">Platform</a>
+        <a href="#how" onclick="return jump('how',event)">How it works</a>
+        <a href="#detection" onclick="return jump('detection',event)">Detection</a>
+        <a href="#reporting" onclick="return jump('reporting',event)">Reporting</a>
+        <a class="btn btn-primary btn-sm" href="#dashboard">Start monitoring</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero" id="platform">
+    <div>
+      <span class="pill eyebrow"><span class="dot"></span> Continuous attack surface monitoring</span>
+      <div class="mono-label">// discover · detect · respond</div>
+      <h1>See everything exposed to the internet — <span class="hl">before attackers do.</span></h1>
+      <p class="hero-sub">Recon maintains a live inventory of your internet-facing infrastructure, discovers unknown exposed services, and tells you exactly what changed since the last scan — so no exposure window slips by unnoticed.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#dashboard">Map your attack surface →</a>
+        <a class="btn btn-ghost" href="#scans">See a live scan</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><div class="n">&lt;24h</div><div class="l">to full inventory</div></div>
+        <div class="stat"><div class="n">100%</div><div class="l">scope coverage</div></div>
+        <div class="stat"><div class="n">0</div><div class="l">missed changes</div></div>
+      </div>
+    </div>
+
+    <div class="console">
+      <div class="console-top"><span class="wd"></span><span class="wd"></span><span class="wd"></span>
+        <span class="console-search mono">recon scan --scope acme-corp.com</span></div>
+      <div class="console-bar"><h4>External attack surface</h4><span class="pill"><span class="dot"></span> scanning</span></div>
+      <div class="asset-head"><span>Host</span><span>Service</span><span>Port</span><span>Status</span></div>
+      <div class="asset-row"><span class="mono">api.acme-corp.com</span><span class="mono muted">nginx 1.27</span><span class="mono">443</span><span class="badge ok">authorized</span></div>
+      <div class="asset-row"><span class="mono">vpn.acme-corp.com</span><span class="mono muted">openssh 9.6</span><span class="mono">22</span><span class="badge watch">watch</span></div>
+      <div class="asset-row row-flag"><span class="mono">staging.acme-corp.com</span><span class="mono muted">postgres</span><span class="mono">5432</span><span class="badge new">new</span></div>
+      <div class="console-foot"><span class="delta-add">+1 opened</span><span class="delta-rm">−0 closed</span><span>2 certs rotating</span></div>
+      <div class="alert-card">
+        <div class="t"><span class="badge new" style="padding:2px 6px"></span> Exposure change</div>
+        <div class="b">Port 5432 opened on <b>staging.acme-corp.com</b> — routed to #soc-alerts 14s ago.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="features" id="how">
+    <div class="mono-label">// from discovery to response</div>
+    <h2>One continuous loop around everything you expose.</h2>
+    <div class="bento">
+      <div class="feature f-lg" id="detection">
+        <div class="f-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg></div>
+        <h3>Baseline change detection</h3>
+        <p>Every scan is diffed against your accepted baseline. New ports, rotated certs, vanished hosts — surfaced as typed, severity-ranked change events.</p>
+        <div class="mini-diff"><span class="delta-add">+ PORT_OPENED  5432/postgres  staging.acme-corp.com</span><br><span class="delta-rm">− PORT_CLOSED  8080/http      legacy.acme-corp.com</span><br><span class="muted">~ CERT_ROTATED  api.acme-corp.com (expires 28d)</span></div>
+        <span class="f-link">baseline → diff → alert →</span>
+      </div>
+      <div class="feature f-sm">
+        <div class="f-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
+        <h3>Automatic asset discovery</h3>
+        <p>Register IP ranges and domains; Recon enumerates hosts, services, and certificates across the full authorized scope.</p>
+        <span class="f-link">scope → inventory →</span>
+      </div>
+      <div class="feature f-sm">
+        <div class="f-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <h3>Scheduled continuous scans</h3>
+        <p>Hourly, daily, or weekly cadences with per-target locks — no exposure window exceeds your SLA.</p>
+        <span class="f-link">cadence → coverage →</span>
+      </div>
+      <div class="feature f-lg" id="reporting">
+        <div class="f-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5M4 19h16M8 16V9M13 16v-4M18 16V7"/></svg></div>
+        <h3>Audit-ready trend reporting</h3>
+        <p>12-month immutable history, exposure trends, and remediation velocity — exported to PDF, JSON, or CSV in seconds for your next audit.</p>
+        <span class="f-link">history → report → export →</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-block">
+    <div class="cta-inner">
+      <div class="mono-label" style="color:#aab6cf">// know what changed before your next audit</div>
+      <h2>Take control of what's exposed to the internet.</h2>
+      <p>Continuous visibility, change intelligence, and alert routing to Slack, webhook, and email — purpose-built for security operations teams.</p>
+      <a class="btn btn-on-dark" href="#dashboard">Start monitoring your surface →</a>
+    </div>
+  </section>
+
+  <footer class="footer-meta">
+    <span class="brand" style="font-size:16px"><span class="brand-mark" style="width:22px;height:22px">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>Recon</span>
+    <div class="links"><a href="#dashboard">Platform</a><a href="#audit">Security</a><a href="#home">Documentation</a><a href="#home">Status</a><a href="#home">Privacy</a></div>
+    <span class="mono small">© 2026 Recon Security, Inc. · Built with MDLC™</span>
+  </footer>
+</div>
+
+<!-- ============================== APP SHELL ============================== -->
+<div id="app">
+  <aside class="sidebar">
+    <a class="brand" href="#home">
+      <span class="brand-mark"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>Recon
+    </a>
+    <a class="nav-item" data-nav="dashboard" href="#dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13h8V3H3zM13 21h8V3h-8zM3 21h8v-6H3z"/></svg> Dashboard</a>
+    <a class="nav-item" data-nav="assets" href="#assets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18M3 12h18M3 17h18"/></svg> Assets</a>
+    <a class="nav-item" data-nav="scans" href="#scans"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg> Scans</a>
+    <a class="nav-item" data-nav="changes" href="#changes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h11M4 7l3-3M4 7l3 3M20 17H9M20 17l-3-3M20 17l-3 3"/></svg> Changes</a>
+    <a class="nav-item" data-nav="alerts" href="#alerts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg> Alerts</a>
+    <a class="nav-item" data-nav="reports" href="#reports"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg> Reports</a>
+    <div class="nav-sep"></div>
+    <a class="nav-item" data-nav="audit" href="#audit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg> Audit log</a>
+    <div class="side-foot">v0.1.1 · functional-verified<br>SOC2 · HTTPS-only</div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="crumbs"><h2 id="page-title">Dashboard</h2></div>
+      <div class="org">
+        <span class="pill"><span class="dot"></span> 3 scans running</span>
+        <span class="muted small">Acme Corp SOC</span>
+        <span class="avatar">AC</span>
+      </div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="page" id="page-dashboard">
+        <div class="metrics">
+          <div class="metric lead card"><div class="k">Assets monitored</div><div class="v">1,284</div><div class="trend">▲ 36 new this week</div></div>
+          <div class="metric card"><div class="k">Open changes</div><div class="v">7</div><div class="trend down">▲ 3 since yesterday</div></div>
+          <div class="metric card"><div class="k">Scans · 7d</div><div class="v">412</div><div class="trend">0 missed cycles</div></div>
+          <div class="metric card"><div class="k">Authorized</div><div class="v">98%</div><div class="trend">1,259 / 1,284</div></div>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <div class="panel-h"><h3>Recent change events</h3><a class="pill" href="#changes">View all →</a></div>
+            <table><tbody>
+              <tr><td><span class="badge crit">port_opened</span></td><td class="mono small">staging.acme-corp.com :5432</td><td class="muted small">2m ago</td></tr>
+              <tr><td><span class="badge new">cert_expiring</span></td><td class="mono small">api.acme-corp.com (28d)</td><td class="muted small">19m ago</td></tr>
+              <tr><td><span class="badge info">service_changed</span></td><td class="mono small">vpn.acme-corp.com :22</td><td class="muted small">1h ago</td></tr>
+              <tr><td><span class="badge watch">host_gone</span></td><td class="mono small">legacy.acme-corp.com</td><td class="muted small">3h ago</td></tr>
+            </tbody></table>
+          </div>
+          <div class="card">
+            <div class="panel-h"><h3>Recent scans</h3><a class="pill" href="#scans">View all →</a></div>
+            <table><tbody>
+              <tr><td class="mono small">acme-corp.com</td><td><span class="badge ok">completed</span></td><td class="muted small">8 hosts</td></tr>
+              <tr><td class="mono small">10.0.0.0/24</td><td><span class="pill" style="font-size:10px"><span class="dot"></span>running</span></td><td class="muted small">—</td></tr>
+              <tr><td class="mono small">vpn.acme-corp.com</td><td><span class="badge ok">completed</span></td><td class="muted small">1 host</td></tr>
+              <tr><td class="mono small">edge.acme-corp.com</td><td><span class="badge ok">completed</span></td><td class="muted small">3 hosts</td></tr>
+            </tbody></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ASSETS -->
+      <section class="page" id="page-assets">
+        <div class="section-h"><h2>Asset inventory</h2><button class="btn btn-primary btn-sm" onclick="alert('Demo: opens the Add asset dialog (domain / CIDR + cadence).')">+ Add asset</button></div>
+        <div class="toolbar">
+          <input class="input" placeholder="Search host or label…" />
+          <select class="select"><option>All status</option><option>authorized</option><option>verifying</option><option>pending</option></select>
+          <select class="select"><option>All kinds</option><option>domain</option><option>cidr</option></select>
+        </div>
+        <div class="card">
+          <table>
+            <thead><tr><th>Asset</th><th>Kind</th><th>Status</th><th>Cadence</th><th>Last scan</th><th></th></tr></thead>
+            <tbody>
+              <tr onclick="go('asset-detail')" style="cursor:pointer"><td class="mono">acme-corp.com</td><td class="tag">domain</td><td><span class="badge ok">authorized</span></td><td class="small">daily</td><td class="muted small">12m ago</td><td class="muted">›</td></tr>
+              <tr onclick="go('asset-detail')" style="cursor:pointer" class="row-flag"><td class="mono">staging.acme-corp.com</td><td class="tag">domain</td><td><span class="badge ok">authorized</span></td><td class="small">hourly</td><td class="muted small">2m ago</td><td class="muted">›</td></tr>
+              <tr><td class="mono">10.0.0.0/24</td><td class="tag">cidr</td><td><span class="badge new">verifying</span></td><td class="small">manual</td><td class="muted small">—</td><td class="muted">›</td></tr>
+              <tr><td class="mono">vpn.acme-corp.com</td><td class="tag">domain</td><td><span class="badge ok">authorized</span></td><td class="small">weekly</td><td class="muted small">3h ago</td><td class="muted">›</td></tr>
+              <tr><td class="mono">edge.acme-corp.com</td><td class="tag">domain</td><td><span class="badge watch">pending</span></td><td class="small">manual</td><td class="muted small">—</td><td class="muted">›</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ASSET DETAIL -->
+      <section class="page" id="page-asset-detail">
+        <div class="section-h"><div><a class="tag" href="#assets">← Assets</a><h2 class="mono" style="margin-top:6px">staging.acme-corp.com</h2></div>
+          <div style="display:flex;gap:10px"><button class="btn btn-ghost btn-sm" onclick="go('changes')">Accept baseline</button><button class="btn btn-primary btn-sm" onclick="go('scan-detail')">Run scan</button></div></div>
+        <div class="banner okb">✓ Authorization verified via DNS-TXT · this asset is cleared for scanning (authorization-to-scan enforced).</div>
+        <div class="grid2">
+          <div class="card" style="padding:var(--space-5)">
+            <h3 style="font-size:15px;margin-bottom:16px">Authorization & schedule</h3>
+            <div class="kv">
+              <span class="k">status</span><span><span class="badge ok">authorized</span></span>
+              <span class="k">method</span><span>dns_txt</span>
+              <span class="k">cadence</span><span>hourly</span>
+              <span class="k">last scan</span><span class="muted">2 minutes ago</span>
+              <span class="k">baseline</span><span class="muted">accepted 6h ago</span>
+            </div>
+          </div>
+          <div class="card" style="padding:var(--space-5)">
+            <h3 style="font-size:15px;margin-bottom:12px">Current snapshot</h3>
+            <table><thead><tr><th>Port</th><th>Service</th><th>Cert</th></tr></thead><tbody>
+              <tr><td class="mono">443</td><td class="mono small">nginx 1.27</td><td class="tag">CN=*.acme-corp.com · 28d</td></tr>
+              <tr><td class="mono">22</td><td class="mono small">openssh 9.6</td><td class="muted">—</td></tr>
+              <tr class="row-flag"><td class="mono">5432</td><td class="mono small">postgresql</td><td class="muted">—</td></tr>
+            </tbody></table>
+          </div>
+        </div>
+        <div class="card" style="margin-top:var(--space-5)">
+          <div class="panel-h"><h3>Scan history</h3></div>
+          <table><thead><tr><th>Started</th><th>Trigger</th><th>Status</th><th>Hosts</th><th></th></tr></thead><tbody>
+            <tr onclick="go('scan-detail')" style="cursor:pointer"><td class="small">today 14:02</td><td class="tag">manual</td><td><span class="badge ok">completed</span></td><td>1</td><td class="muted">›</td></tr>
+            <tr onclick="go('scan-detail')" style="cursor:pointer"><td class="small">today 13:00</td><td class="tag">scheduled</td><td><span class="badge ok">completed</span></td><td>1</td><td class="muted">›</td></tr>
+            <tr><td class="small">today 12:00</td><td class="tag">scheduled</td><td><span class="badge ok">completed</span></td><td>1</td><td class="muted">›</td></tr>
+          </tbody></table>
+        </div>
+      </section>
+
+      <!-- SCANS / SCAN DETAIL -->
+      <section class="page" id="page-scans">
+        <div class="section-h"><h2>Scans</h2></div>
+        <div class="card">
+          <table><thead><tr><th>Asset</th><th>Trigger</th><th>Status</th><th>Hosts</th><th>Open ports</th><th>Finished</th><th></th></tr></thead><tbody>
+            <tr onclick="go('scan-detail')" style="cursor:pointer"><td class="mono small">staging.acme-corp.com</td><td class="tag">manual</td><td><span class="badge ok">completed</span></td><td>1</td><td>3</td><td class="muted small">2m ago</td><td class="muted">›</td></tr>
+            <tr><td class="mono small">10.0.0.0/24</td><td class="tag">manual</td><td><span class="pill" style="font-size:10px"><span class="dot"></span>running</span></td><td>—</td><td>—</td><td class="muted small">—</td><td class="muted">›</td></tr>
+            <tr onclick="go('scan-detail')" style="cursor:pointer"><td class="mono small">acme-corp.com</td><td class="tag">scheduled</td><td><span class="badge ok">completed</span></td><td>8</td><td>14</td><td class="muted small">12m ago</td><td class="muted">›</td></tr>
+            <tr><td class="mono small">edge.acme-corp.com</td><td class="tag">manual</td><td><span class="badge crit">failed</span></td><td>0</td><td>0</td><td class="muted small">1h ago</td><td class="muted">›</td></tr>
+          </tbody></table>
+        </div>
+      </section>
+
+      <section class="page" id="page-scan-detail">
+        <div class="section-h"><div><a class="tag" href="#scans">← Scans</a><h2 style="margin-top:6px">Scan result</h2></div><span class="badge ok">completed · 4.2s</span></div>
+        <div class="card" style="padding:var(--space-5);margin-bottom:var(--space-5)">
+          <div class="kv">
+            <span class="k">asset</span><span class="mono">staging.acme-corp.com</span>
+            <span class="k">trigger</span><span>manual · today 14:02</span>
+            <span class="k">snapshot hash</span><span class="mono small muted">a1f3…9c0b</span>
+            <span class="k">changes</span><span><span class="badge crit">1 PORT_OPENED</span></span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="panel-h"><h3>Discovered surface · 1 host</h3><span class="tag mono">203.0.113.42 · US · AS64500</span></div>
+          <table><thead><tr><th>Port</th><th>Proto</th><th>Service</th><th>Version</th><th>TLS certificate</th></tr></thead><tbody>
+            <tr><td class="mono">443</td><td class="tag">tcp</td><td>https</td><td class="mono small">nginx 1.27</td><td class="small">CN=*.acme-corp.com · exp 28d · SAN ×4</td></tr>
+            <tr><td class="mono">22</td><td class="tag">tcp</td><td>ssh</td><td class="mono small">openssh 9.6</td><td class="muted">—</td></tr>
+            <tr class="row-flag"><td class="mono">5432</td><td class="tag">tcp</td><td>postgresql</td><td class="mono small">—</td><td class="muted">— (newly exposed)</td></tr>
+          </tbody></table>
+        </div>
+      </section>
+
+      <!-- CHANGES / CHANGE DETAIL -->
+      <section class="page" id="page-changes">
+        <div class="section-h"><h2>Change feed</h2></div>
+        <div class="toolbar">
+          <select class="select"><option>All types</option><option>PORT_OPENED</option><option>CERT_ROTATED</option><option>HOST_NEW</option></select>
+          <select class="select"><option>All severities</option><option>high</option><option>medium</option><option>low</option></select>
+          <select class="select"><option>Open</option><option>Acknowledged</option></select>
+        </div>
+        <div class="card">
+          <table><thead><tr><th>Type</th><th>Asset</th><th>Severity</th><th>Detected</th><th>Status</th><th></th></tr></thead><tbody>
+            <tr onclick="go('change-detail')" style="cursor:pointer" class="row-flag"><td><span class="badge crit">port_opened</span></td><td class="mono small">staging.acme-corp.com</td><td class="severity-high">high</td><td class="muted small">2m ago</td><td><span class="badge new">open</span></td><td class="muted">›</td></tr>
+            <tr onclick="go('change-detail')" style="cursor:pointer"><td><span class="badge new">cert_expiring</span></td><td class="mono small">api.acme-corp.com</td><td class="severity-high">high</td><td class="muted small">19m ago</td><td><span class="badge new">open</span></td><td class="muted">›</td></tr>
+            <tr><td><span class="badge info">service_changed</span></td><td class="mono small">vpn.acme-corp.com</td><td class="severity-medium">medium</td><td class="muted small">1h ago</td><td><span class="badge ok">acked</span></td><td class="muted">›</td></tr>
+            <tr><td><span class="badge watch">host_gone</span></td><td class="mono small">legacy.acme-corp.com</td><td class="severity-low">low</td><td class="muted small">3h ago</td><td><span class="badge ok">acked</span></td><td class="muted">›</td></tr>
+          </tbody></table>
+        </div>
+      </section>
+
+      <section class="page" id="page-change-detail">
+        <div class="section-h"><div><a class="tag" href="#changes">← Changes</a><h2 style="margin-top:6px">PORT_OPENED</h2></div>
+          <button class="btn btn-primary btn-sm" onclick="this.textContent='✓ Acknowledged';this.disabled=true;this.style.opacity=.6">Acknowledge</button></div>
+        <div class="card" style="padding:var(--space-5);margin-bottom:var(--space-5)">
+          <div class="kv">
+            <span class="k">severity</span><span><span class="badge crit">high</span></span>
+            <span class="k">asset</span><span class="mono">staging.acme-corp.com</span>
+            <span class="k">detected</span><span>today 14:02 · scan #4192</span>
+            <span class="k">routed to</span><span>#soc-alerts (Slack) · ops-webhook</span>
+          </div>
+        </div>
+        <div class="ch-detail">
+          <div class="ch-col"><h4>Prior state (baseline)</h4><div class="codeblock">ports: [22, 443]
+services:
+  22  → openssh 9.6
+  443 → nginx 1.27</div></div>
+          <div class="ch-col"><h4>Current state</h4><div class="codeblock">ports: [22, 443, <span style="color:#fca5a5">5432</span>]
+services:
+  22   → openssh 9.6
+  443  → nginx 1.27
+  <span style="color:#fca5a5">5432 → postgresql (NEW)</span></div></div>
+        </div>
+      </section>
+
+      <!-- ALERTS -->
+      <section class="page" id="page-alerts">
+        <div class="section-h"><h2>Alert channels</h2><button class="btn btn-primary btn-sm" onclick="alert('Demo: opens the Add channel drawer (Slack / webhook / email).')">+ Add channel</button></div>
+        <div class="grid-cards" style="margin-bottom:var(--space-6)">
+          <div class="card" style="padding:var(--space-5)"><div style="display:flex;justify-content:space-between;align-items:center"><h3 style="font-size:15px">SOC Slack</h3><span class="badge ok">enabled</span></div><p class="muted small" style="margin:10px 0">slack · #soc-alerts</p><div class="tag">min severity: medium</div><button class="btn btn-ghost btn-sm" style="margin-top:14px" onclick="alert('Demo: test delivery sent.')">Send test</button></div>
+          <div class="card" style="padding:var(--space-5)"><div style="display:flex;justify-content:space-between;align-items:center"><h3 style="font-size:15px">Ops webhook</h3><span class="badge ok">enabled</span></div><p class="muted small mono" style="margin:10px 0">https://ops.acme-corp.com/hooks</p><div class="tag">HMAC signed · min: high</div><button class="btn btn-ghost btn-sm" style="margin-top:14px" onclick="alert('Demo: test delivery sent.')">Send test</button></div>
+          <div class="card" style="padding:var(--space-5)"><div style="display:flex;justify-content:space-between;align-items:center"><h3 style="font-size:15px">Compliance email</h3><span class="badge watch">disabled</span></div><p class="muted small" style="margin:10px 0">email · risk@acme-corp.com</p><div class="tag">min severity: info</div><button class="btn btn-ghost btn-sm" style="margin-top:14px" onclick="alert('Demo: test delivery sent.')">Send test</button></div>
+        </div>
+        <div class="card">
+          <div class="panel-h"><h3>Delivery log</h3></div>
+          <table><thead><tr><th>Event</th><th>Channel</th><th>Status</th><th>Attempts</th><th>When</th></tr></thead><tbody>
+            <tr><td class="mono small">port_opened</td><td>SOC Slack</td><td><span class="badge ok">delivered</span></td><td>1</td><td class="muted small">2m ago</td></tr>
+            <tr><td class="mono small">port_opened</td><td>Ops webhook</td><td><span class="badge ok">delivered</span></td><td>1</td><td class="muted small">2m ago</td></tr>
+            <tr><td class="mono small">cert_expiring</td><td>SOC Slack</td><td><span class="badge ok">delivered</span></td><td>1</td><td class="muted small">19m ago</td></tr>
+            <tr><td class="mono small">service_changed</td><td>Ops webhook</td><td><span class="badge new">retrying</span></td><td>2</td><td class="muted small">1h ago</td></tr>
+          </tbody></table>
+        </div>
+      </section>
+
+      <!-- REPORTS -->
+      <section class="page" id="page-reports">
+        <div class="section-h"><h2>Reports</h2><button class="btn btn-primary btn-sm" onclick="alert('Demo: opens the Generate report drawer (audit / trend · PDF / JSON / CSV).')">+ Generate report</button></div>
+        <div class="card">
+          <table><thead><tr><th>Report</th><th>Kind</th><th>Format</th><th>Status</th><th>Created</th><th></th></tr></thead><tbody>
+            <tr><td>Q2 exposure audit</td><td class="tag">audit</td><td><span class="badge info" style="text-transform:uppercase">pdf</span></td><td><span class="badge ok">ready</span></td><td class="muted small">today 09:14</td><td><a class="tag" href="#reports" onclick="alert('Demo: downloads the PDF.')">Download ↓</a></td></tr>
+            <tr><td>90-day surface trend</td><td class="tag">trend</td><td><span class="badge info" style="text-transform:uppercase">csv</span></td><td><span class="badge ok">ready</span></td><td class="muted small">yesterday</td><td><a class="tag" href="#reports" onclick="alert('Demo: downloads the CSV.')">Download ↓</a></td></tr>
+            <tr><td>Asset inventory export</td><td class="tag">audit</td><td><span class="badge info" style="text-transform:uppercase">json</span></td><td><span class="pill" style="font-size:10px"><span class="dot"></span>rendering</span></td><td class="muted small">just now</td><td class="muted">—</td></tr>
+          </tbody></table>
+        </div>
+      </section>
+
+      <!-- AUDIT -->
+      <section class="page" id="page-audit">
+        <div class="section-h"><h2>Audit log</h2><span class="tag mono">append-only · 12-month retention</span></div>
+        <div class="toolbar"><input class="input" placeholder="Filter by action or actor…" /><select class="select"><option>All actions</option><option>scan.trigger</option><option>asset.create</option><option>auth.login</option></select></div>
+        <div class="card">
+          <table><thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Target</th><th>IP</th></tr></thead><tbody>
+            <tr><td class="mono small">14:02:11</td><td class="small">analyst@acme</td><td class="mono small">scan.trigger</td><td class="mono small muted">staging.acme-corp.com</td><td class="mono small muted">10.4.2.9</td></tr>
+            <tr><td class="mono small">14:01:58</td><td class="small">analyst@acme</td><td class="mono small">baseline.accept</td><td class="mono small muted">staging.acme-corp.com</td><td class="mono small muted">10.4.2.9</td></tr>
+            <tr><td class="mono small">13:47:02</td><td class="small">admin@acme</td><td class="mono small">channel.create</td><td class="mono small muted">Ops webhook</td><td class="mono small muted">10.4.2.1</td></tr>
+            <tr><td class="mono small">09:14:30</td><td class="small">risk@acme</td><td class="mono small">report.generate</td><td class="mono small muted">Q2 exposure audit</td><td class="mono small muted">10.4.8.7</td></tr>
+            <tr><td class="mono small">08:55:12</td><td class="small">analyst@acme</td><td class="mono small">auth.login</td><td class="mono small muted">user</td><td class="mono small muted">10.4.2.9</td></tr>
+          </tbody></table>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // Lightweight hash router. Home = landing; everything else = app shell.
+  var PAGES = ['dashboard','assets','asset-detail','scans','scan-detail','changes','change-detail','alerts','reports','audit'];
+  var TITLES = {dashboard:'Dashboard',assets:'Assets','asset-detail':'Asset detail',scans:'Scans','scan-detail':'Scan result',changes:'Changes','change-detail':'Change detail',alerts:'Alerts',reports:'Reports',audit:'Audit log'};
+  var NAVGROUP = {dashboard:'dashboard',assets:'assets','asset-detail':'assets',scans:'scans','scan-detail':'scans',changes:'changes','change-detail':'changes',alerts:'alerts',reports:'reports',audit:'audit'};
+
+  function go(route){ location.hash = '#' + route; }
+
+  // In-page section scroll for the landing nav (Platform / How it works / Detection / Reporting).
+  // preventDefault keeps the hash unchanged so the router never treats these as routes.
+  function jump(id, e){
+    if (e) e.preventDefault();
+    var el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return false;
+  }
+
+  function render(){
+    var route = (location.hash || '#home').slice(1);
+    if (route === 'home' || route === '') {
+      document.body.setAttribute('data-route','home');
+      window.scrollTo(0,0);
+      return;
+    }
+    if (PAGES.indexOf(route) === -1) route = 'dashboard';
+    document.body.setAttribute('data-route', route);
+    PAGES.forEach(function(p){
+      var el = document.getElementById('page-'+p);
+      if (el) el.classList.toggle('active', p === route);
+    });
+    var t = document.getElementById('page-title'); if (t) t.textContent = TITLES[route] || 'Recon';
+    document.querySelectorAll('.nav-item').forEach(function(n){
+      n.classList.toggle('active', n.getAttribute('data-nav') === NAVGROUP[route]);
+    });
+    var c = document.querySelector('.content'); if (c) c.scrollTo ? window.scrollTo(0,0) : null;
+    window.scrollTo(0,0);
+  }
+  window.addEventListener('hashchange', render);
+  render();
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+# Playwright MCP scratch
+.playwright-mcp/
+console-*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Never check the runnable build plumbing into the showcase
+node_modules/
+dist/
+.env
