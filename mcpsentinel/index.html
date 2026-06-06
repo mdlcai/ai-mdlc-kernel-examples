@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
 <!-- Fonts (progressive enhancement; falls back to system fonts offline) -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 
 <script>
   // Apply persisted theme before paint to avoid a flash.
@@ -18,7 +18,7 @@
     try {
       var t = localStorage.getItem('sentinel-theme');
       if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
-      else document.documentElement.removeAttribute('data-theme');
+      else document.documentElement.setAttribute('data-theme', 'dark');
     } catch (e) {}
   })();
 </script>
@@ -32,9 +32,9 @@
   --color-fg: #0c1424;
   --color-muted: #5b6779;
   --color-border: #e1e7f0;
-  --color-accent: #2563eb;
-  --color-accent-soft: #e8f0ff;
-  --color-accent-strong: #1d4ed8;
+  --color-accent: #16a34a;
+  --color-accent-soft: #e7f8ee;
+  --color-accent-strong: #15803d;
   --color-success: #15803d;
   --color-success-soft: #e7f6ec;
   --color-warning: #b45309;
@@ -43,9 +43,9 @@
   --color-error-soft: #fbe9eb;
   --color-on-accent: #ffffff;
 
-  --font-display: "Manrope", system-ui, sans-serif;
-  --font-body: "Inter", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-display: "Geist", system-ui, sans-serif;
+  --font-body: "Geist", system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
 
   --space-1: 4px;  --space-2: 8px;  --space-3: 12px;  --space-4: 16px;
   --space-5: 24px; --space-6: 32px; --space-7: 48px;  --space-8: 64px; --space-9: 96px;
@@ -66,9 +66,9 @@
   --color-fg: #e8eef8;
   --color-muted: #93a1b8;
   --color-border: #232c3d;
-  --color-accent: #4d86f7;
-  --color-accent-soft: #15233f;
-  --color-accent-strong: #6ea0ff;
+  --color-accent: #34d399;
+  --color-accent-soft: #102a1f;
+  --color-accent-strong: #22c55e;
   --color-success: #4ade80;
   --color-success-soft: #11281c;
   --color-warning: #fbbf4d;
@@ -485,7 +485,7 @@ footer.foot { border-top: 1px solid var(--color-border); }
       var root = document.documentElement;
       var buttons = document.querySelectorAll('[data-theme-set]');
       function current() {
-        try { return localStorage.getItem(KEY) || 'system'; } catch (e) { return 'system'; }
+        try { return localStorage.getItem(KEY) || 'dark'; } catch (e) { return 'dark'; }
       }
       function apply(choice) {
         if (choice === 'system') root.removeAttribute('data-theme');
