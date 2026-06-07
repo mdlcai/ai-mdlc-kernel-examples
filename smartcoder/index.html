@@ -254,6 +254,27 @@
 <body>
 <a href="../index.html" aria-label="Back to the MDLC examples gallery" data-mdlc-backlink style="position:fixed;bottom:16px;left:16px;z-index:9000;display:inline-flex;align-items:center;gap:7px;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:13px;font-weight:600;line-height:1;color:#fff;background:rgba(13,17,28,.82);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:9px 15px 9px 12px;text-decoration:none;box-shadow:0 10px 30px -10px rgba(0,0,0,.55);transition:background .16s,transform .16s" onmouseover="this.style.background='rgba(37,99,235,.94)';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(13,17,28,.82)';this.style.transform='none'">← All examples</a>
 
+<style>
+  /* ===== MDLC preview chrome (shared demo bar) ===== */
+  :root{--mdlc-bar-h:41px}
+  .mdlc-switcher{position:sticky;top:0;z-index:9000;display:flex;align-items:center;gap:14px;flex-wrap:wrap;min-height:var(--mdlc-bar-h);padding:7px 18px;box-sizing:border-box;background:rgba(255,255,255,.88);-webkit-backdrop-filter:saturate(1.5) blur(12px);backdrop-filter:saturate(1.5) blur(12px);border-bottom:1px solid rgba(15,23,42,.10);font-family:system-ui,-apple-system,'Segoe UI',sans-serif}
+  .mdlc-switcher .mdlc-label{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#5b6472;white-space:nowrap}
+  .mdlc-switcher .mdlc-tab{font:500 13px/1 system-ui,-apple-system,'Segoe UI',sans-serif;color:#5b6472;padding:7px 11px;border-radius:7px;cursor:pointer;border:1px solid transparent;background:none;text-decoration:none}
+  .mdlc-switcher .mdlc-tab:hover{color:#0f172a;background:rgba(15,23,42,.05)}
+  .mdlc-switcher .mdlc-tab.active{color:#2563eb;background:rgba(37,99,235,.10);border-color:rgba(37,99,235,.28)}
+  @media(max-width:680px){.mdlc-switcher{gap:6px 8px;padding:7px 12px}}
+  header.site{top:var(--mdlc-bar-h)!important}
+</style>
+<nav class="mdlc-switcher" aria-label="Preview pages">
+  <span class="mdlc-label">SmartCoder · static preview</span>
+  <button class="mdlc-tab active" data-mdlc="landing">Home</button>
+  <button class="mdlc-tab" data-mdlc="queue">Queue</button>
+  <button class="mdlc-tab" data-mdlc="coding">Coding</button>
+  <button class="mdlc-tab" data-mdlc="audit">Audit</button>
+  <button class="mdlc-tab" data-mdlc="metrics">Metrics</button>
+  <button class="mdlc-tab" data-mdlc="imports">Imports</button>
+  <button class="mdlc-tab" data-mdlc="users">Users</button>
+</nav>
 
 <!-- ============================== HEADER ============================== -->
 <header class="site nav-blur">
@@ -717,6 +738,15 @@
   }
   window.showApp = showApp;
   window.showLanding = showLanding;
+  // ===== MDLC preview bar wiring =====
+  (function(){
+    var bar=document.querySelector('.mdlc-switcher'); if(!bar) return;
+    var tabs=[].slice.call(bar.querySelectorAll('.mdlc-tab'));
+    function sync(id){tabs.forEach(function(t){t.classList.toggle('active',t.getAttribute('data-mdlc')===id);});}
+    var _a=window.showApp;window.showApp=function(v){var r=_a.apply(this,arguments);sync(String(v));return r;};
+    var _l=window.showLanding;window.showLanding=function(){var r=_l.apply(this,arguments);sync('landing');return r;};
+    tabs.forEach(function(t){t.addEventListener('click',function(e){e.preventDefault();var v=t.getAttribute('data-mdlc');if(v==='landing'){window.showLanding();}else{window.showApp(v);}});});
+  })();
 </script>
 </body>
 </html>
