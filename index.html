@@ -4,9 +4,9 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>MDLC™ — Example Builds</title>
-<meta name="description" content="Five real applications, each built end-to-end by the MDLC methodology — from a one-page blueprint to a gate-passing build." />
+<meta name="description" content="Six real applications, each built end-to-end by the MDLC methodology — from a one-page blueprint to a gate-passing build." />
 <meta property="og:title" content="MDLC™ — Example Builds" />
-<meta property="og:description" content="Five real applications, each built end-to-end by the MDLC methodology. Live previews, architecture, and the full build report for each." />
+<meta property="og:description" content="Six real applications, each built end-to-end by the MDLC methodology. Live previews, architecture, and the full build report for each." />
 <meta property="og:type" content="website" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -138,20 +138,23 @@
       <img src="https://mdlc.ai/images/logo.webp" alt="" />
       <span class="wm">MDLC<sup>™</sup></span>
     </a>
-    <a class="cta" href="https://mdlc.ai">Build yours →</a>
+    <nav style="display:flex;align-items:center;gap:20px">
+      <a href="https://github.com/mdlcai/ai-mdlc-kernel-examples" style="font-family:var(--font-mono);font-weight:600;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary);transition:.2s var(--ease)" onmouseover="this.style.color='var(--cyan)'" onmouseout="this.style.color='var(--text-secondary)'">GitHub ↗</a>
+      <a class="cta" href="https://mdlc.ai">Build yours →</a>
+    </nav>
   </div>
 
   <header class="hero">
     <div class="eyebrow"><span class="gl">✦</span> Reference Builds <span class="gl">→</span> Built with MDLC™</div>
-    <h1>Five real apps,<br><em>built by the methodology.</em></h1>
+    <h1>Six real apps,<br><em>built by the methodology.</em></h1>
     <p class="sub">Each app below started as a one-page <code>RESEARCH.md</code> blueprint and came out the other side as a working, reviewed application — with the architecture, the spec, the decisions, and the full build report to prove it.</p>
     <div class="actions">
       <a class="btn btn-primary" href="#gallery">See the builds</a>
       <a class="btn btn-ghost" href="https://mdlc.ai/ai-mdlc-kernel.html">What is MDLC?</a>
     </div>
     <div class="stats">
-      <span>5 apps, 0 hand-written</span>
-      <span>84 smoke flows passed</span>
+      <span>6 apps, 0 hand-written</span>
+      <span>99 smoke flows passed</span>
       <span>every gate, with receipts</span>
     </div>
   </header>
@@ -164,7 +167,7 @@
         <h3>MCP Sentinel <span class="badge">Security</span></h3>
         <p>Point it at a Model Context Protocol endpoint; it enumerates the server's tools, resources, and prompts, then grades the posture — tool poisoning, excessive scope, leaked secrets, rug pulls, missing auth.</p>
         <div class="gates"><span class="gate">37 tests</span><span class="gate">17/17 smoke</span><span class="gate">10/10 invariants</span><span class="gate">Reviewer PASS</span></div>
-        <div class="links"><a class="lead" href="mcpsentinel/index.html">Live preview</a><a href="mcpsentinel/architecture.html">Architecture</a><a href="mcpsentinel/REPORT.md">Build report</a></div>
+        <div class="links"><a class="lead" href="mcpsentinel/index.html">Live preview</a><a href="mcpsentinel/architecture.html">Architecture</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/mcpsentinel/REPORT.md">Build report</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/tree/main/mcpsentinel">Files ↗</a></div>
       </div>
     </article>
 
@@ -174,7 +177,7 @@
         <h3>Pulse <span class="badge">Monitoring</span></h3>
         <p>Real-time infrastructure monitoring: multi-protocol health checks, a flap-resistant alert engine, and guaranteed-delivery notifications. Sub-minute detection, zero alert fatigue.</p>
         <div class="gates"><span class="gate">21/21 smoke</span><span class="gate">11/11 invariants</span><span class="gate">Reviewer PASS</span></div>
-        <div class="links"><a class="lead" href="pulse/index.html">Live preview</a><a href="pulse/architecture.html">Architecture</a><a href="pulse/REPORT.md">Build report</a></div>
+        <div class="links"><a class="lead" href="pulse/index.html">Live preview</a><a href="pulse/architecture.html">Architecture</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/pulse/REPORT.md">Build report</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/tree/main/pulse">Files ↗</a></div>
       </div>
     </article>
 
@@ -184,7 +187,7 @@
         <h3>Recon <span class="badge">Security</span></h3>
         <p>Continuous attack-surface monitoring. Watches the systems, ports, and services you expose to the internet and alerts the moment the surface changes — new exposure, drifted config, rogue service.</p>
         <div class="gates"><span class="gate">29 tests</span><span class="gate">8/8 smoke</span><span class="gate">15/15 invariants</span></div>
-        <div class="links"><a class="lead" href="recon/index.html">Live preview</a><a href="recon/architecture.html">Architecture</a><a href="recon/REPORT.md">Build report</a></div>
+        <div class="links"><a class="lead" href="recon/index.html">Live preview</a><a href="recon/architecture.html">Architecture</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/recon/REPORT.md">Build report</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/tree/main/recon">Files ↗</a></div>
       </div>
     </article>
 
@@ -194,7 +197,7 @@
         <h3>SmartCoder <span class="badge">Healthcare</span></h3>
         <p>A medical-coding workflow and QA-training tool that runs entirely on synthetic encounters — no real PHI. Coders work a queue; supervisors audit accuracy, feedback, and compliance.</p>
         <div class="gates"><span class="gate">14 tests</span><span class="gate">16/16 smoke</span><span class="gate">Reviewer PASS</span></div>
-        <div class="links"><a class="lead" href="smartcoder/index.html">Live preview</a><a href="smartcoder/architecture.html">Architecture</a><a href="smartcoder/REPORT.md">Build report</a></div>
+        <div class="links"><a class="lead" href="smartcoder/index.html">Live preview</a><a href="smartcoder/architecture.html">Architecture</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/smartcoder/REPORT.md">Build report</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/tree/main/smartcoder">Files ↗</a></div>
       </div>
     </article>
 
@@ -204,7 +207,17 @@
         <h3>ServiceHub <span class="badge">ITSM</span></h3>
         <p>Multi-tenant IT service management — one place for employee requests, incidents, and approvals, with automated routing, SLA tracking, and real-time queues. No bloat, no lost tickets.</p>
         <div class="gates"><span class="gate">25 tests</span><span class="gate">22/22 smoke</span><span class="gate">14/14 invariants</span></div>
-        <div class="links"><a class="lead" href="servicehub/index.html">Live preview</a><a href="servicehub/architecture.html">Architecture</a><a href="servicehub/REPORT.md">Build report</a></div>
+        <div class="links"><a class="lead" href="servicehub/index.html">Live preview</a><a href="servicehub/architecture.html">Architecture</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/servicehub/REPORT.md">Build report</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/tree/main/servicehub">Files ↗</a></div>
+      </div>
+    </article>
+
+    <article class="card">
+      <a class="shot" href="workgrid/index.html"><img src="workgrid/preview.png" alt="WorkGrid" loading="lazy"><span class="open"><span>Open live preview →</span></span></a>
+      <div class="body">
+        <h3>WorkGrid <span class="badge">Work mgmt</span></h3>
+        <p>One workspace for tickets, tasks, and projects — work routes itself, dependencies stay visible, and real-time dashboards keep nothing stalled between intake and done.</p>
+        <div class="gates"><span class="gate">15/15 smoke</span><span class="gate">13/13 invariants</span></div>
+        <div class="links"><a class="lead" href="workgrid/index.html">Live preview</a><a href="workgrid/architecture.html">Architecture</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/workgrid/REPORT.md">Build report</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/tree/main/workgrid">Files ↗</a></div>
       </div>
     </article>
 

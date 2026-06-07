@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>WorkGrid — One workspace to move work forward</title>
+<meta name="description" content="WorkGrid centralizes planning, tracking, and execution in a single workspace." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  /* ---- Canonical design tokens (copied verbatim from the WorkGrid template) ---- */
+  :root{
+    --color-bg:#f6f8fb; --color-surface:#ffffff; --color-surface-2:#eef2f8;
+    --color-fg:#0d1526; --color-muted:#5a6679; --color-border:#e3e8f0;
+    --color-accent:#e11d48; --color-accent-strong:#be123c; --color-accent-soft:#ffe4e6;
+    --color-success:#15885a; --color-warning:#b46710; --color-error:#cc3340;
+    --font-display:"Space Grotesk",system-ui,sans-serif;
+    --font-body:"Inter",system-ui,sans-serif;
+    --font-mono:"JetBrains Mono",ui-monospace,monospace;
+    --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:24px;
+    --space-6:32px;--space-7:48px;--space-8:64px;--space-9:96px;
+    --radius-sm:5px;--radius-md:10px;--radius-lg:18px;
+    --shadow-sm:0 1px 2px rgba(13,21,38,.05);
+    --shadow-md:0 8px 24px -10px rgba(13,21,38,.16);
+    --shadow-lg:0 40px 80px -32px rgba(13,21,38,.30);
+    --maxw:1200px; --ring:0 0 0 3px var(--color-accent-soft);
+  }
+  [data-theme="dark"]{
+    --color-bg:#080b12; --color-surface:#10141d; --color-surface-2:#161c28;
+    --color-fg:#eaf0f8; --color-muted:#94a1b6; --color-border:#222a38;
+    --color-accent:#e11d48; --color-accent-strong:#be123c; --color-accent-soft:#ffe4e6;
+    --color-success:#34c98a; --color-warning:#e0a44a; --color-error:#f0717c;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+    --shadow-md:0 8px 24px -10px rgba(0,0,0,.55);
+    --shadow-lg:0 40px 90px -30px rgba(0,0,0,.8);
+    --ring:0 0 0 3px rgba(59,130,246,.35);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:var(--font-body);font-size:16px;line-height:1.6;background:var(--color-bg);color:var(--color-fg);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  h1,h2,h3,h4{font-family:var(--font-display);letter-spacing:-.02em;line-height:1.08}
+  a{color:inherit;text-decoration:none}
+  p{text-wrap:pretty}
+  :focus-visible{outline:none;box-shadow:var(--ring);border-radius:var(--radius-sm)}
+  .wrap{width:100%;max-width:var(--maxw);margin-inline:auto;padding-inline:var(--space-6)}
+  .eyebrow{font-family:var(--font-mono);font-size:12px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent)}
+  .mono{font-family:var(--font-mono)}
+  .muted{color:var(--color-muted)}
+  .accent{color:var(--color-accent)}
+
+  /* ---- Buttons ---- */
+  .btn{font-family:var(--font-body);font-size:15px;font-weight:550;display:inline-flex;align-items:center;gap:var(--space-2);padding:var(--space-3) var(--space-5);border-radius:var(--radius-md);border:1px solid transparent;cursor:pointer;transition:background .18s,color .18s,transform .18s,box-shadow .18s,border-color .18s;min-height:42px}
+  .btn svg{width:17px;height:17px}
+  .btn-primary{background:var(--color-accent);color:#fff;box-shadow:var(--shadow-sm)}
+  .btn-primary:hover{background:var(--color-accent-strong);transform:translateY(-1px);box-shadow:var(--shadow-md)}
+  .btn-ghost{background:transparent;color:var(--color-fg);border-color:var(--color-border)}
+  .btn-ghost:hover{background:var(--color-surface-2);transform:translateY(-1px)}
+  .btn-sm{font-size:13px;padding:var(--space-2) var(--space-4);min-height:34px}
+
+  /* ---- Top view switcher (demo chrome) ---- */
+  .switcher{position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;padding:var(--space-2) var(--space-6);background:color-mix(in srgb,var(--color-bg) 82%,transparent);backdrop-filter:saturate(1.4) blur(12px);border-bottom:1px solid var(--color-border)}
+  .switcher .label{font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-muted);margin-right:var(--space-1)}
+  .tab{font-size:13px;font-weight:500;color:var(--color-muted);padding:var(--space-2) var(--space-3);border-radius:var(--radius-sm);cursor:pointer;border:1px solid transparent;background:none}
+  .tab:hover{color:var(--color-fg);background:var(--color-surface-2)}
+  .tab.active{color:var(--color-accent);background:var(--color-accent-soft);border-color:color-mix(in srgb,var(--color-accent) 25%,transparent)}
+  .theme-btn{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:var(--radius-sm);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-fg);cursor:pointer}
+  .theme-btn:hover{background:var(--color-surface-2)}
+
+  .view{display:none}
+  .view.active{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  /* ===================== LANDING ===================== */
+  .nav-primary{position:sticky;top:41px;z-index:40;height:68px;display:flex;align-items:center;background:color-mix(in srgb,var(--color-bg) 82%,transparent);backdrop-filter:saturate(1.4) blur(12px);border-bottom:1px solid var(--color-border)}
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;width:100%}
+  .brand{display:flex;align-items:center;gap:var(--space-2);font-family:var(--font-display);font-weight:600;font-size:19px}
+  .mark{width:30px;height:30px;border-radius:8px;background:var(--color-accent);display:flex;align-items:center;justify-content:center;color:#fff}
+  .nav-links{display:flex;gap:var(--space-1);list-style:none}
+  .nav-links a{font-size:14.5px;font-weight:500;color:var(--color-muted);padding:var(--space-2) var(--space-3);border-radius:var(--radius-sm)}
+  .nav-links a:hover{color:var(--color-fg);background:var(--color-surface-2)}
+  .nav-cta{display:flex;align-items:center;gap:var(--space-2)}
+  @media(max-width:980px){.nav-links{display:none}}
+
+  .hero{position:relative;overflow:hidden;background:radial-gradient(120% 80% at 88% -10%,var(--color-accent-soft) 0%,transparent 46%)}
+  .hero::before{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--color-border) 1px,transparent 1px),linear-gradient(90deg,var(--color-border) 1px,transparent 1px);background-size:56px 56px;opacity:.5;-webkit-mask-image:radial-gradient(110% 90% at 78% 8%,#000 0%,transparent 62%);mask-image:radial-gradient(110% 90% at 78% 8%,#000 0%,transparent 62%);pointer-events:none}
+  .hero-grid{position:relative;display:grid;grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr);gap:var(--space-8);align-items:center;padding-block:var(--space-9) var(--space-8)}
+  .hero-copy{max-width:540px}
+  .hero h1{font-size:clamp(40px,5vw,60px);font-weight:600;margin-top:var(--space-4)}
+  .hero-lead{color:var(--color-muted);font-size:18px;max-width:480px;margin-top:var(--space-4)}
+  .hero-actions{display:flex;gap:var(--space-3);margin-top:var(--space-6);flex-wrap:wrap}
+  .hero-proof{display:flex;gap:var(--space-6);margin-top:var(--space-7);padding-top:var(--space-5);border-top:1px solid var(--color-border)}
+  .proof-item .num{font-family:var(--font-display);font-size:26px;font-weight:600}
+  .proof-item .lbl{font-size:13px;color:var(--color-muted)}
+
+  /* app mockup in hero */
+  .app{transform:perspective(1800px) rotateY(-7deg) rotateX(2deg);transform-origin:left center;border:1px solid var(--color-border);border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-lg);overflow:hidden}
+  .app-bar{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-bottom:1px solid var(--color-border);background:var(--color-surface-2)}
+  .dot{width:11px;height:11px;border-radius:50%}.dot.r{background:#ec6a5e}.dot.y{background:#f4bf4f}.dot.g{background:#61c454}
+  .app-crumb{font-family:var(--font-mono);font-size:12px;color:var(--color-muted)}
+  .app-body{display:grid;grid-template-columns:168px 1fr}
+  .app-side{border-right:1px solid var(--color-border);padding:var(--space-3);font-size:13px}
+  .app-side .grp{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-muted);margin:var(--space-3) var(--space-2) var(--space-1)}
+  .side-item{display:flex;align-items:center;justify-content:space-between;padding:6px var(--space-2);border-radius:var(--radius-sm);color:var(--color-muted)}
+  .side-item.active{background:var(--color-accent-soft);color:var(--color-accent)}
+  .badge-mini{font-family:var(--font-mono);font-size:10px;background:var(--color-surface-2);padding:1px 6px;border-radius:999px}
+  .side-item.active .badge-mini{background:var(--color-accent);color:#fff}
+  .app-main{padding:var(--space-4)}
+  .app-main h4{font-size:15px}
+  .auto-chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--color-success);background:color-mix(in srgb,var(--color-success) 12%,transparent);padding:3px 8px;border-radius:999px}
+  .row{display:grid;grid-template-columns:54px 1fr auto auto;align-items:center;gap:var(--space-3);padding:var(--space-2);border-radius:var(--radius-sm);font-size:13px}
+  .row.hot{background:var(--color-surface-2)}
+  .row .id{font-family:var(--font-mono);font-size:11px;color:var(--color-muted)}
+  .row .sub{font-size:11px;color:var(--color-muted)}
+  .pill{font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:.03em;padding:3px 8px;border-radius:999px}
+  .pill.p1{color:var(--color-error);background:color-mix(in srgb,var(--color-error) 14%,transparent)}
+  .pill.prog{color:var(--color-accent);background:var(--color-accent-soft)}
+  .pill.block{color:var(--color-warning);background:color-mix(in srgb,var(--color-warning) 14%,transparent)}
+  .pill.done{color:var(--color-success);background:color-mix(in srgb,var(--color-success) 14%,transparent)}
+  .ava{width:24px;height:24px;border-radius:50%;font-family:var(--font-mono);font-size:10px;font-weight:600;color:#fff;display:flex;align-items:center;justify-content:center}
+  .ava.a{background:#5b6ef0}.ava.b{background:#d4774e}.ava.c{background:#3fa37a}.ava.d{background:#b057c4}
+  @media(max-width:980px){.hero-grid{grid-template-columns:1fr;gap:var(--space-7)}.app{transform:none}.hero-copy{max-width:620px}}
+
+  .section{padding-block:var(--space-9)}
+  .section-head{max-width:620px;margin-bottom:var(--space-7)}
+  .section-head h2{font-size:clamp(28px,3.4vw,38px);margin-top:var(--space-3)}
+  .section-head p{color:var(--color-muted);margin-top:var(--space-3)}
+  .features{display:grid;grid-template-columns:repeat(6,1fr);gap:var(--space-4)}
+  .feat{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-6);transition:transform .18s,box-shadow .18s,border-color .18s}
+  .feat:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:color-mix(in srgb,var(--color-accent) 35%,var(--color-border))}
+  .feat.lg{grid-column:span 4}.feat.sm{grid-column:span 2}
+  .feat-ico{width:42px;height:42px;border-radius:var(--radius-md);background:var(--color-accent-soft);color:var(--color-accent);display:flex;align-items:center;justify-content:center;margin-bottom:var(--space-4)}
+  .feat h3{font-size:20px;margin-bottom:var(--space-2)}
+  .feat p{color:var(--color-muted);font-size:15px}
+  .flow{display:flex;align-items:center;gap:var(--space-2);margin-top:var(--space-4);flex-wrap:wrap;font-size:13px}
+  .flow .node{display:flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--color-border);border-radius:999px}
+  .flow .d{width:7px;height:7px;border-radius:50%}
+  .tags{display:flex;gap:var(--space-2);margin-top:var(--space-4);flex-wrap:wrap}
+  .tag{font-family:var(--font-mono);font-size:11px;color:var(--color-muted);background:var(--color-surface-2);padding:var(--space-1) var(--space-3);border-radius:999px}
+  @media(max-width:980px){.features{grid-template-columns:repeat(2,1fr)}.feat.lg,.feat.sm{grid-column:span 1}}
+
+  .cta-block{position:relative;overflow:hidden;background:var(--color-fg);color:#fff;border-radius:var(--radius-lg);text-align:center;padding:var(--space-9) var(--space-8)}
+  .cta-block::after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px);background-size:44px 44px;-webkit-mask-image:radial-gradient(80% 120% at 50% 0%,#000,transparent 70%);mask-image:radial-gradient(80% 120% at 50% 0%,#000,transparent 70%)}
+  .cta-block>*{position:relative}
+  .cta-block .eyebrow{color:#93b4fb}
+  .cta-block h2{font-size:clamp(30px,4vw,44px);margin:var(--space-3) 0}
+  .cta-block p{color:rgba(255,255,255,.72);max-width:520px;margin:0 auto var(--space-6)}
+  .cta-actions{display:flex;gap:var(--space-3);justify-content:center;flex-wrap:wrap}
+  .cta-block .btn-ghost{color:#fff;border-color:rgba(255,255,255,.3)}
+  .cta-block .btn-ghost:hover{background:rgba(255,255,255,.08)}
+
+  .footer-meta{border-top:1px solid var(--color-border);margin-top:var(--space-9);padding-block:var(--space-7) var(--space-6)}
+  .footer-top{display:flex;justify-content:space-between;gap:var(--space-7);flex-wrap:wrap}
+  .footer-brand{max-width:260px}
+  .footer-brand p{color:var(--color-muted);font-size:14px;margin-top:var(--space-3)}
+  .fcol h5{font-size:13px;margin-bottom:var(--space-3)}
+  .fcol a{display:block;color:var(--color-muted);font-size:14px;padding:3px 0}
+  .fcol a:hover{color:var(--color-fg)}
+  .footer-bottom{display:flex;justify-content:space-between;border-top:1px solid var(--color-border);margin-top:var(--space-6);padding-top:var(--space-5);font-size:13px;color:var(--color-muted);flex-wrap:wrap;gap:var(--space-3)}
+  .footer-legal{display:flex;gap:var(--space-4)}
+
+  /* ===================== APP SHELL (dashboard/tickets/etc.) ===================== */
+  .shell{display:grid;grid-template-columns:224px 1fr;min-height:80vh}
+  .sidebar{border-right:1px solid var(--color-border);background:var(--color-surface);padding:var(--space-4)}
+  .sidebar .grp{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-muted);margin:var(--space-5) var(--space-2) var(--space-2)}
+  .nav-item{display:flex;align-items:center;justify-content:space-between;gap:var(--space-2);padding:var(--space-2) var(--space-3);border-radius:var(--radius-sm);color:var(--color-muted);font-size:14px;font-weight:500;cursor:pointer;margin-bottom:2px}
+  .nav-item:hover{background:var(--color-surface-2);color:var(--color-fg)}
+  .nav-item.active{background:var(--color-accent-soft);color:var(--color-accent)}
+  .nav-item .ico{display:flex}
+  .content{padding:var(--space-6)}
+  .page-head{display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-5);flex-wrap:wrap}
+  .page-head h1{font-size:24px}
+  .page-head .crumb{font-family:var(--font-mono);font-size:12px;color:var(--color-muted)}
+  .card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:var(--space-5)}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-4);margin-bottom:var(--space-5)}
+  .metric .k{font-size:13px;color:var(--color-muted)}
+  .metric .v{font-family:var(--font-display);font-size:30px;font-weight:600;margin-top:var(--space-1)}
+  .metric .delta{font-size:12px;font-weight:500}
+  .delta.up{color:var(--color-success)}.delta.down{color:var(--color-error)}
+  .grid-2{display:grid;grid-template-columns:1.4fr 1fr;gap:var(--space-4)}
+  .bar{height:8px;border-radius:999px;background:var(--color-surface-2);overflow:hidden;margin-top:6px}
+  .bar>span{display:block;height:100%;background:var(--color-accent)}
+  .legend{display:flex;align-items:center;gap:6px;font-size:13px;margin-top:var(--space-2)}
+  .legend .sw{width:10px;height:10px;border-radius:3px}
+
+  table.tbl{width:100%;border-collapse:collapse;font-size:14px}
+  table.tbl th{text-align:left;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--color-muted);font-weight:600;padding:var(--space-3);border-bottom:1px solid var(--color-border)}
+  table.tbl td{padding:var(--space-3);border-bottom:1px solid var(--color-border)}
+  table.tbl tr:hover td{background:var(--color-surface-2)}
+  .toolbar{display:flex;gap:var(--space-3);margin-bottom:var(--space-4);flex-wrap:wrap}
+  .input{font-family:var(--font-body);font-size:14px;padding:var(--space-2) var(--space-3);border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface);color:var(--color-fg);min-height:38px}
+  .select{appearance:none;padding-right:28px;background-image:linear-gradient(45deg,transparent 50%,var(--color-muted) 50%),linear-gradient(135deg,var(--color-muted) 50%,transparent 50%);background-position:calc(100% - 14px) 17px,calc(100% - 9px) 17px;background-size:5px 5px;background-repeat:no-repeat}
+  .status{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px}
+  .s-new{color:var(--color-muted);background:var(--color-surface-2)}
+  .s-active{color:var(--color-accent);background:var(--color-accent-soft)}
+  .s-blocked{color:var(--color-warning);background:color-mix(in srgb,var(--color-warning) 14%,transparent)}
+  .s-resolved{color:var(--color-success);background:color-mix(in srgb,var(--color-success) 14%,transparent)}
+
+  .detail-grid{display:grid;grid-template-columns:1fr 300px;gap:var(--space-4)}
+  .timer{font-family:var(--font-mono);font-size:13px;color:var(--color-warning)}
+  .comment{display:flex;gap:var(--space-3);padding:var(--space-3) 0;border-bottom:1px solid var(--color-border)}
+  .meta-row{display:flex;justify-content:space-between;font-size:13px;padding:var(--space-2) 0;border-bottom:1px solid var(--color-border)}
+  .meta-row .muted{color:var(--color-muted)}
+
+  .board{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-3)}
+  .col{background:var(--color-surface-2);border-radius:var(--radius-md);padding:var(--space-3);min-height:220px}
+  .col h4{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--color-muted);margin-bottom:var(--space-3);display:flex;justify-content:space-between}
+  .tcard{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:var(--space-3);margin-bottom:var(--space-2);box-shadow:var(--shadow-sm)}
+  .tcard .t{font-size:14px;font-weight:500}
+  .tcard .b{display:flex;justify-content:space-between;align-items:center;margin-top:var(--space-2)}
+
+  .wf-states{display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap;margin-top:var(--space-3)}
+  .wf-state{display:flex;align-items:center;gap:8px;padding:var(--space-2) var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface);font-size:14px;font-weight:500}
+  .wf-state.gate{border-color:color-mix(in srgb,var(--color-warning) 50%,var(--color-border))}
+  .arrow{color:var(--color-muted)}
+
+  @media(max-width:860px){.shell{grid-template-columns:1fr}.sidebar{display:none}.metrics{grid-template-columns:repeat(2,1fr)}.grid-2,.detail-grid{grid-template-columns:1fr}.board{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<a href="../index.html" aria-label="Back to the MDLC examples gallery" data-mdlc-backlink style="position:fixed;bottom:16px;left:16px;z-index:9000;display:inline-flex;align-items:center;gap:7px;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:13px;font-weight:600;line-height:1;color:#fff;background:rgba(13,17,28,.82);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:9px 15px 9px 12px;text-decoration:none;box-shadow:0 10px 30px -10px rgba(0,0,0,.55);transition:background .16s,transform .16s" onmouseover="this.style.background='rgba(37,99,235,.94)';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(13,17,28,.82)';this.style.transform='none'">← All examples</a>
+
+
+<!-- ============ DEMO VIEW SWITCHER ============ -->
+<div class="switcher">
+  <span class="label">WorkGrid · static preview</span>
+  <button class="tab active" data-view="home">Home</button>
+  <button class="tab" data-view="dashboard">Dashboard</button>
+  <button class="tab" data-view="tickets">Tickets</button>
+  <button class="tab" data-view="ticket">Ticket detail</button>
+  <button class="tab" data-view="projects">Projects board</button>
+  <button class="tab" data-view="workflows">Workflows</button>
+  <button class="theme-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme">◐</button>
+</div>
+
+<!-- ============ HOME / LANDING ============ -->
+<section class="view active" id="view-home">
+  <header class="nav-primary">
+    <div class="wrap nav-inner">
+      <a class="brand" href="#"><span class="mark">▦</span> WorkGrid</a>
+      <ul class="nav-links">
+        <li><a href="#platform">Platform</a></li>
+        <li><a href="#platform">Workflows</a></li>
+        <li><a href="#platform">Solutions</a></li>
+        <li><a href="#platform">Pricing</a></li>
+      </ul>
+      <div class="nav-cta">
+        <a class="btn btn-ghost btn-sm" href="#">Sign in</a>
+        <a class="btn btn-primary btn-sm" href="#">Book a demo →</a>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <span class="eyebrow">Unified work management</span>
+        <h1>One grid for every <span class="accent">ticket, task, and project</span> your team ships.</h1>
+        <p class="hero-lead">WorkGrid centralizes planning, tracking, and execution in a single workspace — so work routes itself, dependencies stay visible, and nothing stalls between intake and done.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#">Start free workspace →</a>
+          <a class="btn btn-ghost" href="#platform">▶ Watch the tour</a>
+        </div>
+        <div class="hero-proof">
+          <div class="proof-item"><div class="num">45 → 15 <span class="muted" style="font-size:15px">min</span></div><div class="lbl">Mean time to response</div></div>
+          <div class="proof-item"><div class="num">−40%</div><div class="lbl">Sprint scope creep</div></div>
+          <div class="proof-item"><div class="num">1</div><div class="lbl">Workspace, zero tool sprawl</div></div>
+        </div>
+      </div>
+      <div class="app" aria-hidden="true">
+        <div class="app-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="app-crumb">workgrid.app / service-desk / queue</span></div>
+        <div class="app-body">
+          <div class="app-side">
+            <div class="grp">Workspace</div>
+            <div class="side-item active">Service desk <span class="badge-mini">12</span></div>
+            <div class="side-item">Projects</div>
+            <div class="side-item">Tasks</div>
+            <div class="side-item">Workflows</div>
+            <div class="grp">Insight</div>
+            <div class="side-item">Portfolio</div>
+          </div>
+          <div class="app-main">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-3)">
+              <div><h4>Incident queue</h4><div class="mono muted" style="font-size:11px">P1 · routed by severity + skills</div></div>
+              <span class="auto-chip">⚡ Auto-routing on</span>
+            </div>
+            <div class="row hot"><span class="id">INC-4821</span><div><div>Checkout API latency spike</div><div class="sub">Auto-escalated · on-call paged</div></div><span class="pill p1">P1</span><span class="ava a">RK</span></div>
+            <div class="row"><span class="id">INC-4820</span><div><div>SSO token refresh failing</div><div class="sub">Routed to Identity team</div></div><span class="pill prog">ACTIVE</span><span class="ava b">MJ</span></div>
+            <div class="row"><span class="id">TSK-3190</span><div><div>Migrate billing webhooks</div><div class="sub">Blocked by INC-4821</div></div><span class="pill block">BLOCKED</span><span class="ava c">SP</span></div>
+            <div class="row"><span class="id">INC-4817</span><div><div>Dashboard export timeout</div><div class="sub">Resolved · customer notified</div></div><span class="pill done">CLOSED</span><span class="ava d">AL</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="platform">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">The platform</span>
+        <h2>Structure for the work. Visibility for everyone.</h2>
+        <p>Every workflow — incidents, sprints, runbooks, roadmaps — runs on one connected grid, so a change in one place updates everywhere it matters.</p>
+      </div>
+      <div class="features">
+        <div class="feat lg" tabindex="0">
+          <div class="feat-ico">⚡</div>
+          <h3>Automated routing &amp; escalation</h3>
+          <p>Tickets create themselves from email, route to the right on-call engineer by severity and skill, and escalate unresolved P1s after 30 minutes — driving mean time to response from 45 minutes down to 15.</p>
+          <div class="flow">
+            <span class="node"><span class="d" style="background:var(--color-muted)"></span>Intake</span><span class="arrow">→</span>
+            <span class="node"><span class="d" style="background:var(--color-accent)"></span>Route by skill</span><span class="arrow">→</span>
+            <span class="node"><span class="d" style="background:var(--color-warning)"></span>Escalate P1</span><span class="arrow">→</span>
+            <span class="node"><span class="d" style="background:var(--color-success)"></span>Resolve</span>
+          </div>
+        </div>
+        <div class="feat sm" tabindex="0">
+          <div class="feat-ico">⛓</div>
+          <h3>Dependencies &amp; critical path</h3>
+          <p>Link tasks across teams and see the critical path with resource conflicts highlighted before they slip the date.</p>
+          <div class="tags"><span class="tag">cross-team links</span><span class="tag">conflict flags</span></div>
+        </div>
+        <div class="feat sm" tabindex="0">
+          <div class="feat-ico">✓</div>
+          <h3>Runbooks with approval gates</h3>
+          <p>Execute templated task sequences with sign-off at each step, auto-escalation past SLA, and a full audit trail.</p>
+          <div class="tags"><span class="tag">SLA timers</span><span class="tag">audit log</span></div>
+        </div>
+        <div class="feat lg" tabindex="0">
+          <div class="feat-ico">▦</div>
+          <h3>Real-time portfolio dashboard</h3>
+          <p>Project health, budget burn, and outcome metrics update live from the underlying work data — no manual roll-ups, no weekly status meeting. Executives see exactly where every initiative stands and decide with current numbers.</p>
+          <div class="tags"><span class="tag">live from work data</span><span class="tag">budget burn</span><span class="tag">outcome metrics</span><span class="tag">velocity</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0">
+    <div class="wrap">
+      <div class="cta-block">
+        <span class="eyebrow">Move work forward</span>
+        <h2>Retire the tool sprawl. Run it all on the grid.</h2>
+        <p>Bring intake, planning, execution, and reporting into one workspace your whole team can see. Spin up a workspace in minutes — no migration weekend required.</p>
+        <div class="cta-actions">
+          <a class="btn btn-primary" href="#">Start free workspace →</a>
+          <a class="btn btn-ghost" href="#">Talk to sales</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer-meta">
+    <div class="wrap">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a class="brand" href="#"><span class="mark">▦</span> WorkGrid</a>
+          <p>One workspace to plan, track, and execute every piece of work your team ships.</p>
+        </div>
+        <div class="fcol"><h5>Product</h5><a href="#">Workflows</a><a href="#">Service desk</a><a href="#">Projects &amp; tasks</a><a href="#">Portfolio</a></div>
+        <div class="fcol"><h5>Solutions</h5><a href="#">IT service teams</a><a href="#">Engineering</a><a href="#">Operations</a><a href="#">Executives</a></div>
+        <div class="fcol"><h5>Company</h5><a href="#">About</a><a href="#">Security</a><a href="#">Documentation</a><a href="#">System status</a></div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 <span style="font-family:var(--font-display)">WorkGrid</span>, Inc. All rights reserved.</span>
+        <span class="footer-legal"><a href="#">Privacy</a><a href="#">Terms</a><a href="#">DPA</a><a href="#">Status</a></span>
+      </div>
+    </div>
+  </footer>
+</section>
+
+<!-- ============ DASHBOARD ============ -->
+<section class="view" id="view-dashboard">
+  <div class="shell">
+    <aside class="sidebar" id="sb-dashboard"></aside>
+    <main class="content">
+      <div class="page-head">
+        <div><div class="crumb">Acme Inc / Portfolio</div><h1>Executive dashboard</h1></div>
+        <a class="btn btn-primary btn-sm" href="#">Export report →</a>
+      </div>
+      <div class="metrics">
+        <div class="card metric"><div class="k">Open tickets</div><div class="v">23</div><div class="delta down">▲ 4 vs last week</div></div>
+        <div class="card metric"><div class="k">SLA breaching</div><div class="v" style="color:var(--color-warning)">2</div><div class="delta up">▼ 1 vs last week</div></div>
+        <div class="card metric"><div class="k">On-track projects</div><div class="v">7<span class="muted" style="font-size:16px">/9</span></div><div class="delta up">90% on time</div></div>
+        <div class="card metric"><div class="k">Budget burn</div><div class="v">42%</div><div class="delta up">$2.1M / $5.0M</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h4 style="font-size:15px;margin-bottom:var(--space-4)">Project health</h4>
+          <div style="font-size:14px">On track <span class="muted">7</span><div class="bar"><span style="width:78%;background:var(--color-success)"></span></div></div>
+          <div style="font-size:14px;margin-top:var(--space-3)">At risk <span class="muted">1</span><div class="bar"><span style="width:11%;background:var(--color-warning)"></span></div></div>
+          <div style="font-size:14px;margin-top:var(--space-3)">Off track <span class="muted">1</span><div class="bar"><span style="width:11%;background:var(--color-error)"></span></div></div>
+          <h4 style="font-size:15px;margin:var(--space-5) 0 var(--space-3)">Velocity — completed / week</h4>
+          <div style="display:flex;align-items:flex-end;gap:var(--space-3);height:90px">
+            <div style="flex:1;background:var(--color-surface-2);border-radius:6px 6px 0 0;height:46%"></div>
+            <div style="flex:1;background:var(--color-surface-2);border-radius:6px 6px 0 0;height:62%"></div>
+            <div style="flex:1;background:var(--color-surface-2);border-radius:6px 6px 0 0;height:54%"></div>
+            <div style="flex:1;background:var(--color-accent);border-radius:6px 6px 0 0;height:80%"></div>
+          </div>
+          <div class="mono muted" style="font-size:11px;display:flex;justify-content:space-between;margin-top:6px"><span>W-3</span><span>W-2</span><span>W-1</span><span>This wk</span></div>
+        </div>
+        <div class="card">
+          <h4 style="font-size:15px;margin-bottom:var(--space-4)">Tickets by severity</h4>
+          <div class="legend"><span class="sw" style="background:var(--color-error)"></span> P1 critical <span class="muted" style="margin-left:auto">3</span></div>
+          <div class="bar"><span style="width:30%;background:var(--color-error)"></span></div>
+          <div class="legend" style="margin-top:var(--space-3)"><span class="sw" style="background:var(--color-warning)"></span> P2 high <span class="muted" style="margin-left:auto">6</span></div>
+          <div class="bar"><span style="width:55%;background:var(--color-warning)"></span></div>
+          <div class="legend" style="margin-top:var(--space-3)"><span class="sw" style="background:var(--color-accent)"></span> P3 normal <span class="muted" style="margin-left:auto">11</span></div>
+          <div class="bar"><span style="width:80%"></span></div>
+          <div class="legend" style="margin-top:var(--space-3)"><span class="sw" style="background:var(--color-muted)"></span> P4 low <span class="muted" style="margin-left:auto">3</span></div>
+          <div class="bar"><span style="width:25%;background:var(--color-muted)"></span></div>
+          <div class="meta-row" style="margin-top:var(--space-5)"><span class="muted">99% audit trail completeness</span><span class="status s-resolved">healthy</span></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<!-- ============ TICKETS QUEUE ============ -->
+<section class="view" id="view-tickets">
+  <div class="shell">
+    <aside class="sidebar" id="sb-tickets"></aside>
+    <main class="content">
+      <div class="page-head">
+        <div><div class="crumb">Acme Inc / Service desk</div><h1>Tickets</h1></div>
+        <a class="btn btn-primary btn-sm" href="#">＋ New ticket</a>
+      </div>
+      <div class="toolbar">
+        <input class="input" placeholder="Search subject or body" style="flex:1;min-width:200px" aria-label="Search tickets" />
+        <select class="input select" aria-label="Filter by status"><option>All statuses</option><option>Active</option><option>Resolved</option></select>
+        <select class="input select" aria-label="Filter by severity"><option>All severities</option><option>P1</option><option>P2</option></select>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table class="tbl">
+          <thead><tr><th>#</th><th>Subject</th><th>Severity</th><th>Status</th><th>Assignee</th><th>Updated</th></tr></thead>
+          <tbody>
+            <tr><td class="mono muted">#4821</td><td style="font-weight:500">Checkout API latency spike</td><td><span class="pill p1">P1</span></td><td><span class="status s-active">active</span></td><td><span class="ava a" style="display:inline-flex">RK</span></td><td class="muted">2m ago</td></tr>
+            <tr><td class="mono muted">#4820</td><td style="font-weight:500">SSO token refresh failing</td><td><span class="pill" style="color:var(--color-warning);background:color-mix(in srgb,var(--color-warning) 14%,transparent)">P2</span></td><td><span class="status s-new">triage</span></td><td><span class="ava b" style="display:inline-flex">MJ</span></td><td class="muted">14m ago</td></tr>
+            <tr><td class="mono muted">#4819</td><td style="font-weight:500">Webhook retries exhausted</td><td><span class="pill" style="color:var(--color-warning);background:color-mix(in srgb,var(--color-warning) 14%,transparent)">P2</span></td><td><span class="status s-blocked">blocked</span></td><td><span class="ava c" style="display:inline-flex">SP</span></td><td class="muted">1h ago</td></tr>
+            <tr><td class="mono muted">#4817</td><td style="font-weight:500">Dashboard export timeout</td><td><span class="pill prog">P3</span></td><td><span class="status s-resolved">resolved</span></td><td><span class="ava d" style="display:inline-flex">AL</span></td><td class="muted">3h ago</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mono muted" style="font-size:12px;margin-top:var(--space-3)">Page 1 · 23 tickets · auto-routing on</div>
+    </main>
+  </div>
+</section>
+
+<!-- ============ TICKET DETAIL ============ -->
+<section class="view" id="view-ticket">
+  <div class="shell">
+    <aside class="sidebar" id="sb-ticket"></aside>
+    <main class="content">
+      <div class="page-head">
+        <div><div class="crumb">Service desk / Tickets / #4821</div><h1>Checkout API latency spike</h1></div>
+        <div style="display:flex;gap:var(--space-2)"><a class="btn btn-ghost btn-sm" href="#">Reopen</a><a class="btn btn-primary btn-sm" href="#">Resolve</a></div>
+      </div>
+      <div style="display:flex;gap:var(--space-3);align-items:center;margin-bottom:var(--space-5);flex-wrap:wrap">
+        <span class="pill p1">P1</span><span class="status s-active">active</span>
+        <span class="timer">⏱ SLA due in 11:42</span>
+        <span class="auto-chip">⚡ Auto-routed → RK</span>
+      </div>
+      <div class="detail-grid">
+        <div class="card">
+          <p style="margin-bottom:var(--space-4)">p95 latency on <code class="mono">/v1/checkout</code> jumped from 180ms to 2.4s after the 14:00 deploy. On-call paged; rollback in progress. Linked to <span class="accent">TSK-3190</span> (billing webhook migration).</p>
+          <h4 style="font-size:14px;margin:var(--space-4) 0 var(--space-3)">Activity</h4>
+          <div class="comment"><span class="ava a">RK</span><div><div style="font-size:14px"><b>Rae K.</b> <span class="muted" style="font-size:12px">· 2m ago</span></div><div style="font-size:14px">Rolling back deploy 0c1a. Watching p95.</div></div></div>
+          <div class="comment"><span class="ava" style="background:var(--color-muted)">SY</span><div><div style="font-size:14px"><b>System</b> <span class="muted" style="font-size:12px">· 6m ago</span></div><div class="muted" style="font-size:14px">Auto-escalated to P1 — on-call paged via PagerDuty.</div></div></div>
+          <div style="display:flex;gap:var(--space-2);margin-top:var(--space-4)"><input class="input" placeholder="Add a comment…" style="flex:1" aria-label="Add comment" /><button class="btn btn-primary btn-sm">Send</button></div>
+        </div>
+        <div class="card" style="height:fit-content">
+          <div class="meta-row"><span class="muted">Assignee</span><span>Rae K.</span></div>
+          <div class="meta-row"><span class="muted">Severity</span><span>P1 · Critical</span></div>
+          <div class="meta-row"><span class="muted">SLA policy</span><span>15m response</span></div>
+          <div class="meta-row"><span class="muted">Source</span><span>email</span></div>
+          <div class="meta-row"><span class="muted">First response</span><span>0:38</span></div>
+          <div class="meta-row" style="border:none"><span class="muted">Workflow</span><span class="accent">Change Runbook</span></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<!-- ============ PROJECTS BOARD ============ -->
+<section class="view" id="view-projects">
+  <div class="shell">
+    <aside class="sidebar" id="sb-projects"></aside>
+    <main class="content">
+      <div class="page-head">
+        <div><div class="crumb">Acme Inc / Projects / PLAT</div><h1>Platform Revamp</h1></div>
+        <a class="btn btn-primary btn-sm" href="#">＋ Add task</a>
+      </div>
+      <div class="metrics" style="grid-template-columns:repeat(3,1fr)">
+        <div class="card metric"><div class="k">Health</div><div class="v" style="color:var(--color-success);font-size:22px">On track</div></div>
+        <div class="card metric"><div class="k">Budget burn</div><div class="v">42%</div><div class="delta">$2.1M / $5.0M</div></div>
+        <div class="card metric"><div class="k">Blocked tasks</div><div class="v" style="color:var(--color-warning)">1</div></div>
+      </div>
+      <div class="board">
+        <div class="col"><h4>To do <span>1</span></h4>
+          <div class="tcard"><div class="t">Design portfolio dashboard</div><div class="b"><span class="mono muted" style="font-size:11px">PLAT-2</span><span class="pill prog">8 pts</span></div></div>
+        </div>
+        <div class="col"><h4>In progress <span>1</span></h4>
+          <div class="tcard"><div class="t">Migrate billing webhooks</div><div class="b"><span class="mono muted" style="font-size:11px">PLAT-1</span><span class="ava a" style="display:inline-flex">RK</span></div></div>
+        </div>
+        <div class="col"><h4>Blocked <span>1</span></h4>
+          <div class="tcard" style="border-color:color-mix(in srgb,var(--color-warning) 45%,var(--color-border))"><div class="t">Ship workflow approvals</div><div style="font-size:12px;color:var(--color-warning);margin-top:4px">⛔ Blocked by PLAT-1</div><div class="b"><span class="mono muted" style="font-size:11px">PLAT-3</span><span class="pill block">URGENT</span></div></div>
+        </div>
+        <div class="col"><h4>Done <span>0</span></h4>
+          <div class="muted" style="font-size:13px;text-align:center;padding:var(--space-5) 0">Nothing here yet</div>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<!-- ============ WORKFLOWS ============ -->
+<section class="view" id="view-workflows">
+  <div class="shell">
+    <aside class="sidebar" id="sb-workflows"></aside>
+    <main class="content">
+      <div class="page-head">
+        <div><div class="crumb">Acme Inc / Workflows</div><h1>Change Runbook</h1></div>
+        <a class="btn btn-primary btn-sm" href="#">Start run</a>
+      </div>
+      <div class="card" style="margin-bottom:var(--space-4)">
+        <h4 style="font-size:14px;color:var(--color-muted)">States &amp; transitions</h4>
+        <div class="wf-states">
+          <span class="wf-state"><span class="dot g"></span>Intake</span>
+          <span class="arrow">→</span>
+          <span class="wf-state gate">🔒 Approval Gate</span>
+          <span class="arrow">→</span>
+          <span class="wf-state"><span class="dot" style="background:var(--color-success)"></span>Done</span>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-3)">
+          <h4 style="font-size:15px">Pending approvals</h4><span class="status s-blocked">1 waiting</span>
+        </div>
+        <div class="meta-row">
+          <div><div style="font-weight:500">Run #RUN-204 · INC-4821 rollback</div><div class="muted" style="font-size:12px">Requested by Rae K. · awaiting Approval Gate</div></div>
+          <div style="display:flex;gap:var(--space-2)"><button class="btn btn-ghost btn-sm">Reject</button><button class="btn btn-primary btn-sm">Approve</button></div>
+        </div>
+        <div class="meta-row" style="border:none">
+          <div><div style="font-weight:500">Run #RUN-203 · DB index migration</div><div class="muted" style="font-size:12px">Approved by Mo J. · completed</div></div>
+          <span class="status s-resolved">completed</span>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<script>
+  // ---- View switching ----
+  const tabs = document.querySelectorAll('.tab');
+  const views = document.querySelectorAll('.view');
+  function show(id){
+    views.forEach(v=>v.classList.toggle('active', v.id==='view-'+id));
+    tabs.forEach(t=>t.classList.toggle('active', t.dataset.view===id));
+    window.scrollTo({top:0,behavior:'instant'});
+  }
+  tabs.forEach(t=>t.addEventListener('click',()=>show(t.dataset.view)));
+
+  // ---- Shared app sidebar (rendered into each app view) ----
+  const NAV = [
+    ['Workspace', [['Dashboard','dashboard'],['Tickets','tickets'],['Projects','projects'],['Workflows','workflows'],['Approvals','workflows']]],
+    ['Insight', [['Reports','dashboard'],['Audit','dashboard']]]
+  ];
+  function sidebar(active){
+    let html = '<a class="brand" href="#" style="margin-bottom:var(--space-4)"><span class="mark">▦</span> WorkGrid</a>';
+    for(const [grp, items] of NAV){
+      html += '<div class="grp">'+grp+'</div>';
+      for(const [name,view] of items){
+        const on = (view===active) ? ' active' : '';
+        html += '<div class="nav-item'+on+'" data-view="'+view+'"><span>'+name+'</span></div>';
+      }
+    }
+    return html;
+  }
+  document.getElementById('sb-dashboard').innerHTML = sidebar('dashboard');
+  document.getElementById('sb-tickets').innerHTML = sidebar('tickets');
+  document.getElementById('sb-ticket').innerHTML = sidebar('tickets');
+  document.getElementById('sb-projects').innerHTML = sidebar('projects');
+  document.getElementById('sb-workflows').innerHTML = sidebar('workflows');
+  document.querySelectorAll('.nav-item').forEach(n=>n.addEventListener('click',()=>show(n.dataset.view)));
+
+  // ---- Theme toggle (persists, honors system default) ----
+  const root = document.documentElement;
+  const saved = localStorage.getItem('wg-theme');
+  if(saved){ root.setAttribute('data-theme', saved); }
+  else if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){ root.setAttribute('data-theme','dark'); }
+  document.getElementById('themeBtn').addEventListener('click',()=>{
+    const next = root.getAttribute('data-theme')==='dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('wg-theme', next);
+  });
+</script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 
 # MDLC — Example Builds
 
-### Five real applications, each built end-to-end by the MDLC methodology.
+### Six real applications, each built end-to-end by the MDLC methodology.
 
 **[🌐 Browse the live gallery →](https://mdlcai.github.io/ai-mdlc-kernel-examples/)**
 
@@ -14,7 +14,7 @@
 
 ## What you're looking at
 
-**MDLC** (the Model-Driven Lifecycle) turns a single `RESEARCH.md` blueprint into a working, reviewed application — driving it through architecture, build, and a battery of automated quality gates. These five examples are the proof. Each one was generated, not hand-written, and each ships the **complete paper trail**: the blueprint that started it, the architecture that fell out of it, the spec and decisions it was built to, and the build report showing every gate it passed.
+**MDLC** (the Model-Driven Lifecycle) turns a single `RESEARCH.md` blueprint into a working, reviewed application — driving it through architecture, build, and a battery of automated quality gates. These six examples are the proof. Each one was generated, not hand-written, and each ships the **complete paper trail**: the blueprint that started it, the architecture that fell out of it, the spec and decisions it was built to, and the build report showing every gate it passed.
 
 Open any folder and read it top to bottom — `RESEARCH.md` → `ARCHITECTURE.md` → `SPEC.md` → `DECISIONS.md` → `REPORT.md` — and you can watch the methodology think.
 
@@ -27,6 +27,7 @@ Open any folder and read it top to bottom — `RESEARCH.md` → `ARCHITECTURE.md
 | [<img src="recon/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/recon/index.html) | **[Recon](recon/)** | Continuous attack-surface monitoring — alerts the moment your internet exposure changes. | 29 tests · 8/8 smoke · 15/15 invariants |
 | [<img src="smartcoder/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/smartcoder/index.html) | **[SmartCoder](smartcoder/)** | Medical-coding workflow & QA training on synthetic encounters — no real PHI. | 14 tests · 16/16 smoke · Reviewer PASS |
 | [<img src="servicehub/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/servicehub/index.html) | **[ServiceHub](servicehub/)** | Multi-tenant IT service management — requests, incidents, approvals, SLA tracking. | 25 tests · 22/22 smoke · 14/14 invariants |
+| [<img src="workgrid/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/workgrid/index.html) | **[WorkGrid](workgrid/)** | One workspace for tickets, tasks, and projects — self-routing work, live dashboards. | 15/15 smoke · 13/13 invariants |
 
 > Previews are self-contained, multi-screen HTML — design tokens and screens lifted from each deployed build. Use the screen switcher in the top-right of any preview to walk the app.
 

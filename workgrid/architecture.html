@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>WorkGrid — System Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --color-bg:#f6f8fb; --color-surface:#ffffff; --color-surface-2:#eef2f8;
+    --color-fg:#0d1526; --color-muted:#5a6679; --color-border:#e3e8f0;
+    --color-accent:#e11d48; --color-accent-strong:#be123c; --color-accent-soft:#ffe4e6;
+    --color-success:#15885a; --color-warning:#b46710; --color-error:#cc3340;
+    --font-display:"Space Grotesk",system-ui,sans-serif;
+    --font-body:"Inter",system-ui,sans-serif;
+    --font-mono:"JetBrains Mono",ui-monospace,monospace;
+    --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:24px;
+    --space-6:32px;--space-7:48px;--space-8:64px;--space-9:96px;
+    --radius-sm:5px;--radius-md:10px;--radius-lg:18px;
+    --shadow-sm:0 1px 2px rgba(13,21,38,.05);
+    --shadow-md:0 8px 24px -10px rgba(13,21,38,.16);
+    --maxw:1180px; --ring:0 0 0 3px var(--color-accent-soft);
+  }
+  [data-theme="dark"]{
+    --color-bg:#080b12; --color-surface:#10141d; --color-surface-2:#161c28;
+    --color-fg:#eaf0f8; --color-muted:#94a1b6; --color-border:#222a38;
+    --color-accent:#e11d48; --color-accent-strong:#be123c; --color-accent-soft:#ffe4e6;
+    --color-success:#34c98a; --color-warning:#e0a44a; --color-error:#f0717c;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.4); --shadow-md:0 8px 24px -10px rgba(0,0,0,.55);
+    --ring:0 0 0 3px rgba(59,130,246,.35);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--font-body);background:var(--color-bg);color:var(--color-fg);line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:var(--space-9)}
+  h1,h2,h3,h4{font-family:var(--font-display);letter-spacing:-.02em;line-height:1.1}
+  .mono{font-family:var(--font-mono)}
+  .muted{color:var(--color-muted)}
+  .wrap{max-width:var(--maxw);margin-inline:auto;padding-inline:var(--space-6)}
+
+  header.top{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--color-bg) 85%,transparent);backdrop-filter:saturate(1.4) blur(12px);border-bottom:1px solid var(--color-border)}
+  .top-inner{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-6);max-width:var(--maxw);margin-inline:auto}
+  .brand{display:flex;align-items:center;gap:var(--space-2);font-family:var(--font-display);font-weight:600;font-size:18px}
+  .mark{width:28px;height:28px;border-radius:7px;background:var(--color-accent);color:#fff;display:flex;align-items:center;justify-content:center}
+  .pill{font-family:var(--font-mono);font-size:11px;color:var(--color-muted);border:1px solid var(--color-border);border-radius:999px;padding:3px 10px}
+  .theme-btn{margin-left:auto;width:34px;height:34px;border-radius:var(--radius-sm);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-fg);cursor:pointer}
+  .theme-btn:hover{background:var(--color-surface-2)}
+
+  .hero{padding:var(--space-7) 0 var(--space-5)}
+  .hero h1{font-size:34px}
+  .hero p{color:var(--color-muted);max-width:760px;margin-top:var(--space-3)}
+  .eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent)}
+
+  /* layer band */
+  .layer{position:relative;border:1px solid var(--color-border);border-radius:var(--radius-lg);background:var(--color-surface);padding:var(--space-5);margin-top:var(--space-4)}
+  .layer-tag{position:absolute;top:-11px;left:var(--space-5);background:var(--color-bg);padding:0 var(--space-3);font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-muted)}
+  .layer.edge{border-color:color-mix(in srgb,var(--color-accent) 35%,var(--color-border))}
+  .row{display:grid;gap:var(--space-4)}
+  .cols-2{grid-template-columns:1fr 1fr}
+  .cols-3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:820px){.cols-2,.cols-3{grid-template-columns:1fr}}
+
+  .node{border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface);padding:var(--space-4);box-shadow:var(--shadow-sm)}
+  .node.accent{border-color:color-mix(in srgb,var(--color-accent) 45%,var(--color-border));background:color-mix(in srgb,var(--color-accent-soft) 50%,var(--color-surface))}
+  .node.soft{background:var(--color-surface-2);box-shadow:none}
+  .node h3{font-size:16px;display:flex;align-items:center;gap:var(--space-2)}
+  .node .sub{font-family:var(--font-mono);font-size:11px;color:var(--color-muted);margin-top:2px}
+  .node ul{list-style:none;margin-top:var(--space-3);display:flex;flex-direction:column;gap:6px}
+  .node li{font-size:13px;display:flex;gap:8px;align-items:flex-start}
+  .node li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--color-accent);margin-top:6px;flex:none}
+  .chiprow{display:flex;flex-wrap:wrap;gap:6px;margin-top:var(--space-3)}
+  .chip{font-family:var(--font-mono);font-size:11px;background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:999px;padding:2px 9px;color:var(--color-muted)}
+  .dotic{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;background:var(--color-accent-soft);color:var(--color-accent)}
+
+  .flowdown{display:flex;flex-direction:column;align-items:center;color:var(--color-muted);font-family:var(--font-mono);font-size:11px;padding:var(--space-2) 0}
+  .flowdown .ar{font-size:18px;line-height:1;color:var(--color-accent)}
+  .biarrow{justify-content:center}
+
+  .pipeline{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;margin-top:var(--space-3)}
+  .stage{flex:1;min-width:120px;border:1px dashed var(--color-border);border-radius:var(--radius-sm);padding:var(--space-3);font-size:12px;text-align:center;background:var(--color-surface-2);position:relative}
+  .stage b{font-family:var(--font-mono);font-size:11px;color:var(--color-accent)}
+  .stage+.stage{margin-left:18px}
+  .stage+.stage::before{content:"→";position:absolute;left:-15px;top:50%;transform:translateY(-50%);color:var(--color-accent)}
+
+  .flowsteps{counter-reset:step;display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3)}
+  @media(max-width:820px){.flowsteps{grid-template-columns:1fr}}
+  .step{counter-increment:step;position:relative;border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:var(--space-3) var(--space-3) var(--space-3) 44px;font-size:13px;background:var(--color-surface)}
+  .step::before{content:counter(step);position:absolute;left:10px;top:10px;width:24px;height:24px;border-radius:50%;background:var(--color-accent);color:#fff;font-family:var(--font-mono);font-size:12px;display:flex;align-items:center;justify-content:center}
+  .step b{font-weight:600}
+
+  .legend{display:flex;gap:var(--space-5);flex-wrap:wrap;font-size:12px;color:var(--color-muted);margin-top:var(--space-3)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:12px;height:12px;border-radius:3px;border:1px solid var(--color-border)}
+
+  .invgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--space-2);margin-top:var(--space-3)}
+  @media(max-width:820px){.invgrid{grid-template-columns:1fr}}
+  .inv{font-size:12.5px;display:flex;gap:8px;align-items:flex-start;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:var(--space-2) var(--space-3)}
+  .inv .id{font-family:var(--font-mono);color:var(--color-accent);font-size:11px;flex:none}
+  footer.foot{margin-top:var(--space-7);border-top:1px solid var(--color-border);padding-top:var(--space-4);font-size:12px;color:var(--color-muted)}
+</style>
+</head>
+<body>
+<a href="../index.html" aria-label="Back to the MDLC examples gallery" data-mdlc-backlink style="position:fixed;bottom:16px;left:16px;z-index:9000;display:inline-flex;align-items:center;gap:7px;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:13px;font-weight:600;line-height:1;color:#fff;background:rgba(13,17,28,.82);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:9px 15px 9px 12px;text-decoration:none;box-shadow:0 10px 30px -10px rgba(0,0,0,.55);transition:background .16s,transform .16s" onmouseover="this.style.background='rgba(37,99,235,.94)';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(13,17,28,.82)';this.style.transform='none'">← All examples</a>
+
+
+<header class="top">
+  <div class="top-inner">
+    <span class="brand"><span class="mark">▦</span> WorkGrid</span>
+    <span class="pill">System Architecture · v0.1.2</span>
+    <button class="theme-btn" id="themeBtn" aria-label="Toggle theme" title="Toggle theme">◐</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="hero">
+    <span class="eyebrow">Architecture overview</span>
+    <h1>WorkGrid — multi-tenant work-management platform</h1>
+    <p>Monorepo: <span class="mono">apps/web</span> (Next.js), <span class="mono">apps/api</span> (NestJS + BullMQ worker), <span class="mono">packages/shared</span> (contracts). HTTPS-only, multi-tenant via PostgreSQL Row-Level Security, transactional outbox for dual-write safety, real-time over Socket.IO. Read top-to-bottom; arrows show request &amp; data flow.</p>
+    <div class="legend">
+      <span><span class="sw" style="background:var(--color-accent-soft);border-color:var(--color-accent)"></span> request path</span>
+      <span><span class="sw" style="background:var(--color-surface-2)"></span> infrastructure</span>
+      <span><span class="ar" style="color:var(--color-accent)">↕</span> bidirectional</span>
+      <span class="mono">INV-n = architectural invariant (invariants.json)</span>
+    </div>
+  </section>
+
+  <!-- CLIENT -->
+  <div class="layer">
+    <span class="layer-tag">Client</span>
+    <div class="node accent">
+      <h3><span class="dotic">🖥</span> Browser (web)</h3>
+      <div class="sub">target_platforms: web · WCAG 2.2 AA</div>
+      <div class="chiprow"><span class="chip">HTTPS / WSS</span><span class="chip">session cookie</span><span class="chip">X-Org-Id header</span></div>
+    </div>
+  </div>
+
+  <div class="flowdown"><span class="ar">↓</span> HTTPS 443 · WSS</div>
+
+  <!-- EDGE -->
+  <div class="layer edge">
+    <span class="layer-tag">Edge — TLS termination</span>
+    <div class="node">
+      <h3><span class="dotic">🔒</span> nginx reverse proxy</h3>
+      <div class="sub">protocol_support: HTTPS only (ADR-0009)</div>
+      <ul>
+        <li>HTTP→HTTPS 301 redirect · HSTS (the only plaintext served is the redirect)</li>
+        <li>Routes <span class="mono">/</span> → web · <span class="mono">/api/</span> → api (strips prefix → <span class="mono">/v1</span>) · <span class="mono">/socket.io/</span> → api (WS upgrade)</li>
+        <li>Header-buffer sizing 16k / 8×32k (large-cookie resilience)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="flowdown"><span class="ar">↓</span></div>
+
+  <!-- APP TIER -->
+  <div class="layer">
+    <span class="layer-tag">Application tier</span>
+    <div class="row cols-2">
+      <div class="node">
+        <h3><span class="dotic">▲</span> apps/web — Next.js 16</h3>
+        <div class="sub">App Router · standalone</div>
+        <ul>
+          <li>RSC pages + client components; ported landing on copied design tokens</li>
+          <li>TanStack Query (server state) · Zustand (UI state)</li>
+          <li>shadcn-style UI · Tailwind · design tokens (INV-9/17)</li>
+        </ul>
+      </div>
+      <div class="node accent">
+        <h3><span class="dotic">⬡</span> apps/api — NestJS 11</h3>
+        <div class="sub">REST · URL-path versioning /v1 (INV-2)</div>
+        <div class="muted" style="font-size:12px;margin-top:8px">Per-request guard + interceptor pipeline:</div>
+        <div class="pipeline">
+          <div class="stage"><b>Throttler</b><br/>Redis rate limit</div>
+          <div class="stage"><b>JwtAuth</b><br/>verify token</div>
+          <div class="stage"><b>Tenant</b><br/>resolve org/role</div>
+          <div class="stage"><b>Rbac</b><br/>deny-by-default</div>
+        </div>
+        <div class="pipeline" style="margin-top:10px">
+          <div class="stage"><b>TenantScope</b><br/>tx + SET LOCAL GUC</div>
+          <div class="stage"><b>Audit</b><br/>append-only log</div>
+          <div class="stage"><b>Transform</b><br/>problem+json</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="node soft" style="margin-top:var(--space-4)">
+      <h3 style="font-size:14px">Domain modules <span class="muted mono" style="font-size:11px;font-weight:400">apps/api/src/modules</span></h3>
+      <div class="chiprow">
+        <span class="chip">auth</span><span class="chip">orgs · members (RBAC)</span><span class="chip">projects</span><span class="chip">tasks (DAG deps)</span>
+        <span class="chip">tickets · SLA · escalation</span><span class="chip">workflows · approvals</span><span class="chip">dashboard</span><span class="chip">notifications</span>
+        <span class="chip">reports (PDF/CSV/JSON)</span><span class="chip">webhooks</span><span class="chip">integrations</span><span class="chip">audit</span><span class="chip">events</span><span class="chip">health</span><span class="chip">outbox</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="flowdown"><span class="ar">↕</span> TypeORM (pooled) · ioredis · Socket.IO adapter</div>
+
+  <!-- DATA + RUNTIME -->
+  <div class="layer">
+    <span class="layer-tag">Data &amp; runtime</span>
+    <div class="row cols-3">
+      <div class="node">
+        <h3><span class="dotic">🛢</span> PostgreSQL 16</h3>
+        <div class="sub">database_preference: PostgreSQL</div>
+        <ul>
+          <li>Row-Level Security <b>ENABLE + FORCE</b> per tenant table (INV-14)</li>
+          <li>Policy: <span class="mono">organization_id = current_setting('app.current_tenant_id')</span></li>
+          <li>Optimistic <span class="mono">@VersionColumn</span> · unique idempotency keys (INV-7/8/10)</li>
+          <li>Daily backups + WAL/PITR</li>
+        </ul>
+      </div>
+      <div class="node">
+        <h3><span class="dotic">⚡</span> Redis 7</h3>
+        <div class="sub">background_jobs: Bull + Redis</div>
+        <ul>
+          <li>BullMQ queues (outbox-relay, sla-escalation, notifications, reports)</li>
+          <li>Distributed rate-limit store (INV-6)</li>
+          <li>Socket.IO pub/sub adapter (multi-pod fan-out)</li>
+        </ul>
+      </div>
+      <div class="node">
+        <h3><span class="dotic">⚙</span> apps/api worker</h3>
+        <div class="sub">separate process · scales independently</div>
+        <ul>
+          <li>Outbox relay → delivers side effects idempotently</li>
+          <li>SLA sweep → recompute breaches from <span class="mono">due_at</span></li>
+          <li>Sets tenant GUC per org when touching RLS tables</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="flowdown biarrow"><span class="ar">↕</span> outbound (signed) · inbound webhooks (HMAC-verified)</div>
+
+  <!-- EXTERNAL -->
+  <div class="layer">
+    <span class="layer-tag">External services — no-op adapters until configured</span>
+    <div class="row cols-3">
+      <div class="node soft"><h3 style="font-size:15px">✉ Resend</h3><div class="sub">email · guaranteed delivery via outbox</div></div>
+      <div class="node soft"><h3 style="font-size:15px">🐙 GitHub</h3><div class="sub">webhooks (X-Hub-Signature-256) + REST</div></div>
+      <div class="node soft"><h3 style="font-size:15px">💬 Slack</h3><div class="sub">signed events (v0=) · incoming webhook</div></div>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:var(--space-3)">＋ Sentry (error reporting) · OpenTelemetry/APM hooks · structured JSON logs with PII redaction (INV-13)</div>
+  </div>
+
+  <!-- REQUEST FLOW -->
+  <div class="layer" style="margin-top:var(--space-6)">
+    <span class="layer-tag">Authenticated mutation — request flow</span>
+    <div class="flowsteps">
+      <div class="step"><b>TLS terminate.</b> nginx forwards; helmet sets HSTS + security headers.</div>
+      <div class="step"><b>Authenticate.</b> JwtAuthGuard validates the access token → principal.</div>
+      <div class="step"><b>Resolve tenant.</b> TenantGuard checks membership for X-Org-Id; non-member → <span class="mono">NOT_FOUND</span> (no leak).</div>
+      <div class="step"><b>Authorize.</b> RbacGuard enforces the route's minimum role (deny-by-default).</div>
+      <div class="step"><b>Scope.</b> TenantScope opens a tx and <span class="mono">SET LOCAL app.current_tenant_id</span> so RLS applies.</div>
+      <div class="step"><b>Execute.</b> Service runs domain logic; external side effects append an <span class="mono">outbox_event</span> in the same tx.</div>
+      <div class="step"><b>Audit.</b> AuditInterceptor writes an append-only <span class="mono">audit_log</span> row before commit.</div>
+      <div class="step"><b>Commit &amp; emit.</b> Worker relays the outbox; EventsGateway emits to room <span class="mono">tenant:&lt;org&gt;</span> (INV-15). Response shaped as <span class="mono">application/problem+json</span> on error (RFC 9457).</div>
+    </div>
+  </div>
+
+  <!-- CROSS-CUTTING -->
+  <div class="row cols-2" style="margin-top:var(--space-4)">
+    <div class="layer" style="margin:0">
+      <span class="layer-tag">Dual-write safety</span>
+      <div class="pipeline">
+        <div class="stage"><b>domain write</b><br/>+ outbox row (1 tx)</div>
+        <div class="stage"><b>relay worker</b><br/>idempotency_key</div>
+        <div class="stage"><b>deliver</b><br/>retry → DLQ</div>
+      </div>
+      <p class="muted" style="font-size:12.5px;margin-top:var(--space-3)">Transactional outbox (ADR-0007) eliminates "DB committed but webhook lost / webhook sent but DB rolled back". Inbound webhooks verify HMAC over the raw body <b>before</b> any DB read (INV-4) and dedup by <span class="mono">(source, external_id)</span>.</p>
+    </div>
+    <div class="layer" style="margin:0">
+      <span class="layer-tag">Tenant isolation (defense-in-depth)</span>
+      <p class="muted" style="font-size:12.5px;margin-top:var(--space-2)">Two enforced layers (ADR-0005): the DB rejects cross-tenant rows via RLS FORCE even if a query forgets the filter; the service layer keeps the GUC contract honest by routing every scoped read/write through the per-request transactional manager. Identity tables (users/orgs/memberships) are intentionally un-scoped so auth can resolve a user before tenant context exists.</p>
+    </div>
+  </div>
+
+  <!-- INVARIANTS -->
+  <div class="layer" style="margin-top:var(--space-4)">
+    <span class="layer-tag">Architectural invariants — §9 / invariants.json (lint-enforced)</span>
+    <div class="invgrid">
+      <div class="inv"><span class="id">INV-1</span> Scoped DB access only via the service/repository layer.</div>
+      <div class="inv"><span class="id">INV-2</span> Global URL-path versioning; no hardcoded <span class="mono">v1</span> in controllers.</div>
+      <div class="inv"><span class="id">INV-4</span> Webhook signature verified before processing.</div>
+      <div class="inv"><span class="id">INV-5</span> <span class="mono">process.env</span> only in the config layer.</div>
+      <div class="inv"><span class="id">INV-6</span> Distributed (Redis) rate limiting configured.</div>
+      <div class="inv"><span class="id">INV-7/8/10</span> Unique idempotency / tenancy constraints.</div>
+      <div class="inv"><span class="id">INV-9/17</span> UI uses design tokens; no raw hex.</div>
+      <div class="inv"><span class="id">INV-11</span> Append-only audit log.</div>
+      <div class="inv"><span class="id">INV-14</span> RLS ENABLE+FORCE per tenant table.</div>
+      <div class="inv"><span class="id">INV-15</span> Real-time emits scoped to tenant rooms.</div>
+      <div class="inv"><span class="id">INV-12/13</span> Structured logs; PII redacted.</div>
+      <div class="inv"><span class="id">INV-16</span> UI coverage: every screen/endpoint/workflow reachable + e2e.</div>
+    </div>
+  </div>
+
+  <footer class="foot">
+    WorkGrid · NestJS 11 · Next.js 16 · TypeORM · PostgreSQL 16 (RLS) · Redis 7 · BullMQ · Socket.IO · nginx (TLS) · Docker / Kubernetes.
+    Source of truth: <span class="mono">ARCHITECTURE.md</span> (§9 invariants) and <span class="mono">SPEC.md</span>. Built with the MDLC™ pipeline.
+  </footer>
+</div>
+
+<script>
+  const root=document.documentElement;
+  const saved=localStorage.getItem('wg-theme');
+  if(saved) root.setAttribute('data-theme',saved);
+  else if(matchMedia('(prefers-color-scheme: dark)').matches) root.setAttribute('data-theme','dark');
+  document.getElementById('themeBtn').addEventListener('click',()=>{
+    const n=root.getAttribute('data-theme')==='dark'?'light':'dark';
+    root.setAttribute('data-theme',n);localStorage.setItem('wg-theme',n);
+  });
+</script>
+</body>
+</html>
