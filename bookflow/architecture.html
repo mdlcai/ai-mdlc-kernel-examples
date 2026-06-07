@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BookFlow — Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --color-bg:#f4f4f3;--color-surface:#fff;--color-surface-2:#ebebe9;--color-fg:#111;
+    --color-muted:#5c5c5c;--color-border:#dcdcd9;--color-accent:#000;--color-accent-soft:#e6e6e3;
+    --color-success:#1c7c4a;--color-warning:#9a6400;--color-error:#b3261e;
+    --font-display:"IBM Plex Sans",sans-serif;--font-body:"Geist",sans-serif;--font-mono:"Geist Mono",monospace;
+    --radius-sm:4px;--radius-md:6px;--radius-lg:10px;
+    --shadow-md:0 1px 2px rgba(17,17,17,.06),0 4px 12px rgba(17,17,17,.04);
+  }
+  .dark{
+    --color-bg:#0c0c0b;--color-surface:#161615;--color-surface-2:#1e1e1c;--color-fg:#ececea;
+    --color-muted:#9a9a96;--color-border:#2c2c2a;--color-accent:#fff;--color-accent-soft:#2a2a28;
+    --color-success:#4ec07e;--color-warning:#d9a23b;--color-error:#e06b63;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--color-bg);color:var(--color-fg);font-family:var(--font-body);font-size:13px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1,h2,h3{font-family:var(--font-display);font-weight:600;letter-spacing:-.01em}
+  .mono{font-family:var(--font-mono)}
+  .wrap{max-width:1320px;margin:0 auto;padding:24px}
+  header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+  .logo{width:22px;height:22px;border-radius:var(--radius-sm);background:var(--color-accent);color:var(--color-surface);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}
+  .brand{display:flex;align-items:center;gap:8px;font-family:var(--font-display);font-weight:600;font-size:15px}
+  .sub{color:var(--color-muted);margin-top:4px;max-width:60ch}
+  .theme-toggle{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--color-muted);border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:6px 10px;background:transparent;cursor:pointer}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin:0 0 16px;padding:12px 16px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);font-size:12px}
+  .legend .item{display:flex;align-items:center;gap:8px;color:var(--color-muted)}
+  .legend svg{display:block}
+  .diagram{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);overflow:auto}
+  .diagram svg{display:block;width:100%;height:auto;min-width:980px}
+
+  /* SVG element styling via CSS custom props */
+  .container{fill:var(--color-bg);stroke:var(--color-border);stroke-width:1.5}
+  .node{fill:var(--color-surface);stroke:var(--color-border);stroke-width:1.25}
+  .chip{fill:var(--color-surface-2);stroke:var(--color-border);stroke-width:1}
+  .guard{fill:var(--color-accent-soft);stroke:var(--color-fg);stroke-width:1.25}
+  .ext{fill:var(--color-surface);stroke:var(--color-fg);stroke-dasharray:5 3;stroke-width:1.25}
+  .t-title{fill:var(--color-fg);font-family:var(--font-display);font-weight:600}
+  .t-sub{fill:var(--color-muted);font-family:var(--font-body)}
+  .t-mono{fill:var(--color-fg);font-family:var(--font-mono)}
+  .t-mono-mut{fill:var(--color-muted);font-family:var(--font-mono)}
+  .t-edge{fill:var(--color-muted);font-family:var(--font-mono);font-size:11px}
+  .ok{fill:var(--color-success)}
+  .flow{stroke:var(--color-fg);stroke-width:1.5;fill:none}
+  .flow-sse{stroke:var(--color-fg);stroke-width:1.5;fill:none;stroke-dasharray:1.5 4;stroke-linecap:round}
+  .flow-async{stroke:var(--color-warning);stroke-width:1.6;fill:none;stroke-dasharray:7 4}
+  .flow-ext{stroke:var(--color-success);stroke-width:1.6;fill:none;stroke-dasharray:7 4}
+  .boundary{fill:none;stroke:var(--color-accent);stroke-width:1.25;stroke-dasharray:3 4;opacity:.55}
+
+  .notes{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+  .notes .card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px 18px}
+  .notes h3{font-size:14px;margin-bottom:10px}
+  .notes ol,.notes ul{margin-left:18px;color:var(--color-muted)}
+  .notes li{margin:4px 0}
+  .notes code{font-family:var(--font-mono);font-size:11px;background:var(--color-surface-2);padding:1px 5px;border-radius:var(--radius-sm);color:var(--color-fg)}
+  footer{color:var(--color-muted);font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.04em;margin-top:22px;text-align:center}
+  @media(max-width:760px){.notes{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<a href="../index.html" aria-label="Back to the MDLC examples gallery" data-mdlc-backlink style="position:fixed;bottom:16px;left:16px;z-index:9000;display:inline-flex;align-items:center;gap:7px;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:13px;font-weight:600;line-height:1;color:#fff;background:rgba(13,17,28,.82);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:9px 15px 9px 12px;text-decoration:none;box-shadow:0 10px 30px -10px rgba(0,0,0,.55);transition:background .16s,transform .16s" onmouseover="this.style.background='rgba(37,99,235,.94)';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(13,17,28,.82)';this.style.transform='none'">← All examples</a>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="brand"><span class="logo">B</span> BookFlow — System Architecture</div>
+      <p class="sub">Multi-tenant booking &amp; approvals platform. Monorepo with two deployables plus a worker, backed by one PostgreSQL primary. Tier: small (&lt;1k concurrent) — no Redis/replicas; the SSE channel and outbox worker are correctness/availability requirements, not scaling ones.</p>
+    </div>
+    <button class="theme-toggle" id="theme">☀ light</button>
+  </header>
+
+  <div class="legend">
+    <span class="item"><svg width="34" height="10"><line x1="2" y1="5" x2="32" y2="5" stroke="var(--color-fg)" stroke-width="1.5"/></svg> Synchronous REST</span>
+    <span class="item"><svg width="34" height="10"><line x1="2" y1="5" x2="32" y2="5" stroke="var(--color-fg)" stroke-width="1.5" stroke-dasharray="1.5 4" stroke-linecap="round"/></svg> SSE stream (live)</span>
+    <span class="item"><svg width="34" height="10"><line x1="2" y1="5" x2="32" y2="5" stroke="var(--color-warning)" stroke-width="1.6" stroke-dasharray="7 4"/></svg> Async / outbox</span>
+    <span class="item"><svg width="34" height="10"><line x1="2" y1="5" x2="32" y2="5" stroke="var(--color-success)" stroke-width="1.6" stroke-dasharray="7 4"/></svg> External callback</span>
+    <span class="item"><svg width="34" height="14"><rect x="2" y="2" width="30" height="10" rx="2" fill="none" stroke="var(--color-accent)" stroke-dasharray="3 4"/></svg> Tenant trust boundary</span>
+  </div>
+
+  <div class="diagram">
+  <svg viewBox="0 0 1280 980" role="img" aria-label="BookFlow architecture diagram">
+    <defs>
+      <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="var(--color-fg)"/></marker>
+      <marker id="ar-w" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="var(--color-warning)"/></marker>
+      <marker id="ar-e" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="var(--color-success)"/></marker>
+    </defs>
+
+    <!-- ===== CLIENT ===== -->
+    <rect class="node" x="360" y="28" width="560" height="88" rx="10"/>
+    <text class="t-title" x="640" y="58" text-anchor="middle" font-size="16">Browser — Next.js 16 web app</text>
+    <text class="t-sub" x="640" y="78" text-anchor="middle" font-size="12.5">App Router · TanStack Query · Tailwind · design-token UI kit</text>
+    <text class="t-mono-mut" x="640" y="98" text-anchor="middle" font-size="11">marketing landing + admin console (15 screens)</text>
+
+    <!-- client -> api -->
+    <line class="flow" x1="520" y1="116" x2="520" y2="194" marker-end="url(#ar)"/>
+    <text class="t-edge" x="512" y="160" text-anchor="end">REST /v1 · Bearer JWT</text>
+    <line class="flow-sse" x1="760" y1="194" x2="760" y2="118" marker-end="url(#ar)"/>
+    <text class="t-edge" x="768" y="160" text-anchor="start">SSE /v1/stream</text>
+
+    <!-- tenant trust boundary -->
+    <rect class="boundary" x="104" y="186" width="1072" height="600" rx="12"/>
+    <text class="t-mono-mut" x="1168" y="204" text-anchor="end" font-size="10">tenant trust boundary · org isolation</text>
+
+    <!-- ===== API ===== -->
+    <rect class="container" x="120" y="200" width="1040" height="312" rx="10"/>
+    <text class="t-title" x="140" y="228" font-size="15">NestJS 11 API</text>
+    <text class="t-mono-mut" x="1140" y="228" text-anchor="end" font-size="10">REST · /v1 versioned · RFC 7807 errors</text>
+
+    <!-- guard pipeline -->
+    <text class="t-mono-mut" x="140" y="256" font-size="10">request pipeline →</text>
+    <g font-size="11">
+      <rect class="guard" x="250" y="242" width="118" height="26" rx="5"/><text class="t-mono" x="309" y="259" text-anchor="middle">Throttler</text>
+      <line class="flow" x1="368" y1="255" x2="392" y2="255" marker-end="url(#ar)"/>
+      <rect class="guard" x="394" y="242" width="140" height="26" rx="5"/><text class="t-mono" x="464" y="259" text-anchor="middle">JwtAuthGuard</text>
+      <line class="flow" x1="534" y1="255" x2="558" y2="255" marker-end="url(#ar)"/>
+      <rect class="guard" x="560" y="242" width="128" height="26" rx="5"/><text class="t-mono" x="624" y="259" text-anchor="middle">RolesGuard</text>
+      <line class="flow" x1="688" y1="255" x2="712" y2="255" marker-end="url(#ar)"/>
+      <rect class="guard" x="714" y="242" width="132" height="26" rx="5"/><text class="t-mono" x="780" y="259" text-anchor="middle">TenantGuard</text>
+    </g>
+
+    <!-- module grid -->
+    <text class="t-mono-mut" x="140" y="298" font-size="10">feature modules</text>
+    <g font-size="11">
+      <!-- row 1 -->
+      <rect class="chip" x="150" y="306" width="126" height="28" rx="5"/><text class="t-mono" x="213" y="324" text-anchor="middle">auth</text>
+      <rect class="chip" x="284" y="306" width="126" height="28" rx="5"/><text class="t-mono" x="347" y="324" text-anchor="middle">orgs</text>
+      <rect class="chip" x="418" y="306" width="126" height="28" rx="5"/><text class="t-mono" x="481" y="324" text-anchor="middle">members</text>
+      <rect class="chip" x="552" y="306" width="126" height="28" rx="5"/><text class="t-mono" x="615" y="324" text-anchor="middle">resources</text>
+      <rect class="chip" x="686" y="306" width="126" height="28" rx="5"/><text class="t-mono" x="749" y="324" text-anchor="middle">bookings</text>
+      <rect class="chip" x="820" y="306" width="126" height="28" rx="5"/><text class="t-mono" x="883" y="324" text-anchor="middle">approvals</text>
+      <rect class="chip" x="954" y="306" width="118" height="28" rx="5"/><text class="t-mono" x="1013" y="324" text-anchor="middle">workflows</text>
+      <!-- row 2 -->
+      <rect class="chip" x="150" y="342" width="126" height="28" rx="5"/><text class="t-mono" x="213" y="360" text-anchor="middle">notifications</text>
+      <rect class="chip" x="284" y="342" width="126" height="28" rx="5"/><text class="t-mono" x="347" y="360" text-anchor="middle">webhooks</text>
+      <rect class="chip" x="418" y="342" width="126" height="28" rx="5"/><text class="t-mono" x="481" y="360" text-anchor="middle">audit</text>
+      <rect class="chip" x="552" y="342" width="126" height="28" rx="5"/><text class="t-mono" x="615" y="360" text-anchor="middle">reports</text>
+      <rect class="chip" x="686" y="342" width="126" height="28" rx="5"/><text class="t-mono" x="749" y="360" text-anchor="middle">sse</text>
+      <rect class="chip" x="820" y="342" width="126" height="28" rx="5"/><text class="t-mono" x="883" y="360" text-anchor="middle">health</text>
+    </g>
+
+    <!-- cross-cutting strip -->
+    <rect class="node" x="150" y="392" width="922" height="100" rx="8"/>
+    <text class="t-mono-mut" x="166" y="412" font-size="10">cross-cutting</text>
+    <g font-size="11.5">
+      <text class="t-sub" x="166" y="436">• TenantContext (CLS) + ScopedRepository — row-level <tspan class="t-mono" font-size="11">org_id</tspan> scoping <tspan class="t-mono-mut" font-size="10">(INV-1 / INV-14)</tspan></text>
+      <text class="t-sub" x="166" y="458">• RFC 7807 problem+json filter <tspan class="t-mono-mut" font-size="10">(INV-7)</tspan>   • Audit interceptor → append-only <tspan class="t-mono" font-size="11">audit_log</tspan> <tspan class="t-mono-mut" font-size="10">(INV-8)</tspan></text>
+      <text class="t-sub" x="166" y="480">• Throttler + Helmet + structured JSON logging (pino)   • bcrypt · JWT access/refresh</text>
+    </g>
+
+    <!-- api -> db / worker -->
+    <line class="flow" x1="380" y1="512" x2="380" y2="568" marker-end="url(#ar)"/>
+    <text class="t-edge" x="372" y="544" text-anchor="end">TypeORM</text>
+    <path class="flow-async" d="M820,512 L820,560" marker-end="url(#ar-w)"/>
+    <text class="t-edge" x="828" y="540" text-anchor="start" fill="var(--color-warning)">enqueue in same tx</text>
+
+    <!-- ===== POSTGRES ===== -->
+    <rect class="node" x="120" y="572" width="560" height="206" rx="10"/>
+    <text class="t-title" x="140" y="600" font-size="15">PostgreSQL 16</text>
+    <text class="t-mono-mut" x="660" y="600" text-anchor="end" font-size="10">extension: btree_gist · daily backup + PITR</text>
+    <g font-size="11.5">
+      <text class="t-sub" x="140" y="628"><tspan class="ok" font-family="var(--font-mono)" font-size="12">⛒</tspan> <tspan class="t-mono" fill="var(--color-fg)" font-size="11">bookings</tspan> — EXCLUDE USING gist (tstzrange &amp;&amp;) → no double-booking</text>
+      <text class="t-sub" x="140" y="652"><tspan class="t-mono" fill="var(--color-fg)" font-size="11">audit_log</tspan> — append-only, 7-year retention</text>
+      <text class="t-sub" x="140" y="676"><tspan class="t-mono" fill="var(--color-fg)" font-size="11">outbox</tspan> — pending → sent · retry/backoff → dead (DLQ)</text>
+      <text class="t-sub" x="140" y="700"><tspan class="t-mono" fill="var(--color-fg)" font-size="11">webhook_events</tspan> — idempotency ledger (unique svix-id)</text>
+      <text class="t-sub" x="140" y="724"><tspan class="t-mono" fill="var(--color-fg)" font-size="11">organizations · users · memberships</tspan></text>
+      <text class="t-sub" x="140" y="748"><tspan class="t-mono" fill="var(--color-fg)" font-size="11">resources · approvals · workflow_rules · refresh_tokens</tspan></text>
+    </g>
+
+    <!-- ===== WORKER ===== -->
+    <rect class="node" x="720" y="572" width="440" height="120" rx="10"/>
+    <text class="t-title" x="740" y="600" font-size="15">Outbox Worker</text>
+    <text class="t-mono-mut" x="1140" y="600" text-anchor="end" font-size="10">separate process</text>
+    <text class="t-sub" x="740" y="626" font-size="12">Drains the outbox; the only component that sends.</text>
+    <text class="t-sub" x="740" y="648" font-size="12">Polls <tspan class="t-mono" fill="var(--color-fg)" font-size="11">FOR UPDATE SKIP LOCKED</tspan> (multi-instance safe).</text>
+    <text class="t-sub" x="740" y="670" font-size="12">Exponential backoff → DLQ after 5 attempts.</text>
+
+    <!-- worker <- postgres (drain) -->
+    <line class="flow-async" x1="718" y1="632" x2="682" y2="676" marker-end="url(#ar-w)"/>
+    <text class="t-edge" x="690" y="628" text-anchor="end" fill="var(--color-warning)">drain</text>
+
+    <!-- ===== RESEND (external) ===== -->
+    <rect class="ext" x="720" y="724" width="440" height="64" rx="10"/>
+    <text class="t-title" x="740" y="750" font-size="14">Resend</text>
+    <text class="t-sub" x="740" y="770" font-size="12">Email send API · Svix-signed delivery webhooks  <tspan class="t-mono-mut" font-size="10">(stub transport when no key)</tspan></text>
+
+    <!-- worker -> resend (send) -->
+    <line class="flow-ext" x1="940" y1="692" x2="940" y2="722" marker-end="url(#ar-e)"/>
+    <text class="t-edge" x="948" y="712" text-anchor="start" fill="var(--color-success)">send email</text>
+
+    <!-- resend -> api inbound webhook (curved up the right margin) -->
+    <path class="flow-ext" d="M1140,724 C1232,724 1232,356 1162,356" marker-end="url(#ar-e)"/>
+    <text class="t-edge" x="1226" y="548" text-anchor="middle" transform="rotate(90 1226 548)" fill="var(--color-success)">inbound webhook (Svix) → verify sig → idempotency → process (INV-3/4)</text>
+  </svg>
+  </div>
+
+  <div class="notes">
+    <div class="card">
+      <h3>Booking write path (the core flow)</h3>
+      <ol>
+        <li><code>POST /v1/bookings</code> → Throttler → JwtAuthGuard → RolesGuard → TenantGuard (binds <code>org_id</code> into CLS).</li>
+        <li>One DB transaction: insert the booking. The <code>EXCLUDE</code> constraint atomically rejects overlaps → mapped to <code>409 booking_conflict</code>.</li>
+        <li>Workflow rules evaluate → status <code>confirmed</code> or <code>pending_approval</code> (+ approval steps).</li>
+        <li>In the <em>same tx</em>, a notification row is written to <code>outbox</code> (dual-write solved).</li>
+        <li>Commit → SSE publishes <code>booking.created</code>; the audit interceptor records the change.</li>
+        <li>The worker later drains the outbox and sends via Resend (retry → DLQ on failure).</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h3>Why this shape</h3>
+      <ul>
+        <li><strong>No double-booking</strong> is a database guarantee (exclusion constraint), not an app check — race-proof across every code path.</li>
+        <li><strong>Tenant isolation</strong> is enforced once, in <code>ScopedRepository</code>; cross-tenant reads return <code>NOT_FOUND</code>, never leak existence.</li>
+        <li><strong>Dual-write</strong> (email / outbound webhooks) goes through a transactional outbox + worker — never a synchronous send in the request path.</li>
+        <li><strong>Inbound webhooks</strong> verify the Svix signature on the raw body <em>before</em> any read, then dedupe on an idempotency ledger.</li>
+        <li><strong>Realtime</strong> uses SSE (one-way push) — sufficient at &lt;1k concurrent; a WebSocket upgrade path is documented.</li>
+      </ul>
+    </div>
+  </div>
+
+  <footer>BookFlow · architecture as built (ARCHITECTURE.md §1–§9, invariants.json) · Built with the AI MDLC pipeline</footer>
+</div>
+
+<script>
+  var btn=document.getElementById('theme');
+  function setTheme(d){document.documentElement.classList.toggle('dark',d);btn.textContent=d?'☾ dark':'☀ light';try{localStorage.setItem('bf_theme',d?'dark':'light')}catch(e){}}
+  (function(){var s;try{s=localStorage.getItem('bf_theme')}catch(e){}setTheme(s?s==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches)})();
+  btn.addEventListener('click',function(){setTheme(!document.documentElement.classList.contains('dark'))});
+</script>
+</body>
+</html>

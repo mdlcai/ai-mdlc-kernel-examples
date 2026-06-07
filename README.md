@@ -2,7 +2,7 @@
 
 # MDLC — Example Builds
 
-### Seven real applications, each built end-to-end by the MDLC methodology.
+### Eight real applications, each built end-to-end by the MDLC methodology.
 
 **[🌐 Browse the live gallery →](https://mdlcai.github.io/ai-mdlc-kernel-examples/)**
 
@@ -14,7 +14,7 @@
 
 ## What you're looking at
 
-**MDLC** (the Markdown Development Life Cycle) turns a single `RESEARCH.md` blueprint into a working, reviewed application — driving it through architecture, build, and a battery of automated quality gates. These seven examples are the proof. Each one was generated, not hand-written, and each ships the **complete paper trail**: the blueprint that started it, the architecture that fell out of it, the spec and decisions it was built to, and the build report showing every gate it passed.
+**MDLC** (the Markdown Development Life Cycle) turns a single `RESEARCH.md` blueprint into a working, reviewed application — driving it through architecture, build, and a battery of automated quality gates. These eight examples are the proof. Each one was generated, not hand-written, and each ships the **complete paper trail**: the blueprint that started it, the architecture that fell out of it, the spec and decisions it was built to, and the build report showing every gate it passed.
 
 Open any folder and read it top to bottom — `RESEARCH.md` → `ARCHITECTURE.md` → `SPEC.md` → `DECISIONS.md` → `REPORT.md` — and you can watch the methodology think.
 
@@ -29,6 +29,7 @@ Open any folder and read it top to bottom — `RESEARCH.md` → `ARCHITECTURE.md
 | [<img src="servicehub/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/servicehub/index.html) | **[ServiceHub](servicehub/)** | Multi-tenant IT service management — requests, incidents, approvals, SLA tracking. | 25 tests · 22/22 smoke · 14/14 invariants |
 | [<img src="workgrid/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/workgrid/index.html) | **[WorkGrid](workgrid/)** | One workspace for tickets, tasks, and projects — self-routing work, live dashboards. | 15/15 smoke · 13/13 invariants |
 | [<img src="ember/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/ember/index.html) | **[Ember](ember/)** | A specialty coffee roaster's storefront — catalog, tasting notes, cart, Stripe checkout + subscriptions. | 39 tests · 23 smoke · 12 invariants |
+| [<img src="bookflow/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/bookflow/index.html) | **[BookFlow](bookflow/)** | Booking & reservation platform — approval workflows, DB-guaranteed conflict prevention (no double-booking), audit trail. | 10 tests · 17/17 smoke · 9/9 invariants |
 
 > Previews are self-contained, multi-screen HTML — design tokens and screens lifted from each deployed build. Use the screen switcher in the top-right of any preview to walk the app.
 

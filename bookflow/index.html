@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BookFlow — site preview</title>
+<meta name="description" content="Multi-tenant booking & approvals platform — self-contained preview of the home page and key console screens." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  /* ===== Design tokens — light :root copied verbatim from DESIGN-TEMPLATE.html ===== */
+  :root{
+    --color-bg:#f4f4f3; --color-surface:#ffffff; --color-surface-2:#ebebe9;
+    --color-fg:#111111; --color-muted:#5c5c5c; --color-border:#dcdcd9;
+    --color-accent:#000000; --color-accent-soft:#e6e6e3;
+    --color-success:#1c7c4a; --color-warning:#9a6400; --color-error:#b3261e;
+    --font-display:"IBM Plex Sans",sans-serif; --font-body:"Geist",sans-serif; --font-mono:"Geist Mono",monospace;
+    --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:24px;--space-6:32px;--space-7:48px;--space-8:64px;
+    --radius-sm:4px;--radius-md:6px;--radius-lg:10px;
+    --shadow-sm:0 1px 0 rgba(17,17,17,.04);
+    --shadow-md:0 1px 2px rgba(17,17,17,.06),0 4px 12px rgba(17,17,17,.04);
+    --shadow-lg:0 8px 28px rgba(17,17,17,.10);
+  }
+  /* derived dark palette (ADR-0003) — light values above untouched */
+  .dark{
+    --color-bg:#0c0c0b; --color-surface:#161615; --color-surface-2:#1e1e1c;
+    --color-fg:#ececea; --color-muted:#9a9a96; --color-border:#2c2c2a;
+    --color-accent:#ffffff; --color-accent-soft:#2a2a28;
+    --color-success:#4ec07e; --color-warning:#d9a23b; --color-error:#e06b63;
+    --shadow-sm:0 1px 0 rgba(0,0,0,.4);
+    --shadow-md:0 1px 2px rgba(0,0,0,.5),0 4px 12px rgba(0,0,0,.4);
+    --shadow-lg:0 8px 28px rgba(0,0,0,.6);
+  }
+
+  *{box-sizing:border-box;border-color:var(--color-border);margin:0;padding:0}
+  html,body{background:var(--color-bg);color:var(--color-fg);font-family:var(--font-body);font-size:13px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,h4{font-family:var(--font-display);font-weight:600;letter-spacing:-.01em;line-height:1.15}
+  a{color:inherit;text-decoration:none}
+  .mono{font-family:var(--font-mono)}
+  .tnum{font-variant-numeric:tabular-nums}
+  :focus-visible{outline:2px solid var(--color-accent);outline-offset:2px;border-radius:var(--radius-sm)}
+  button{font:inherit;cursor:pointer;color:inherit}
+  @media (prefers-reduced-motion:reduce){*{transition-duration:.001ms!important;animation-duration:.001ms!important}}
+
+  /* ===== shared primitives ===== */
+  .btn{display:inline-flex;align-items:center;gap:var(--space-2);font-weight:500;font-size:13px;padding:8px 16px;border-radius:var(--radius-sm);border:1px solid transparent;transition:opacity .12s,background .12s,transform .12s}
+  .btn-primary{background:var(--color-accent);color:var(--color-surface)}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:var(--shadow-md)}
+  .btn-ghost{background:transparent;color:var(--color-fg);border-color:var(--color-border)}
+  .btn-ghost:hover{background:var(--color-surface-2)}
+  .card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md)}
+  .card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--color-border)}
+  .badge{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:var(--radius-sm);border:1px solid var(--color-border);display:inline-flex;align-items:center;gap:6px}
+  .badge i{width:6px;height:6px;border-radius:50%;background:var(--color-muted)}
+  .badge.ok{color:var(--color-success);border-color:color-mix(in srgb,var(--color-success) 35%,var(--color-border))} .badge.ok i{background:var(--color-success)}
+  .badge.wait{color:var(--color-warning);border-color:color-mix(in srgb,var(--color-warning) 35%,var(--color-border))} .badge.wait i{background:var(--color-warning)}
+  .badge.err{color:var(--color-error);border-color:color-mix(in srgb,var(--color-error) 35%,var(--color-border))} .badge.err i{background:var(--color-error)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{text-align:left;font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--color-muted);font-weight:400;padding:8px 20px;border-bottom:1px solid var(--color-border)}
+  tbody td{padding:9px 20px;border-bottom:1px solid var(--color-border)}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:var(--color-surface-2)}
+  .logo{width:20px;height:20px;border-radius:var(--radius-sm);background:var(--color-accent);color:var(--color-surface);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:11px}
+  .maxw{max-width:1280px;margin:0 auto}
+
+  /* ===== top switcher bar ===== */
+  .topbar{position:sticky;top:0;z-index:30;height:52px;display:flex;align-items:center;gap:var(--space-5);padding:0 var(--space-5);border-bottom:1px solid var(--color-border);background:color-mix(in srgb,var(--color-bg) 88%,transparent);backdrop-filter:blur(8px)}
+  .topbar .brand{display:flex;align-items:center;gap:8px;font-family:var(--font-display);font-weight:600;font-size:14px}
+  .tabs{display:flex;gap:2px;flex:1;flex-wrap:wrap}
+  .tab{padding:6px 12px;border-radius:var(--radius-sm);color:var(--color-muted);font-size:13px;border:1px solid transparent}
+  .tab:hover{background:var(--color-surface-2);color:var(--color-fg)}
+  .tab.active{background:var(--color-surface-2);color:var(--color-fg);font-weight:500;border-color:var(--color-border)}
+  .theme-toggle{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--color-muted);border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:5px 9px}
+
+  .page{display:none}
+  .page.active{display:block}
+
+  /* ===== landing ===== */
+  .hero{display:grid;grid-template-columns:.92fr 1.08fr;gap:var(--space-7);align-items:center;padding:var(--space-8) var(--space-5)}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--color-muted);border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:4px 8px}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--color-success)}
+  .hero h1{font-size:40px;font-weight:700;line-height:1.05;margin:20px 0 0}
+  .hero h1 em{font-style:normal;text-decoration:underline;text-decoration-color:var(--color-accent);text-decoration-thickness:2px;text-underline-offset:4px}
+  .lede{color:var(--color-muted);font-size:15px;line-height:1.6;margin-top:var(--space-4);max-width:30rem}
+  .hero-actions{display:flex;gap:var(--space-3);margin-top:var(--space-5)}
+  .stats{display:flex;gap:var(--space-7);margin-top:var(--space-7)}
+  .stats .n{font-family:var(--font-display);font-size:24px;font-weight:600}
+  .stats .l{color:var(--color-muted);font-size:12px}
+  .preview{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);overflow:hidden;position:relative}
+  .preview-bar{display:flex;align-items:center;gap:8px;height:34px;padding:0 14px;border-bottom:1px solid var(--color-border);background:var(--color-surface-2)}
+  .preview-bar .d{width:9px;height:9px;border-radius:50%;background:var(--color-border)}
+  .preview-body{display:grid;grid-template-columns:150px 1fr;min-height:280px}
+  .preview-side{border-right:1px solid var(--color-border);padding:12px}
+  .preview-side .grp{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;color:var(--color-muted);margin-bottom:6px}
+  .preview-side .it{padding:5px 8px;border-radius:var(--radius-sm);color:var(--color-muted);font-size:12px}
+  .preview-side .it.active{background:var(--color-surface-2);color:var(--color-fg);font-weight:500}
+  .preview-main{padding:16px}
+  .approve-chip{position:absolute;bottom:-12px;right:16px;background:var(--color-fg);color:var(--color-bg,var(--color-surface));border-radius:var(--radius-md);box-shadow:var(--shadow-lg);padding:8px 12px;display:flex;align-items:center;gap:8px;font-size:12px}
+  .dark .approve-chip{color:var(--color-bg)}
+  .approve-chip .c{width:16px;height:16px;border-radius:var(--radius-sm);background:var(--color-success);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px}
+  .section{padding:var(--space-7) var(--space-5)}
+  .kicker{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--color-muted)}
+  .bento{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-4);margin-top:var(--space-5)}
+  .feat{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:var(--space-5);display:flex;flex-direction:column;gap:var(--space-3);transition:box-shadow .12s,transform .12s,border-color .12s}
+  .feat:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);border-color:var(--color-fg)}
+  .feat .ico{width:36px;height:36px;border-radius:var(--radius-sm);background:var(--color-surface-2);display:flex;align-items:center;justify-content:center}
+  .feat.wide{grid-column:span 2}
+  .cta{background:var(--color-fg);color:var(--color-bg);border-radius:var(--radius-lg);padding:var(--space-7);display:grid;grid-template-columns:1fr 1fr;gap:var(--space-5);align-items:center}
+  .dark .cta{color:var(--color-bg)}
+  .cta .btn-light{background:var(--color-bg);color:var(--color-fg)}
+  .foot{border-top:1px solid var(--color-border);padding:var(--space-6) var(--space-5);display:flex;align-items:center;justify-content:space-between}
+
+  /* ===== console shell ===== */
+  .shell{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 52px)}
+  .side{border-right:1px solid var(--color-border);background:var(--color-surface);padding:var(--space-4) 0}
+  .side .grp{padding:0 var(--space-5);margin:var(--space-4) 0 var(--space-1);font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--color-muted)}
+  .side .lnk{display:block;padding:6px 20px;border-left:2px solid transparent;color:var(--color-muted);font-size:13px}
+  .side .lnk:hover{background:var(--color-surface-2);color:var(--color-fg)}
+  .side .lnk.active{border-left-color:var(--color-accent);background:var(--color-surface-2);color:var(--color-fg);font-weight:500}
+  .content{padding:var(--space-6);max-width:1100px}
+  .page-head{margin-bottom:var(--space-5)}
+  .page-head h1{font-size:22px}
+  .page-head p{color:var(--color-muted);margin-top:2px}
+  .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-4);margin-bottom:var(--space-5)}
+  .metric{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:var(--space-5)}
+  .metric .l{color:var(--color-muted);font-size:12px}
+  .metric .v{font-family:var(--font-display);font-size:32px;font-weight:600;margin-top:4px}
+  .filter{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:6px 10px;font-size:13px;color:var(--color-fg)}
+  .bar{height:6px;background:var(--color-surface-2);border-radius:var(--radius-sm);overflow:hidden;flex:1}
+  .bar>span{display:block;height:100%;background:var(--color-accent)}
+  .util-row{display:flex;align-items:center;gap:var(--space-3)}
+  .stack{display:flex;flex-direction:column;gap:var(--space-5)}
+  .row-actions a{color:var(--color-muted);text-decoration:underline;text-underline-offset:2px;font-size:12px}
+
+  @media(max-width:900px){
+    .hero{grid-template-columns:1fr}.bento{grid-template-columns:1fr}.feat.wide{grid-column:span 1}
+    .cta{grid-template-columns:1fr}.shell{grid-template-columns:1fr}.side{display:none}.metrics{grid-template-columns:1fr}
+    .preview-side{display:none}.preview-body{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<a href="../index.html" aria-label="Back to the MDLC examples gallery" data-mdlc-backlink style="position:fixed;bottom:16px;left:16px;z-index:9000;display:inline-flex;align-items:center;gap:7px;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:13px;font-weight:600;line-height:1;color:#fff;background:rgba(13,17,28,.82);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:9px 15px 9px 12px;text-decoration:none;box-shadow:0 10px 30px -10px rgba(0,0,0,.55);transition:background .16s,transform .16s" onmouseover="this.style.background='rgba(37,99,235,.94)';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(13,17,28,.82)';this.style.transform='none'">← All examples</a>
+
+
+<!-- ===== top page switcher ===== -->
+<div class="topbar">
+  <span class="brand"><span class="logo">B</span> BookFlow</span>
+  <nav class="tabs" id="tabs">
+    <a class="tab active" data-page="home">Home</a>
+    <a class="tab" data-page="dashboard">Dashboard</a>
+    <a class="tab" data-page="bookings">Bookings</a>
+    <a class="tab" data-page="approvals">Approvals</a>
+    <a class="tab" data-page="resources">Resources</a>
+    <a class="tab" data-page="reports">Reports</a>
+  </nav>
+  <button class="theme-toggle" id="theme">☀ light</button>
+</div>
+
+<!-- ===== HOME / landing ===== -->
+<section class="page active" id="page-home">
+  <div class="maxw">
+    <div class="hero">
+      <div>
+        <span class="eyebrow"><i class="dot"></i> SOC 2-ready · multi-tenant</span>
+        <h1>Bookings and approvals, <em>on your rules</em>.</h1>
+        <p class="lede">One portal for rooms, equipment, and services. Configurable approval workflows,
+          database-guaranteed conflict prevention, and a full audit trail — without custom development.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" data-goto="dashboard">Open the console</a>
+          <a class="btn btn-ghost" href="#features">See features</a>
+        </div>
+        <div class="stats tnum">
+          <div><div class="n">2.4k</div><div class="l">bookings / mo</div></div>
+          <div><div class="n">98.6%</div><div class="l">SLA met</div></div>
+          <div><div class="n">&lt;4s</div><div class="l">to confirm</div></div>
+        </div>
+      </div>
+      <div class="preview">
+        <div class="preview-bar"><span class="d"></span><span class="d"></span><span class="d"></span><span class="mono" style="font-size:11px;color:var(--color-muted);margin-left:8px">app.bookflow.io/bookings</span></div>
+        <div class="preview-body">
+          <div class="preview-side">
+            <div class="grp">Operate</div>
+            <div class="it">Dashboard</div><div class="it active">Bookings</div><div class="it">Approvals</div><div class="it">Resources</div>
+          </div>
+          <div class="preview-main">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><strong style="font-size:13px">Reservations</strong><span class="mono" style="font-size:10px;color:var(--color-muted)">live</span></div>
+            <table>
+              <thead><tr><th>Resource</th><th>Requester</th><th>Status</th></tr></thead>
+              <tbody class="tnum">
+                <tr><td>Conf Room A</td><td class="mono" style="color:var(--color-muted)">q.member</td><td><span class="badge ok"><i></i>confirmed</span></td></tr>
+                <tr><td>Projector X1</td><td class="mono" style="color:var(--color-muted)">r.lee</td><td><span class="badge ok"><i></i>confirmed</span></td></tr>
+                <tr><td>Onboarding</td><td class="mono" style="color:var(--color-muted)">a.kim</td><td><span class="badge wait"><i></i>pending</span></td></tr>
+                <tr><td>Room B</td><td class="mono" style="color:var(--color-muted)">j.diaz</td><td><span class="badge err"><i></i>conflict</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="approve-chip"><span class="c">✓</span> Approval routed &amp; cleared</div>
+      </div>
+    </div>
+
+    <div class="section" id="features">
+      <div class="kicker">Platform</div>
+      <h2 style="font-size:28px;margin-top:4px">Everything operations needs, nothing it doesn't.</h2>
+      <div class="bento">
+        <div class="feat wide"><div class="ico">◆</div><h3 style="font-size:16px">Configurable approval workflows</h3><p style="color:var(--color-muted)">Advance-notice windows, budget thresholds, and multi-step approver chains per resource type — no code, no consultants.</p></div>
+        <div class="feat"><div class="ico">▤</div><h3 style="font-size:16px">Every resource type</h3><p style="color:var(--color-muted)">Rooms, equipment, and services in one catalog with capacity, dependencies, and maintenance windows.</p></div>
+        <div class="feat"><div class="ico">✓</div><h3 style="font-size:16px">Clear approver queues</h3><p style="color:var(--color-muted)">Approvers see full context and decide within SLA; requesters get status and guidance.</p></div>
+        <div class="feat wide"><div class="ico">⊘</div><h3 style="font-size:16px">Zero double bookings</h3><p style="color:var(--color-muted)">A database-level exclusion constraint makes overlaps structurally impossible — not just checked in code.</p></div>
+        <div class="feat"><div class="ico">▦</div><h3 style="font-size:16px">Audit &amp; reporting</h3><p style="color:var(--color-muted)">7-year append-only audit trail; utilization and approval-cycle reports exported to CSV and PDF.</p></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="cta">
+        <div><h2 style="font-size:26px">Stand up your booking workspace today.</h2><p style="opacity:.7;margin-top:6px">Multi-tenant, SSO-ready, audit-clean from day one.</p></div>
+        <div style="display:flex;gap:var(--space-3);align-items:center;justify-content:flex-end;flex-wrap:wrap">
+          <a class="btn btn-light" data-goto="dashboard">Open the console</a>
+          <span class="mono" style="font-size:11px;text-transform:uppercase;letter-spacing:.04em;opacity:.6">No card · SSO ready · SOC 2</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <span class="brand"><span class="logo">B</span> BookFlow</span>
+      <span class="mono" style="font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--color-muted)">© 2026 BookFlow · Built with the AI MDLC pipeline</span>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CONSOLE pages share a shell rendered per page ===== -->
+<section class="page" id="page-dashboard"><div class="shell">
+  <aside class="side" data-active="Dashboard"></aside>
+  <main class="content">
+    <div class="page-head"><h1>Welcome back, Quinn</h1><p>Your operations at a glance.</p></div>
+    <div class="metrics">
+      <div class="metric"><div class="l">My upcoming bookings</div><div class="v tnum">3</div></div>
+      <div class="metric"><div class="l">Pending approvals</div><div class="v tnum" style="color:var(--color-warning)">2</div></div>
+      <div class="metric"><div class="l">Resources</div><div class="v tnum">4</div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:15px">My recent bookings</h2><a class="row-actions" data-goto="bookings">View all</a></div>
+      <table><thead><tr><th>Title</th><th>When (UTC)</th><th>Status</th></tr></thead>
+      <tbody class="tnum">
+        <tr><td>Team offsite planning</td><td class="mono" style="color:var(--color-muted)">2026-07-02 14:00</td><td><span class="badge ok"><i></i>confirmed</span></td></tr>
+        <tr><td>Projector for demo</td><td class="mono" style="color:var(--color-muted)">2026-07-01 10:00</td><td><span class="badge ok"><i></i>confirmed</span></td></tr>
+        <tr><td>All-hands rehearsal</td><td class="mono" style="color:var(--color-muted)">2026-07-05 13:00</td><td><span class="badge wait"><i></i>pending approval</span></td></tr>
+      </tbody></table>
+    </div>
+  </main>
+</div></section>
+
+<section class="page" id="page-bookings"><div class="shell">
+  <aside class="side" data-active="Bookings"></aside>
+  <main class="content">
+    <div style="display:flex;justify-content:space-between;align-items:center" class="page-head">
+      <div><h1>Bookings</h1><p>Reservations across your resources.</p></div>
+      <a class="btn btn-primary" data-goto="resources">New booking</a>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:15px">All bookings</h2>
+        <select class="filter"><option>All statuses</option><option>confirmed</option><option>pending approval</option><option>rejected</option></select></div>
+      <table><thead><tr><th>Title</th><th>Window</th><th>Resource</th><th>Status</th><th></th></tr></thead>
+      <tbody class="tnum">
+        <tr><td style="font-weight:500">Team offsite planning</td><td class="mono" style="color:var(--color-muted)">07-02 14:00 → 16:00</td><td>Conference Room A</td><td><span class="badge ok"><i></i>confirmed</span></td><td class="row-actions" style="text-align:right"><a>Open</a></td></tr>
+        <tr><td style="font-weight:500">Projector for demo</td><td class="mono" style="color:var(--color-muted)">07-01 10:00 → 11:00</td><td>Projector X1</td><td><span class="badge ok"><i></i>confirmed</span></td><td class="row-actions" style="text-align:right"><a>Open</a></td></tr>
+        <tr><td style="font-weight:500">All-hands rehearsal</td><td class="mono" style="color:var(--color-muted)">07-05 13:00 → 15:00</td><td>Conference Room A</td><td><span class="badge wait"><i></i>pending approval</span></td><td class="row-actions" style="text-align:right"><a>Open</a></td></tr>
+        <tr><td style="font-weight:500">Onboarding session</td><td class="mono" style="color:var(--color-muted)">07-08 09:00 → 13:00</td><td>New-Hire Onboarding</td><td><span class="badge wait"><i></i>pending approval</span></td><td class="row-actions" style="text-align:right"><a>Open</a></td></tr>
+        <tr><td style="font-weight:500">Vendor demo (declined)</td><td class="mono" style="color:var(--color-muted)">07-03 16:00 → 18:00</td><td>Conference Room A</td><td><span class="badge err"><i></i>rejected</span></td><td class="row-actions" style="text-align:right"><a>Open</a></td></tr>
+      </tbody></table>
+    </div>
+  </main>
+</div></section>
+
+<section class="page" id="page-approvals"><div class="shell">
+  <aside class="side" data-active="Approvals"></aside>
+  <main class="content">
+    <div class="page-head"><h1>Approvals</h1><p>Booking requests routed to you for a decision.</p></div>
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:15px">Pending approvals</h2><span class="mono" style="font-size:10px;color:var(--color-muted)">2 pending</span></div>
+      <table><thead><tr><th>Booking</th><th>Resource</th><th>Requester</th><th>Step</th><th></th></tr></thead>
+      <tbody>
+        <tr><td style="font-weight:500">All-hands rehearsal</td><td style="color:var(--color-muted)">Conference Room A</td><td style="color:var(--color-muted)">Quinn Member</td><td><span class="badge wait"><i></i>manager</span></td><td style="text-align:right"><button class="btn btn-ghost" data-goto="approvals">Review</button></td></tr>
+        <tr><td style="font-weight:500">Onboarding session</td><td style="color:var(--color-muted)">New-Hire Onboarding</td><td style="color:var(--color-muted)">Riley Lee</td><td><span class="badge wait"><i></i>manager</span></td><td style="text-align:right"><button class="btn btn-ghost" data-goto="approvals">Review</button></td></tr>
+      </tbody></table>
+    </div>
+    <div class="card" style="margin-top:var(--space-5)">
+      <div class="card-head"><h2 style="font-size:15px">Review — All-hands rehearsal</h2></div>
+      <div style="padding:20px;display:flex;flex-direction:column;gap:var(--space-4)">
+        <div><strong style="font-size:15px">All-hands rehearsal</strong><p style="color:var(--color-muted);margin-top:4px">Conference Room A · requested by Quinn Member</p><p class="mono" style="color:var(--color-muted);font-size:12px;margin-top:2px">2026-07-05 13:00 → 15:00 UTC</p></div>
+        <label style="font-size:12px;font-weight:500">Decision note / guidance (shown to requester)
+          <textarea class="filter" style="width:100%;margin-top:6px" rows="3" placeholder="Optional for approval; recommended when declining."></textarea></label>
+        <div style="display:flex;gap:var(--space-2);flex-wrap:wrap">
+          <button class="btn btn-primary">Approve</button>
+          <button class="btn btn-ghost">Request changes</button>
+          <button class="btn" style="background:var(--color-error);color:#fff">Decline</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div></section>
+
+<section class="page" id="page-resources"><div class="shell">
+  <aside class="side" data-active="Resources"></aside>
+  <main class="content">
+    <div style="display:flex;justify-content:space-between;align-items:center" class="page-head">
+      <div><h1>Resources</h1><p>Rooms, equipment, and services available to book.</p></div>
+      <button class="btn btn-primary">Add resource</button>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:15px">Catalog</h2>
+        <select class="filter"><option>All types</option><option>Rooms</option><option>Equipment</option><option>Services</option></select></div>
+      <table><thead><tr><th>Name</th><th>Type</th><th>Capacity</th><th>Location</th><th>Status</th></tr></thead>
+      <tbody class="tnum">
+        <tr><td style="font-weight:500">Conference Room A</td><td style="color:var(--color-muted)">room</td><td>12</td><td style="color:var(--color-muted)">Floor 3 · West</td><td><span class="badge ok"><i></i>active</span></td></tr>
+        <tr><td style="font-weight:500">Projector X1</td><td style="color:var(--color-muted)">equipment</td><td>—</td><td style="color:var(--color-muted)">IT Storeroom</td><td><span class="badge ok"><i></i>active</span></td></tr>
+        <tr><td style="font-weight:500">New-Hire Onboarding</td><td style="color:var(--color-muted)">service</td><td>8</td><td style="color:var(--color-muted)">Remote / Room B</td><td><span class="badge ok"><i></i>active</span></td></tr>
+        <tr><td style="font-weight:500">Huddle Room B</td><td style="color:var(--color-muted)">room</td><td>4</td><td style="color:var(--color-muted)">Floor 2 · East</td><td><span class="badge err"><i></i>inactive</span></td></tr>
+      </tbody></table>
+    </div>
+  </main>
+</div></section>
+
+<section class="page" id="page-reports"><div class="shell">
+  <aside class="side" data-active="Reports"></aside>
+  <main class="content">
+    <div class="page-head"><h1>Reports</h1><p>Resource utilization over the last 30 days.</p></div>
+    <div class="metrics">
+      <div class="metric"><div class="l">Resources</div><div class="v tnum">4</div></div>
+      <div class="metric"><div class="l">Avg utilization</div><div class="v tnum">61.5%</div></div>
+      <div class="metric"><div class="l">Booked hours</div><div class="v tnum">182</div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:15px">Utilization by resource</h2>
+        <div style="display:flex;gap:var(--space-2)"><button class="btn btn-ghost">Export CSV</button><button class="btn btn-ghost">Export PDF</button></div></div>
+      <table><thead><tr><th>Resource</th><th>Type</th><th>Booked (min)</th><th style="width:33%">Utilization</th></tr></thead>
+      <tbody class="tnum">
+        <tr><td style="font-weight:500">Conference Room A</td><td style="color:var(--color-muted)">room</td><td>5 280</td><td><div class="util-row"><div class="bar"><span style="width:82%"></span></div><span style="width:40px;text-align:right">82%</span></div></td></tr>
+        <tr><td style="font-weight:500">Projector X1</td><td style="color:var(--color-muted)">equipment</td><td>3 120</td><td><div class="util-row"><div class="bar"><span style="width:58%"></span></div><span style="width:40px;text-align:right">58%</span></div></td></tr>
+        <tr><td style="font-weight:500">New-Hire Onboarding</td><td style="color:var(--color-muted)">service</td><td>2 400</td><td><div class="util-row"><div class="bar"><span style="width:51%"></span></div><span style="width:40px;text-align:right">51%</span></div></td></tr>
+        <tr><td style="font-weight:500">Huddle Room B</td><td style="color:var(--color-muted)">room</td><td>1 560</td><td><div class="util-row"><div class="bar"><span style="width:35%"></span></div><span style="width:40px;text-align:right">35%</span></div></td></tr>
+      </tbody></table>
+    </div>
+  </main>
+</div></section>
+
+<script>
+  // --- sidebar template shared by console pages ---
+  var NAV = {Operate:['Dashboard','Bookings','Approvals','Resources'], Insight:['Reports','Audit log'], Configure:['Workflows','Members','Settings']};
+  function buildSide(el){
+    var active = el.getAttribute('data-active');
+    var html = '<div style="padding:0 20px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--color-border);margin-bottom:8px"><span class="logo">B</span><span style="font-family:var(--font-display);font-weight:600;font-size:14px">BookFlow</span></div>';
+    Object.keys(NAV).forEach(function(grp){
+      html += '<div class="grp">'+grp+'</div>';
+      NAV[grp].forEach(function(item){
+        var page = item.toLowerCase().replace(' log','');
+        var has = ['dashboard','bookings','approvals','resources','reports'].indexOf(page)>=0;
+        var cls = 'lnk'+(item===active?' active':'');
+        html += has
+          ? '<a class="'+cls+'" data-goto="'+page+'">'+item+'</a>'
+          : '<a class="'+cls+'" style="opacity:.55;cursor:default">'+item+'</a>';
+      });
+    });
+    el.innerHTML = html;
+  }
+  document.querySelectorAll('.side').forEach(buildSide);
+
+  // --- page switching ---
+  function show(page){
+    document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
+    var el = document.getElementById('page-'+page); if(el) el.classList.add('active');
+    document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('active', t.getAttribute('data-page')===page)});
+    window.scrollTo(0,0);
+    if(history.replaceState) history.replaceState(null,'','#'+page);
+  }
+  document.addEventListener('click', function(e){
+    var t = e.target.closest('[data-page],[data-goto]');
+    if(!t) return;
+    var page = t.getAttribute('data-page') || t.getAttribute('data-goto');
+    if(page){ e.preventDefault(); show(page); }
+  });
+  // deep-link via hash
+  var initial = (location.hash||'#home').slice(1);
+  if(document.getElementById('page-'+initial)) show(initial);
+
+  // --- theme toggle (matches the real app: persists + respects system) ---
+  var btn = document.getElementById('theme');
+  function setTheme(dark){
+    document.documentElement.classList.toggle('dark', dark);
+    btn.textContent = dark ? '☾ dark' : '☀ light';
+    try{ localStorage.setItem('bf_theme', dark?'dark':'light'); }catch(e){}
+  }
+  (function(){
+    var saved; try{ saved = localStorage.getItem('bf_theme'); }catch(e){}
+    var dark = saved ? saved==='dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setTheme(dark);
+  })();
+  btn.addEventListener('click', function(){ setTheme(!document.documentElement.classList.contains('dark')); });
+</script>
+</body>
+</html>
