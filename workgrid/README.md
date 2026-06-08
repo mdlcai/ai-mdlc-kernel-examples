@@ -22,7 +22,7 @@ Every file below was generated in sequence. Read them in order to see the method
 | 2 · Architecture | [`ARCHITECTURE.md`](ARCHITECTURE.md) · [`architecture.html`](https://mdlcai.github.io/ai-mdlc-kernel-examples/workgrid/architecture.html) | System design, data flow, layer-by-layer |
 | 3 · Contract | [`SPEC.md`](SPEC.md) · [`DECISIONS.md`](DECISIONS.md) | API surface + the ADRs behind every choice |
 | 4 · Assurance | [`COMPLIANCE.md`](COMPLIANCE.md) · [`SECURITY-AUDIT.md`](SECURITY-AUDIT.md) | OWASP-aligned controls mapping + 3-pass security audit |
-| 5 · Build report | [`REPORT.md`](REPORT.md) | Every gate that ran, with evidence |
+| 5 · Build report | [`REPORT.md`](REPORT.md) · [`SMOKE-TEST.md`](SMOKE-TEST.md) | Every gate that ran + the functional smoke matrix |
 
 ## The gates it passed
 
