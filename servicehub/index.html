@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ServiceHub — From request to resolution, without the handoffs.</title>
+<meta name="description" content="ServiceHub — a centralized, multi-tenant IT Service Management platform. Self-contained showcase of the marketing site and key app pages." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  /* ===== Design tokens — copied verbatim from the ServiceHub design template (:root) ===== */
+  :root {
+    --color-bg: #f6f7f9;
+    --color-surface: #ffffff;
+    --color-surface-2: #eef1f5;
+    --color-fg: #0e1420;
+    --color-muted: #5a6573;
+    --color-border: #e0e4ea;
+    --color-accent: #2563eb;
+    --color-accent-soft: rgba(37, 99, 235, 0.10);
+    --color-accent-line: rgba(37, 99, 235, 0.28);
+    --color-success: #15803d;
+    --color-success-soft: rgba(21, 128, 61, 0.12);
+    --color-warning: #c2410c;
+    --color-warning-soft: rgba(194, 65, 12, 0.12);
+    --color-error: #dc2626;
+    --color-error-soft: rgba(220, 38, 38, 0.12);
+    --font-display: "Space Grotesk", system-ui, sans-serif;
+    --font-body: "Inter", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
+    --space-1: 4px;  --space-2: 8px;  --space-3: 12px;
+    --space-4: 16px; --space-5: 24px; --space-6: 32px;
+    --space-7: 48px; --space-8: 64px; --space-9: 96px;
+    --radius-sm: 6px;  --radius-md: 12px;  --radius-lg: 20px;
+    --shadow-sm: 0 1px 2px rgba(14,20,32,.05), 0 1px 3px rgba(14,20,32,.04);
+    --shadow-md: 0 4px 12px rgba(14,20,32,.06), 0 2px 4px rgba(14,20,32,.04);
+    --shadow-lg: 0 24px 60px rgba(14,20,32,.14), 0 8px 24px rgba(14,20,32,.08);
+  }
+  [data-theme="dark"] {
+    --color-bg: #0b0d11; --color-surface: #14171d; --color-surface-2: #1c212a;
+    --color-fg: #f1f4f8; --color-muted: #9aa4b3; --color-border: #272d37;
+    --color-accent: #3b82f6; --color-accent-soft: rgba(59,130,246,.16); --color-accent-line: rgba(59,130,246,.40);
+    --color-success: #4ade80; --color-success-soft: rgba(74,222,128,.14);
+    --color-warning: #fb923c; --color-warning-soft: rgba(251,146,60,.14);
+    --color-error: #f87171; --color-error-soft: rgba(248,113,113,.14);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
+    --shadow-md: 0 4px 14px rgba(0,0,0,.45);
+    --shadow-lg: 0 24px 60px rgba(0,0,0,.6), 0 8px 24px rgba(0,0,0,.5);
+  }
+
+  /* ===== Base ===== */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-body);
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 600; line-height: 1.15; margin: 0; letter-spacing: -.01em; }
+  a { color: inherit; text-decoration: none; }
+  .mono { font-family: var(--font-mono); }
+  .muted { color: var(--color-muted); }
+  .accent { color: var(--color-accent); }
+  ::selection { background: var(--color-accent-soft); }
+  :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; border-radius: 4px; }
+
+  /* ===== Demo switcher bar ===== */
+  .switcher {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    background: var(--color-fg); color: #fff;
+    flex-wrap: wrap;
+  }
+  .switcher .lbl { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; opacity: .65; margin-right: var(--space-2); }
+  .switcher button {
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: .02em;
+    background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.18);
+    padding: 5px 10px; border-radius: 999px; cursor: pointer; transition: background .15s, border-color .15s;
+  }
+  .switcher button:hover { background: rgba(255,255,255,.10); }
+  .switcher button.active { background: var(--color-accent); border-color: var(--color-accent); }
+  .switcher .spacer { flex: 1; }
+  .theme-toggle {
+    background: var(--color-surface); color: var(--color-fg); border: 1px solid var(--color-border);
+    width: 34px; height: 34px; border-radius: 999px; cursor: pointer; display: inline-flex;
+    align-items: center; justify-content: center; font-size: 15px;
+  }
+
+  /* ===== Buttons / badges / chips ===== */
+  .btn { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-body); font-weight: 600;
+    font-size: 13px; padding: 10px 16px; border-radius: var(--radius-md); border: 1px solid transparent; cursor: pointer;
+    transition: transform .12s ease, box-shadow .12s ease, background .12s ease; }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-primary { background: var(--color-accent); color: #fff; box-shadow: var(--shadow-sm); }
+  .btn-primary:hover { background: color-mix(in srgb, var(--color-accent) 88%, #000); }
+  .btn-ghost { background: transparent; color: var(--color-fg); border-color: var(--color-border); }
+  .btn-ghost:hover { background: var(--color-surface-2); }
+  .btn-sm { padding: 6px 11px; font-size: 12px; }
+  .badge { font-family: var(--font-mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: .04em;
+    padding: 3px 8px; border-radius: 999px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; }
+  .badge.crit { background: var(--color-error-soft); color: var(--color-error); }
+  .badge.high { background: var(--color-warning-soft); color: var(--color-warning); }
+  .badge.norm { background: var(--color-accent-soft); color: var(--color-accent); }
+  .badge.low  { background: var(--color-surface-2); color: var(--color-muted); }
+  .badge.done { background: var(--color-success-soft); color: var(--color-success); }
+  .chip { font-family: var(--font-mono); font-size: 10.5px; padding: 4px 9px; border-radius: 999px;
+    background: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-muted); }
+  .tag { font-family: var(--font-mono); font-size: 10px; padding: 2px 7px; border-radius: var(--radius-sm);
+    background: var(--color-surface-2); color: var(--color-muted); }
+
+  /* ===== Page visibility ===== */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ===== Marketing landing ===== */
+  .nav-primary { position: sticky; top: 0; backdrop-filter: blur(10px);
+    background: color-mix(in srgb, var(--color-bg) 80%, transparent); border-bottom: 1px solid var(--color-border); z-index: 30; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 var(--space-5); }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 62px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 700; font-size: 16px; }
+  .brand-mark { width: 28px; height: 28px; border-radius: 8px; background: var(--color-accent); display: inline-grid; place-items: center; color: #fff; font-size: 15px; }
+  .nav-links { display: flex; gap: var(--space-5); }
+  .nav-links a { font-size: 13px; color: var(--color-muted); padding: 6px 8px; border-radius: var(--radius-sm); }
+  .nav-links a:hover { color: var(--color-fg); background: var(--color-surface-2); }
+  .nav-cta { display: flex; align-items: center; gap: var(--space-3); }
+  .nav-signin { font-size: 13px; font-weight: 600; }
+
+  .hero { padding: var(--space-9) 0 var(--space-8); }
+  .hero-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: var(--space-7); align-items: center; }
+  .hero-eyebrow { display: inline-block; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--color-accent); background: var(--color-accent-soft); padding: 5px 11px; border-radius: 999px; margin-bottom: var(--space-4); }
+  .hero h1 { font-size: 46px; font-weight: 700; letter-spacing: -.02em; }
+  .hero-sub { color: var(--color-muted); font-size: 16px; margin: var(--space-4) 0 var(--space-5); max-width: 30em; }
+  .hero-actions { display: flex; gap: var(--space-3); margin-bottom: var(--space-6); }
+  .hero-stats { display: flex; gap: var(--space-6); }
+  .stat-num { font-family: var(--font-display); font-size: 26px; font-weight: 700; }
+  .stat-num .unit { font-size: 14px; color: var(--color-muted); }
+  .stat-label { font-size: 12px; color: var(--color-muted); }
+
+  .app-window { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg); overflow: hidden; position: relative; }
+  .app-bar { display: flex; align-items: center; gap: 6px; padding: 11px var(--space-4); border-bottom: 1px solid var(--color-border); }
+  .dots { display: flex; gap: 6px; }
+  .dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--color-border); display: inline-block; }
+  .app-bar .mono { font-size: 11px; color: var(--color-muted); margin-left: 8px; }
+  .app-body { display: grid; grid-template-columns: 120px 1fr; min-height: 280px; }
+  .app-side { border-right: 1px solid var(--color-border); padding: var(--space-3); display: flex; flex-direction: column; gap: 2px; }
+  .side-item { font-size: 11px; color: var(--color-muted); padding: 7px 9px; border-radius: var(--radius-sm); }
+  .side-item.active { background: var(--color-accent-soft); color: var(--color-accent); font-weight: 600; }
+  .app-main { padding: var(--space-4); }
+  .app-main h4 { font-size: 13px; margin-bottom: var(--space-3); }
+  .tickets { display: flex; flex-direction: column; gap: var(--space-2); }
+  .ticket { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; transition: border-color .15s, transform .15s; }
+  .ticket:hover { border-color: var(--color-accent-line); transform: translateY(-1px); }
+  .ticket .row1 { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .ticket .t-num { font-family: var(--font-mono); font-size: 10px; color: var(--color-muted); }
+  .ticket .t-sub { font-size: 12.5px; font-weight: 500; }
+  .float-card { position: absolute; right: -14px; bottom: -16px; background: var(--color-surface); border: 1px solid var(--color-border);
+    border-radius: var(--radius-md); box-shadow: var(--shadow-md); padding: 12px 16px; }
+  .float-card .big { font-family: var(--font-display); font-size: 24px; font-weight: 700; color: var(--color-success); }
+  .float-card .lbl { font-size: 10px; color: var(--color-muted); }
+
+  .trust { padding: var(--space-6) 0; border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); }
+  .trust .mono-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--color-muted); text-align: center; margin-bottom: var(--space-4); }
+  .trust-logos { display: flex; justify-content: center; gap: var(--space-7); flex-wrap: wrap; opacity: .7; }
+  .trust-logo { font-family: var(--font-display); font-weight: 700; font-size: 15px; color: var(--color-muted); }
+
+  .features { padding: var(--space-8) 0; }
+  .section-head { text-align: center; max-width: 34em; margin: 0 auto var(--space-7); }
+  .section-head h2 { font-size: 30px; }
+  .section-head p { color: var(--color-muted); margin-top: var(--space-3); }
+  .feature-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--space-4); }
+  .feature { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-5);
+    grid-column: span 2; transition: border-color .15s, transform .15s; }
+  .feature:hover { border-color: var(--color-accent-line); transform: translateY(-3px); }
+  .feature.span-3 { grid-column: span 3; }
+  .feature-icon { width: 38px; height: 38px; border-radius: var(--radius-md); background: var(--color-accent-soft); color: var(--color-accent);
+    display: grid; place-items: center; font-size: 18px; margin-bottom: var(--space-3); }
+  .feature h3 { font-size: 16px; margin-bottom: var(--space-2); }
+  .feature p { color: var(--color-muted); font-size: 13px; }
+  .feature-meta { display: flex; gap: 6px; margin-top: var(--space-4); flex-wrap: wrap; }
+  .mini-bars { display: flex; align-items: flex-end; gap: 6px; height: 56px; margin-top: var(--space-4); }
+  .mini-bars span { flex: 1; background: var(--color-surface-2); border-radius: 4px 4px 0 0; }
+  .mini-bars span.peak { background: var(--color-accent); }
+
+  .cta-block { padding: var(--space-8) 0; }
+  .cta-inner { background: var(--color-fg); border-radius: var(--radius-lg); padding: var(--space-8) var(--space-7); text-align: center; position: relative; overflow: hidden; }
+  .cta-inner::before { content: ""; position: absolute; inset: 0; background: radial-gradient(600px 240px at 50% -10%, rgba(59,130,246,.45), transparent 70%); }
+  .cta-inner h2 { color: #fff; font-size: 30px; position: relative; }
+  .cta-inner p { color: rgba(255,255,255,.7); margin: var(--space-3) auto var(--space-5); max-width: 34em; position: relative; }
+  .cta-actions { display: flex; gap: var(--space-3); justify-content: center; position: relative; }
+
+  .footer-meta { padding: var(--space-7) 0; border-top: 1px solid var(--color-border); }
+  .footer-cols { display: flex; justify-content: space-between; gap: var(--space-6); flex-wrap: wrap; }
+  .footer-col h5 { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--color-muted); margin: 0 0 var(--space-3); }
+  .footer-col a { display: block; font-size: 13px; color: var(--color-muted); padding: 3px 0; }
+  .footer-col a:hover { color: var(--color-fg); }
+  .footer-legal { margin-top: var(--space-6); font-size: 12px; color: var(--color-muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+
+  /* ===== Auth (login) ===== */
+  .auth { display: grid; grid-template-columns: 1fr 1fr; min-height: calc(100vh - 110px); }
+  .auth-brand { background: var(--color-surface-2); padding: var(--space-8) var(--space-7); display: flex; flex-direction: column; justify-content: center; gap: var(--space-4); border-right: 1px solid var(--color-border); }
+  .auth-brand h2 { font-size: 34px; max-width: 12em; }
+  .auth-brand p { color: var(--color-muted); max-width: 28em; }
+  .auth-trust { font-family: var(--font-mono); font-size: 11px; color: var(--color-muted); }
+  .auth-form-wrap { display: flex; align-items: center; justify-content: center; padding: var(--space-7); }
+  .auth-card { width: 100%; max-width: 360px; }
+  .auth-card h1 { font-size: 24px; margin-bottom: 6px; }
+  .auth-card > p { color: var(--color-muted); margin-bottom: var(--space-5); }
+  .field { margin-bottom: var(--space-4); }
+  .field label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; }
+  .field .hint { font-size: 11px; color: var(--color-muted); margin-top: 5px; }
+  .field .err { font-size: 11px; color: var(--color-error); margin-top: 5px; }
+  .input, .select, .textarea {
+    width: 100%; font-family: var(--font-body); font-size: 13px; color: var(--color-fg);
+    background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 10px 12px; }
+  .input:focus, .select:focus, .textarea:focus { outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 3px var(--color-accent-soft); }
+  .input.invalid { border-color: var(--color-error); }
+  .textarea { min-height: 110px; resize: vertical; }
+  .auth-foot { font-size: 13px; color: var(--color-muted); margin-top: var(--space-5); text-align: center; }
+
+  /* ===== App shell ===== */
+  .shell { display: grid; grid-template-columns: 224px 1fr; min-height: calc(100vh - 46px); }
+  .sidebar { border-right: 1px solid var(--color-border); background: var(--color-surface); display: flex; flex-direction: column; padding: var(--space-4) var(--space-3); }
+  .sidebar .brand { padding: 6px 8px var(--space-4); }
+  .nav-group { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+  .nav-item { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 500; color: var(--color-muted);
+    padding: 9px 10px; border-radius: var(--radius-md); cursor: pointer; }
+  .nav-item:hover { background: var(--color-surface-2); color: var(--color-fg); }
+  .nav-item.active { background: var(--color-accent-soft); color: var(--color-accent); font-weight: 600; }
+  .nav-item .ic { width: 16px; text-align: center; }
+  .side-user { display: flex; align-items: center; gap: 10px; padding: var(--space-3) 8px 4px; border-top: 1px solid var(--color-border); margin-top: var(--space-3); }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--color-accent-soft); color: var(--color-accent);
+    display: grid; place-items: center; font-family: var(--font-mono); font-size: 11px; font-weight: 600; }
+  .side-user .nm { font-size: 12.5px; font-weight: 600; }
+  .side-user .rl { font-family: var(--font-mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--color-muted); }
+
+  .content { padding: 0; background: var(--color-bg); }
+  .pg-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4);
+    padding: var(--space-5) var(--space-6); }
+  .pg-header .crumb { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: var(--color-muted); }
+  .pg-header h1 { font-size: 24px; margin-top: 4px; }
+  .pg-actions { display: flex; gap: var(--space-2); align-items: center; }
+  .icon-btn { width: 36px; height: 36px; border-radius: var(--radius-md); border: 1px solid var(--color-border);
+    background: var(--color-surface); cursor: pointer; display: grid; place-items: center; font-size: 15px; }
+  .content-body { padding: 0 var(--space-6) var(--space-7); }
+
+  /* metric cards */
+  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); }
+  .metric { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-5); }
+  .metric .top { display: flex; align-items: flex-start; justify-content: space-between; }
+  .metric .lbl { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--color-muted); max-width: 7em; }
+  .metric .ic { width: 32px; height: 32px; border-radius: var(--radius-sm); display: grid; place-items: center; font-size: 15px; background: var(--color-accent-soft); color: var(--color-accent); }
+  .metric .ic.warn { background: var(--color-warning-soft); color: var(--color-warning); }
+  .metric .ic.err { background: var(--color-error-soft); color: var(--color-error); }
+  .metric .num { font-family: var(--font-display); font-size: 34px; font-weight: 700; margin: var(--space-3) 0 4px; font-variant-numeric: tabular-nums; }
+  .metric .sub { font-size: 12px; color: var(--color-muted); }
+
+  .card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); }
+  .card-head { display: flex; align-items: center; justify-content: space-between; padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--color-border); }
+  .card-head h3 { font-size: 15px; }
+  .card-pad { padding: var(--space-5); }
+  .mt-5 { margin-top: var(--space-5); }
+
+  /* bar chart */
+  .barrow { display: grid; grid-template-columns: 160px 1fr 36px; align-items: center; gap: var(--space-3); padding: 7px 0; font-size: 13px; }
+  .bar { height: 12px; background: var(--color-surface-2); border-radius: 999px; overflow: hidden; }
+  .bar > span { display: block; height: 100%; background: var(--color-accent); border-radius: 999px; }
+  .legend { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 10px; color: var(--color-muted); }
+  .legend i { width: 10px; height: 10px; border-radius: 3px; background: var(--color-accent); display: inline-block; }
+
+  /* table */
+  table.tbl { width: 100%; border-collapse: collapse; }
+  table.tbl th { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--color-muted);
+    text-align: left; padding: 10px var(--space-4); border-bottom: 1px solid var(--color-border); font-weight: 500; }
+  table.tbl td { padding: 12px var(--space-4); border-bottom: 1px solid var(--color-border); font-size: 13px; vertical-align: middle; }
+  table.tbl tr:last-child td { border-bottom: none; }
+  table.tbl tbody tr:hover { background: var(--color-surface-2); cursor: pointer; }
+  .t-id { font-family: var(--font-mono); font-size: 11px; color: var(--color-muted); }
+  .toolbar { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+  .search { flex: 1; min-width: 180px; }
+  .filter { font-family: var(--font-mono); font-size: 11px; }
+
+  /* ticket detail */
+  .detail-grid { display: grid; grid-template-columns: 1fr 320px; gap: var(--space-5); }
+  .timeline { position: relative; padding-left: var(--space-5); }
+  .timeline::before { content: ""; position: absolute; left: 7px; top: 4px; bottom: 4px; width: 2px; background: var(--color-border); }
+  .tl-item { position: relative; padding-bottom: var(--space-5); }
+  .tl-item::before { content: ""; position: absolute; left: -22px; top: 3px; width: 12px; height: 12px; border-radius: 50%; background: var(--color-accent); border: 2px solid var(--color-surface); }
+  .tl-item.internal::before { background: var(--color-warning); }
+  .tl-time { font-family: var(--font-mono); font-size: 10px; color: var(--color-muted); }
+  .tl-body { font-size: 13px; margin-top: 2px; }
+  .comment { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: var(--space-3); }
+  .comment.internal { background: var(--color-warning-soft); border-color: color-mix(in srgb, var(--color-warning) 30%, transparent); }
+  .comment .who { font-size: 12px; font-weight: 600; }
+  .comment .when { font-family: var(--font-mono); font-size: 10px; color: var(--color-muted); }
+  .meta-row { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--color-border); font-size: 13px; }
+  .meta-row:last-child { border-bottom: none; }
+  .meta-row .k { color: var(--color-muted); }
+  .attach { display: flex; align-items: center; gap: 10px; border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 9px 12px; font-size: 12.5px; margin-top: 8px; }
+
+  /* empty state */
+  .empty { text-align: center; padding: var(--space-7); color: var(--color-muted); }
+  .empty .ic { font-size: 30px; }
+  .empty h4 { color: var(--color-fg); margin: var(--space-3) 0 4px; }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+  .dropzone { border: 1.5px dashed var(--color-border); border-radius: var(--radius-md); padding: var(--space-5); text-align: center; color: var(--color-muted); font-size: 13px; }
+  .success-box { background: var(--color-success-soft); border: 1px solid color-mix(in srgb, var(--color-success) 30%, transparent);
+    color: var(--color-success); border-radius: var(--radius-md); padding: 14px 16px; font-size: 13px; }
+
+  @media (max-width: 900px) {
+    .hero-grid, .feature-grid, .auth, .metrics, .detail-grid, .form-grid { grid-template-columns: 1fr; }
+    .feature, .feature.span-3 { grid-column: span 1; }
+    .shell { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .hero h1 { font-size: 34px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- MDLC examples back-link (showcase chrome) -->
+<a href="../index.html" aria-label="Back to the MDLC examples gallery" data-mdlc-backlink style="position:fixed;bottom:16px;left:16px;z-index:9000;display:inline-flex;align-items:center;gap:7px;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:13px;font-weight:600;line-height:1;color:#fff;background:rgba(13,17,28,.82);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:9px 15px 9px 12px;text-decoration:none;box-shadow:0 10px 30px -10px rgba(0,0,0,.55);transition:background .16s,transform .16s" onmouseover="this.style.background='rgba(37,99,235,.94)';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(13,17,28,.82)';this.style.transform='none'">← All examples</a>
+
+<!-- ============ DEMO PAGE SWITCHER ============ -->
+<div class="switcher" role="navigation" aria-label="Page switcher">
+  <span class="lbl">ServiceHub demo ·</span>
+  <button data-go="landing" class="active">Landing</button>
+  <button data-go="login">Login</button>
+  <button data-go="portal">Portal</button>
+  <button data-go="new">New request</button>
+  <button data-go="detail">Ticket detail</button>
+  <button data-go="queue">Agent queue</button>
+  <button data-go="dashboard">Dashboard</button>
+  <button data-go="reports">Reports</button>
+  <span class="spacer"></span>
+  <button class="theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle light/dark theme">🌙</button>
+</div>
+
+<!-- ============ LANDING ============ -->
+<section class="page active" id="landing">
+  <header class="nav-primary">
+    <div class="wrap nav-inner">
+      <div class="brand"><span class="brand-mark">⇆</span> ServiceHub</div>
+      <nav class="nav-links">
+        <a href="#features">Platform</a><a href="#features">Workflows</a><a href="#features">Analytics</a><a href="#">Pricing</a>
+      </nav>
+      <div class="nav-cta">
+        <a class="nav-signin" data-go="login" href="#">Sign in</a>
+        <button class="btn btn-primary btn-sm" data-go="login">Get started →</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap hero">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <span class="hero-eyebrow">IT Service Management, unified</span>
+        <h1>From request to <span class="accent">resolution</span>, without the handoffs.</h1>
+        <p class="hero-sub">ServiceHub consolidates every employee request, incident report, and support interaction into one workflow — so Help Desk agents triage with full context, and IT operations see exactly where work piles up.</p>
+        <div class="hero-actions">
+          <button class="btn btn-primary" data-go="login">Start free trial →</button>
+          <button class="btn btn-ghost" data-go="dashboard">▷ See a live workspace</button>
+        </div>
+        <div class="hero-stats">
+          <div><div class="stat-num">2<span class="unit">min</span></div><div class="stat-label">Average triage time, down from 8</div></div>
+          <div><div class="stat-num">60<span class="unit">%</span></div><div class="stat-label">Fewer repeat handoffs</div></div>
+          <div><div class="stat-num">70<span class="unit">%</span></div><div class="stat-label">Drop in recurring incidents</div></div>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="app-window">
+          <div class="app-bar"><span class="dots"><i></i><i></i><i></i></span><span class="mono">servicehub · /queue</span></div>
+          <div class="app-body">
+            <aside class="app-side">
+              <span class="side-item">Dashboard</span>
+              <span class="side-item active">Queue</span>
+              <span class="side-item">Analytics</span>
+              <span class="side-item">Knowledge base</span>
+              <span class="side-item">Automation</span>
+            </aside>
+            <div class="app-main">
+              <h4>Incoming queue</h4>
+              <div class="tickets">
+                <div class="ticket"><div class="row1"><span class="t-num">SH-318</span><span class="badge crit">Critical</span></div><div class="t-sub">VPN auth failing for Finance</div></div>
+                <div class="ticket"><div class="row1"><span class="t-num">SH-317</span><span class="badge high">High</span></div><div class="t-sub">Laptop will not boot — Glen R.</div></div>
+                <div class="ticket"><div class="row1"><span class="t-num">SH-316</span><span class="badge norm">Standard</span></div><div class="t-sub">Adobe license renewal</div></div>
+                <div class="ticket"><div class="row1"><span class="t-num">SH-315</span><span class="badge done">Resolved</span></div><div class="t-sub">New monitor request</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="float-card"><div class="big">96%</div><div class="lbl">SLA compliance</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="trust"><div class="wrap">
+    <div class="mono-label">Trusted by IT operations teams at</div>
+    <div class="trust-logos"><span class="trust-logo">Berthand</span><span class="trust-logo">Halcyon</span><span class="trust-logo">Meridian</span><span class="trust-logo">Brightlock</span><span class="trust-logo">Avant</span></div>
+  </div></div>
+
+  <div class="wrap features" id="features">
+    <div class="section-head">
+      <h2>One request-to-resolution path, visible to everyone it touches.</h2>
+      <p>Every role works from the same record — employees track their own tickets, agents triage with full history, and operations leads spot the patterns behind the volume.</p>
+    </div>
+    <div class="feature-grid">
+      <div class="feature span-3">
+        <div class="feature-icon">⚡</div>
+        <h3>Self-service portal in under 90 seconds</h3>
+        <p>Employees pick a category, describe the issue in a structured form, attach a screenshot, and submit. ServiceHub instantly routes and returns a real-time resolution estimate drawn from your SLA policy — no multi-channel guesswork.</p>
+        <div class="feature-meta"><span class="chip">Software &amp; Licensing</span><span class="chip">Hardware</span><span class="chip">Access / Security</span></div>
+      </div>
+      <div class="feature span-3">
+        <div class="feature-icon">⏱</div>
+        <h3>Server-side SLA &amp; prioritization</h3>
+        <p>Tickets arrive pre-sorted — critical incidents first, then ordered by SLA urgency. A single server-side evaluator marks every At-Risk &amp; Breached state in a single click.</p>
+        <div class="feature-meta"><span class="tag">2 min →</span><span class="tag">8 h high</span><span class="tag">24 h standard</span></div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📈</div>
+        <h3>Pattern detection</h3>
+        <p>ServiceHub surfaces recurring issues — like VPN failures clustering at 9–11 AM — and a pre-filtered cohort to investigate.</p>
+        <div class="mini-bars"><span style="height:30%"></span><span style="height:55%"></span><span style="height:42%"></span><span class="peak" style="height:100%"></span><span class="peak" style="height:88%"></span><span style="height:48%"></span><span style="height:36%"></span></div>
+      </div>
+      <div class="feature span-3">
+        <div class="feature-icon">🔎</div>
+        <h3>Transparent tracking</h3>
+        <p>Confirmation emails carry a direct link to live ticket status. Employees follow every state change themselves — no agent follow-up, no lost requests.</p>
+        <div class="feature-meta"><span class="chip">Real-time status</span><span class="chip">Audit trail</span></div>
+      </div>
+      <div class="feature span-3">
+        <div class="feature-icon">🗂</div>
+        <h3>Audit-grade history</h3>
+        <p>Every state change, comment, and assignment is appended to an immutable timeline — internal notes stay internal, public events stay public.</p>
+        <div class="feature-meta"><span class="chip">Append-only</span><span class="chip">SOC 2</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap cta-block">
+    <div class="cta-inner">
+      <h2>Give IT one place to resolve, and everyone else one place to ask.</h2>
+      <p>Move your team off fragmented ticketing in an afternoon. Import existing queues, set SLA policies by priority, and watch repeat incidents drop within the first sprint.</p>
+      <div class="cta-actions">
+        <button class="btn btn-primary" data-go="login">Create your workspace</button>
+        <button class="btn btn-ghost" data-go="login" style="color:#fff;border-color:rgba(255,255,255,.25)">Sign in</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer-meta"><div class="wrap">
+    <div class="footer-cols">
+      <div class="brand"><span class="brand-mark">⇆</span> ServiceHub</div>
+      <div class="footer-col"><h5>Platform</h5><a data-go="portal" href="#">Self-service portal</a><a data-go="dashboard" href="#">Analytics</a><a data-go="detail" href="#">Audit history</a></div>
+      <div class="footer-col"><h5>Teams</h5><a href="#">Help Desk</a><a href="#">Infrastructure Ops</a><a href="#">IT Leadership</a></div>
+      <div class="footer-col"><h5>Resources</h5><a href="#">SLA policies</a><a href="#">Documentation</a><a href="#">Status</a><a href="#">Security &amp; compliance</a></div>
+    </div>
+    <div class="footer-legal"><span>© 2026 ServiceHub. All rights reserved.</span><span>Privacy · Terms · SOC 2 · Accessibility</span></div>
+  </div></footer>
+</section>
+
+<!-- ============ LOGIN ============ -->
+<section class="page" id="login">
+  <div class="auth">
+    <div class="auth-brand">
+      <div class="brand"><span class="brand-mark">⇆</span> ServiceHub</div>
+      <h2>From request to resolution, without the handoffs.</h2>
+      <p>One workflow for employees, agents, and IT leadership — with server-side SLA tracking and an audit-grade timeline on every ticket.</p>
+      <div class="auth-trust">SOC 2 Type II · Multi-tenant · RFC 9457 errors</div>
+    </div>
+    <div class="auth-form-wrap">
+      <div class="auth-card">
+        <h1>Sign in to ServiceHub</h1>
+        <p>Resolve, triage, and track — all from one workspace.</p>
+        <div class="field"><label>Workspace *</label><input class="input" value="acme" /><div class="hint">Your organization's ServiceHub workspace slug.</div></div>
+        <div class="field"><label>Work email *</label><input class="input" placeholder="you@company.com" value="manager@acme.test" /></div>
+        <div class="field"><label>Password *</label><input class="input" type="password" value="••••••••••••" /><div style="text-align:right;margin-top:6px"><a class="accent" style="font-size:12px" href="#">Forgot password?</a></div></div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center" data-go="dashboard">Sign in</button>
+        <div class="auth-foot">New to ServiceHub? <a class="accent" data-go="login" href="#">Create a workspace</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ APP SHELL PAGES ============ -->
+<!-- PORTAL (requester) -->
+<section class="page" id="portal">
+  <div class="shell">
+    <aside class="sidebar" data-role="requester"></aside>
+    <main class="content">
+      <div class="pg-header">
+        <div><div class="crumb">Portal</div><h1>My requests</h1></div>
+        <div class="pg-actions"><button class="btn btn-primary btn-sm" data-go="new">+ New request</button></div>
+      </div>
+      <div class="content-body">
+        <div class="card">
+          <div class="card-head"><h3>Your tickets</h3><span class="muted" style="font-size:12px">2 open · 1 resolved</span></div>
+          <table class="tbl">
+            <thead><tr><th>Ticket</th><th>Subject</th><th>Priority</th><th>Status</th><th>SLA</th><th>Updated</th></tr></thead>
+            <tbody>
+              <tr data-go="detail"><td class="t-id">SH-101</td><td>VPN drops at login</td><td><span class="badge high">High</span></td><td><span class="badge norm">In progress</span></td><td><span class="badge done">On track</span></td><td class="muted">2h ago</td></tr>
+              <tr data-go="detail"><td class="t-id">SH-102</td><td>Cannot access Salesforce license</td><td><span class="badge norm">Standard</span></td><td><span class="badge low">New</span></td><td><span class="badge done">On track</span></td><td class="muted">1h ago</td></tr>
+              <tr data-go="detail"><td class="t-id">SH-088</td><td>Request new monitor</td><td><span class="badge low">Low</span></td><td><span class="badge done">Resolved</span></td><td><span class="badge done">Met</span></td><td class="muted">2d ago</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<!-- NEW REQUEST -->
+<section class="page" id="new">
+  <div class="shell">
+    <aside class="sidebar" data-role="requester"></aside>
+    <main class="content">
+      <div class="pg-header"><div><div class="crumb">Portal / New</div><h1>Submit a request</h1></div></div>
+      <div class="content-body" style="max-width:720px">
+        <div class="card card-pad">
+          <div class="form-grid">
+            <div class="field"><label>Category *</label><select class="select"><option>Software &amp; Licensing</option><option>Hardware</option><option>Network / VPN</option><option>Access / Security</option></select></div>
+            <div class="field"><label>Type *</label><select class="select"><option>Incident</option><option>Service request</option></select></div>
+            <div class="field"><label>Priority *</label><select class="select"><option>Standard</option><option>Low</option><option>High</option><option>Critical</option></select></div>
+            <div class="field"><label>Affected system</label><input class="input" placeholder="e.g. Corporate VPN" /></div>
+          </div>
+          <div class="field"><label>Subject *</label><input class="input" placeholder="Short summary of the issue" /></div>
+          <div class="field"><label>Description *</label><textarea class="textarea" placeholder="What happened, what you expected, and any steps to reproduce…"></textarea></div>
+          <div class="field"><label>Attachment</label><div class="dropzone">⬆ Drag a screenshot here, or click to browse<br/><span style="font-size:11px">PNG, JPG, GIF, WEBP, PDF, TXT · up to 10 MB</span></div></div>
+          <div class="success-box mt-5">✓ On submit you'll get ticket <strong class="mono">SH-103</strong> and an expected resolution by <strong>tomorrow 11:00</strong>, based on the Standard SLA.</div>
+          <div style="display:flex;gap:8px;margin-top:var(--space-5)"><button class="btn btn-primary" data-go="detail">Submit request</button><button class="btn btn-ghost" data-go="portal">Cancel</button></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<!-- TICKET DETAIL (agent triage) -->
+<section class="page" id="detail">
+  <div class="shell">
+    <aside class="sidebar" data-role="agent"></aside>
+    <main class="content">
+      <div class="pg-header">
+        <div><div class="crumb">Queue / <span class="mono">SH-101</span></div><h1>VPN drops at login</h1></div>
+        <div class="pg-actions">
+          <button class="btn btn-ghost btn-sm">Assign to me</button>
+          <button class="btn btn-primary btn-sm">Mark resolved</button>
+        </div>
+      </div>
+      <div class="content-body">
+        <div class="detail-grid">
+          <div>
+            <div class="card card-pad">
+              <h3 style="margin-bottom:var(--space-4)">Conversation</h3>
+              <div class="comment"><div style="display:flex;justify-content:space-between"><span class="who">Riley Requester</span><span class="when">2026-06-09 08:14</span></div><div style="margin-top:6px">Cannot reach the VPN after the morning reboot. Worked fine yesterday.</div></div>
+              <div class="comment internal"><div style="display:flex;justify-content:space-between"><span class="who">Alex Agent · <span class="badge high">Internal</span></span><span class="when">2026-06-09 09:02</span></div><div style="margin-top:6px">Auth service logs show throttling on the SSO endpoint between 9–11 AM. Likely the same root cause as SH-318.</div></div>
+              <div class="field mt-5"><label>Add a reply</label><textarea class="textarea" placeholder="Reply to the requester…"></textarea>
+                <label style="display:inline-flex;gap:8px;align-items:center;margin-top:8px;font-weight:500;font-size:12px"><input type="checkbox" /> Internal note (not visible to the requester)</label>
+              </div>
+              <button class="btn btn-primary btn-sm">Post reply</button>
+            </div>
+            <div class="card card-pad mt-5">
+              <h3 style="margin-bottom:var(--space-4)">Timeline</h3>
+              <div class="timeline">
+                <div class="tl-item"><div class="tl-time">08:14</div><div class="tl-body">Ticket created by Riley Requester · <span class="badge low">New</span></div></div>
+                <div class="tl-item internal"><div class="tl-time">08:59</div><div class="tl-body">Assigned to Alex Agent <span class="tag">staff-only</span></div></div>
+                <div class="tl-item"><div class="tl-time">09:01</div><div class="tl-body">Status changed New → <span class="badge norm">In progress</span></div></div>
+                <div class="tl-item internal"><div class="tl-time">09:02</div><div class="tl-body">Internal note added <span class="tag">staff-only</span></div></div>
+              </div>
+            </div>
+          </div>
+          <aside>
+            <div class="card card-pad">
+              <h3 style="margin-bottom:var(--space-3)">Details</h3>
+              <div class="meta-row"><span class="k">Ticket</span><span class="mono">SH-101</span></div>
+              <div class="meta-row"><span class="k">Status</span><span class="badge norm">In progress</span></div>
+              <div class="meta-row"><span class="k">Priority</span><span class="badge high">High</span></div>
+              <div class="meta-row"><span class="k">SLA</span><span class="badge done">On track · 6h left</span></div>
+              <div class="meta-row"><span class="k">Requester</span><span>Riley Requester</span></div>
+              <div class="meta-row"><span class="k">Assignee</span><span>Alex Agent</span></div>
+              <div class="meta-row"><span class="k">Category</span><span>Network / VPN</span></div>
+            </div>
+            <div class="card card-pad mt-5">
+              <h3 style="margin-bottom:var(--space-3)">Attachments</h3>
+              <div class="attach">📎 vpn-error.png <span class="muted" style="margin-left:auto;font-family:var(--font-mono);font-size:10px">CLEAN</span></div>
+              <div class="attach">📎 ipconfig.txt <span class="muted" style="margin-left:auto;font-family:var(--font-mono);font-size:10px">CLEAN</span></div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<!-- AGENT QUEUE -->
+<section class="page" id="queue">
+  <div class="shell">
+    <aside class="sidebar" data-role="agent"></aside>
+    <main class="content">
+      <div class="pg-header"><div><div class="crumb">Queue</div><h1>Team queue</h1></div></div>
+      <div class="content-body">
+        <div class="card">
+          <div class="card-head">
+            <div class="toolbar" style="width:100%">
+              <input class="input search" placeholder="Search tickets…" />
+              <select class="select filter" style="width:auto"><option>All status</option><option>New</option><option>In progress</option><option>Waiting</option></select>
+              <select class="select filter" style="width:auto"><option>All priority</option><option>Critical</option><option>High</option></select>
+              <button class="btn btn-ghost btn-sm">⚠ SLA breached</button>
+            </div>
+          </div>
+          <table class="tbl">
+            <thead><tr><th>Ticket</th><th>Subject</th><th>Requester</th><th>Priority</th><th>Status</th><th>SLA</th><th>Assignee</th></tr></thead>
+            <tbody>
+              <tr data-go="detail"><td class="t-id">SH-318</td><td>VPN auth failing for Finance</td><td>Dana F.</td><td><span class="badge crit">Critical</span></td><td><span class="badge norm">In progress</span></td><td><span class="badge crit">Breached</span></td><td>Alex Agent</td></tr>
+              <tr data-go="detail"><td class="t-id">SH-101</td><td>VPN drops at login</td><td>Riley R.</td><td><span class="badge high">High</span></td><td><span class="badge norm">In progress</span></td><td><span class="badge done">On track</span></td><td>Alex Agent</td></tr>
+              <tr data-go="detail"><td class="t-id">SH-102</td><td>Cannot access Salesforce license</td><td>Riley R.</td><td><span class="badge norm">Standard</span></td><td><span class="badge low">New</span></td><td><span class="badge high">At risk</span></td><td class="muted">Unassigned</td></tr>
+              <tr data-go="detail"><td class="t-id">SH-099</td><td>Email signature not updating</td><td>Sam T.</td><td><span class="badge norm">Standard</span></td><td><span class="badge norm">Triaged</span></td><td><span class="badge done">On track</span></td><td>Morgan M.</td></tr>
+              <tr data-go="detail"><td class="t-id">SH-317</td><td>Laptop will not boot</td><td>Glen G.</td><td><span class="badge crit">Critical</span></td><td><span class="badge high">Waiting</span></td><td><span class="badge high">At risk</span></td><td>Alex Agent</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<!-- DASHBOARD (manager) -->
+<section class="page" id="dashboard">
+  <div class="shell">
+    <aside class="sidebar" data-role="manager"></aside>
+    <main class="content">
+      <div class="pg-header">
+        <div><div class="crumb">Dashboard</div><h1>Operations dashboard</h1></div>
+        <div class="pg-actions"><button class="btn btn-ghost btn-sm">🛡 View breaches</button><button class="icon-btn">🔔</button></div>
+      </div>
+      <div class="content-body">
+        <div class="metrics">
+          <div class="metric"><div class="top"><span class="lbl">Open tickets</span><span class="ic">📥</span></div><div class="num">24</div><div class="sub">Across the whole team queue</div></div>
+          <div class="metric"><div class="top"><span class="lbl">At risk</span><span class="ic warn">⏱</span></div><div class="num">5</div><div class="sub">≥80% of SLA elapsed</div></div>
+          <div class="metric"><div class="top"><span class="lbl">Breached</span><span class="ic err">⚠</span></div><div class="num">1</div><div class="sub">Past SLA target</div></div>
+          <div class="metric"><div class="top"><span class="lbl">MTTR</span><span class="ic">📈</span></div><div class="num">5.4h</div><div class="sub">Mean time to resolve</div></div>
+        </div>
+        <div class="card mt-5">
+          <div class="card-head"><h3>Open tickets by category</h3><span class="legend"><i></i> Ticket count</span></div>
+          <div class="card-pad">
+            <div class="barrow"><span>Network / VPN</span><div class="bar"><span style="width:100%"></span></div><span style="text-align:right" class="mono">9</span></div>
+            <div class="barrow"><span>Software &amp; Licensing</span><div class="bar"><span style="width:70%"></span></div><span style="text-align:right" class="mono">6</span></div>
+            <div class="barrow"><span>Hardware</span><div class="bar"><span style="width:50%"></span></div><span style="text-align:right" class="mono">4</span></div>
+            <div class="barrow"><span>Access / Security</span><div class="bar"><span style="width:33%"></span></div><span style="text-align:right" class="mono">3</span></div>
+            <div class="barrow"><span>Email &amp; Collaboration</span><div class="bar"><span style="width:22%"></span></div><span style="text-align:right" class="mono">2</span></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<!-- REPORTS -->
+<section class="page" id="reports">
+  <div class="shell">
+    <aside class="sidebar" data-role="manager"></aside>
+    <main class="content">
+      <div class="pg-header"><div><div class="crumb">Reports</div><h1>Export &amp; reporting</h1></div></div>
+      <div class="content-body" style="max-width:640px">
+        <div class="card card-pad">
+          <h3 style="margin-bottom:var(--space-4)">Generate an export</h3>
+          <div class="form-grid">
+            <div class="field"><label>Format</label><select class="select"><option>CSV</option><option>PDF</option><option>JSON</option></select></div>
+            <div class="field"><label>Date range</label><select class="select"><option>Last 30 days</option><option>This quarter</option><option>Year to date</option></select></div>
+          </div>
+          <div class="field"><label>Include</label><select class="select"><option>All tickets</option><option>SLA breaches only</option><option>Resolved tickets</option></select></div>
+          <button class="btn btn-primary mt-5">Generate report</button>
+          <div class="card mt-5" style="background:var(--color-surface-2)">
+            <div class="card-pad" style="display:flex;align-items:center;gap:12px">
+              <span class="badge done">Ready</span>
+              <span class="mono" style="font-size:12px">servicehub-tickets-2026-06.csv</span>
+              <a class="btn btn-ghost btn-sm" style="margin-left:auto" href="#">⬇ Download</a>
+            </div>
+          </div>
+        </div>
+        <div class="card card-pad mt-5">
+          <div class="empty">
+            <div class="ic">📄</div>
+            <h4>No earlier exports</h4>
+            <p>Generated reports appear here for 30 days. Pick a format above to create your first export.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<script>
+  // ---- Sidebar nav, rendered per role ----
+  var NAV = {
+    requester: [['portal','📨','My requests'],['new','📝','New request'],['detail','🎫','My tickets']],
+    agent:     [['queue','✓','Queue'],['detail','🎫','Ticket detail'],['dashboard','📊','Dashboard']],
+    manager:   [['portal','📨','My requests'],['new','📝','New request'],['queue','✓','Queue'],['dashboard','📊','Dashboard'],['reports','📈','Reports']]
+  };
+  var USER = {
+    requester: ['RR','Riley Requester','Requester'],
+    agent:     ['AA','Alex Agent','Agent'],
+    manager:   ['MM','Morgan Manager','Manager']
+  };
+  function renderSidebar(el, current){
+    var role = el.getAttribute('data-role');
+    var items = NAV[role] || NAV.manager;
+    var u = USER[role] || USER.manager;
+    var nav = items.map(function(it){
+      var active = it[0] === current ? ' active' : '';
+      return '<div class="nav-item'+active+'" data-go="'+it[0]+'"><span class="ic">'+it[1]+'</span>'+it[2]+'</div>';
+    }).join('');
+    el.innerHTML =
+      '<div class="brand"><span class="brand-mark">⇆</span> ServiceHub</div>'+
+      '<div class="nav-group">'+nav+'</div>'+
+      '<div class="side-user"><span class="avatar">'+u[0]+'</span><span><span class="nm">'+u[1]+'</span><br><span class="rl">'+u[2]+'</span></span></div>';
+  }
+
+  function go(id){
+    document.querySelectorAll('.page').forEach(function(p){ p.classList.toggle('active', p.id === id); });
+    document.querySelectorAll('.switcher button[data-go]').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-go') === id); });
+    document.querySelectorAll('.sidebar').forEach(function(sb){ renderSidebar(sb, id); });
+    window.scrollTo(0,0);
+    if (location.hash !== '#'+id) history.replaceState(null,'','#'+id);
+  }
+
+  document.addEventListener('click', function(e){
+    var t = e.target.closest('[data-go]');
+    if (t){ e.preventDefault(); go(t.getAttribute('data-go')); }
+  });
+
+  // Theme toggle
+  var tt = document.getElementById('themeToggle');
+  tt.addEventListener('click', function(){
+    var html = document.documentElement;
+    var dark = html.getAttribute('data-theme') === 'dark';
+    html.setAttribute('data-theme', dark ? 'light' : 'dark');
+    tt.textContent = dark ? '🌙' : '☀️';
+  });
+
+  // hash navigation (deep links + back/forward)
+  window.addEventListener('hashchange', function(){
+    var id = (location.hash || '#landing').slice(1);
+    if (document.getElementById(id)) go(id);
+  });
+
+  // initial render
+  document.querySelectorAll('.sidebar').forEach(function(sb){ renderSidebar(sb, ''); });
+  var start = (location.hash || '#landing').slice(1);
+  if (document.getElementById(start)) go(start); else go('landing');
+</script>
+</body>
+</html>

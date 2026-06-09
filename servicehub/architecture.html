@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ServiceHub — System Architecture</title>
+<meta name="description" content="System architecture diagram for ServiceHub: a multi-tenant ITSM platform (NestJS + Next.js + PostgreSQL + Redis + BullMQ + Caddy)." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  /* ===== ServiceHub design tokens (verbatim from the design template) ===== */
+  :root {
+    --color-bg:#f6f7f9; --color-surface:#ffffff; --color-surface-2:#eef1f5;
+    --color-fg:#0e1420; --color-muted:#5a6573; --color-border:#e0e4ea;
+    --color-accent:#2563eb; --color-accent-soft:rgba(37,99,235,.10); --color-accent-line:rgba(37,99,235,.28);
+    --color-success:#15803d; --color-success-soft:rgba(21,128,61,.12);
+    --color-warning:#c2410c; --color-warning-soft:rgba(194,65,12,.12);
+    --color-error:#dc2626; --color-error-soft:rgba(220,38,38,.12);
+    --font-display:"Space Grotesk",system-ui,sans-serif; --font-body:"Inter",system-ui,sans-serif; --font-mono:"JetBrains Mono",ui-monospace,monospace;
+    --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:24px;--space-6:32px;--space-7:48px;--space-8:64px;
+    --radius-sm:6px;--radius-md:12px;--radius-lg:20px;
+    --shadow-sm:0 1px 2px rgba(14,20,32,.05),0 1px 3px rgba(14,20,32,.04);
+    --shadow-md:0 4px 12px rgba(14,20,32,.06),0 2px 4px rgba(14,20,32,.04);
+    --shadow-lg:0 24px 60px rgba(14,20,32,.14),0 8px 24px rgba(14,20,32,.08);
+  }
+  [data-theme="dark"]{
+    --color-bg:#0b0d11;--color-surface:#14171d;--color-surface-2:#1c212a;
+    --color-fg:#f1f4f8;--color-muted:#9aa4b3;--color-border:#272d37;
+    --color-accent:#3b82f6;--color-accent-soft:rgba(59,130,246,.16);--color-accent-line:rgba(59,130,246,.40);
+    --color-success:#4ade80;--color-success-soft:rgba(74,222,128,.14);
+    --color-warning:#fb923c;--color-warning-soft:rgba(251,146,60,.14);
+    --color-error:#f87171;--color-error-soft:rgba(248,113,113,.14);
+    --shadow-sm:0 1px 2px rgba(0,0,0,.4);--shadow-md:0 4px 14px rgba(0,0,0,.45);--shadow-lg:0 24px 60px rgba(0,0,0,.6),0 8px 24px rgba(0,0,0,.5);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:var(--font-body);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,h4{font-family:var(--font-display);margin:0;font-weight:600;letter-spacing:-.01em}
+  .mono{font-family:var(--font-mono)}
+  .muted{color:var(--color-muted)}
+
+  header.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:var(--space-4);
+    padding:var(--space-4) var(--space-6);background:color-mix(in srgb,var(--color-bg) 85%,transparent);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--color-border)}
+  .brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:700;font-size:16px}
+  .brand-mark{width:28px;height:28px;border-radius:8px;background:var(--color-accent);display:grid;place-items:center;color:#fff;font-size:15px}
+  header .sub{font-size:12px}
+  .spacer{flex:1}
+  .legend-pill{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-muted);
+    border:1px solid var(--color-border);border-radius:999px;padding:5px 10px}
+  .theme-toggle{background:var(--color-surface);color:var(--color-fg);border:1px solid var(--color-border);width:34px;height:34px;border-radius:999px;cursor:pointer;font-size:15px}
+
+  .canvas{max-width:1180px;margin:0 auto;padding:var(--space-7) var(--space-6) var(--space-8)}
+
+  /* layered band */
+  .band{display:grid;grid-template-columns:120px 1fr;gap:var(--space-4);align-items:stretch}
+  .band-label{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--color-muted);
+    display:flex;align-items:center;justify-content:flex-end;text-align:right;padding-top:var(--space-4)}
+  .band-body{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-5);box-shadow:var(--shadow-sm)}
+  .band-body.zone{border-style:dashed;background:transparent}
+
+  .row{display:flex;gap:var(--space-3);flex-wrap:wrap}
+  .row.center{justify-content:center}
+  .col{display:flex;flex-direction:column;gap:var(--space-3)}
+  .grow{flex:1;min-width:0}
+
+  .node{border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface);padding:12px 14px;min-width:150px;box-shadow:var(--shadow-sm)}
+  .node .t{font-weight:600;font-size:13px;display:flex;align-items:center;gap:8px}
+  .node .d{font-size:11.5px;color:var(--color-muted);margin-top:3px}
+  .node .ic{width:24px;height:24px;border-radius:var(--radius-sm);display:grid;place-items:center;font-size:13px;background:var(--color-accent-soft);color:var(--color-accent);flex:none}
+  .node.accent{border-color:var(--color-accent-line)}
+  .node.sec{border-color:color-mix(in srgb,var(--color-error) 45%,var(--color-border));background:var(--color-error-soft)}
+  .node.sec .ic{background:var(--color-error-soft);color:var(--color-error)}
+  .node.store{border-color:color-mix(in srgb,var(--color-success) 40%,var(--color-border))}
+  .node.store .ic{background:var(--color-success-soft);color:var(--color-success)}
+  .node.ext{border-style:dashed}
+  .node.ext .ic{background:var(--color-warning-soft);color:var(--color-warning)}
+  .node.persona{min-width:0;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px}
+
+  .pill{font-family:var(--font-mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:999px;background:var(--color-surface-2);color:var(--color-muted)}
+  .pill.inv{background:var(--color-accent-soft);color:var(--color-accent)}
+  .tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+
+  /* vertical flow connector between bands */
+  .flow{display:flex;flex-direction:column;align-items:center;color:var(--color-muted)}
+  .flow .line{width:2px;height:14px;background:var(--color-border)}
+  .flow .chev{font-size:14px;line-height:1;margin:-2px 0}
+  .flow .cap{font-family:var(--font-mono);font-size:9.5px;color:var(--color-muted);background:var(--color-bg);padding:0 6px}
+  .flow-wrap{display:grid;grid-template-columns:120px 1fr;gap:var(--space-4)}
+  .flow-wrap > div:last-child{display:flex;justify-content:center;padding:4px 0}
+
+  /* API pipeline inner stack */
+  .pipeline{display:flex;flex-direction:column;gap:8px}
+  .pstep{display:flex;align-items:center;gap:10px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:9px 12px;background:var(--color-surface)}
+  .pstep .n{font-family:var(--font-mono);font-size:10px;color:var(--color-muted);width:16px;flex:none}
+  .pstep .lbl{font-weight:600;font-size:12.5px}
+  .pstep .meta{font-size:11px;color:var(--color-muted);margin-left:auto;text-align:right}
+  .pstep.choke{border-color:var(--color-accent-line);background:var(--color-accent-soft)}
+  .pstep.guard{border-left:3px solid var(--color-accent)}
+  .pdown{align-self:center;color:var(--color-muted);font-size:12px;margin:-3px 0}
+
+  .services-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:4px}
+  .svc{border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:7px 9px;font-size:11.5px;font-weight:500;background:var(--color-surface)}
+  .svc small{display:block;color:var(--color-muted);font-weight:400;font-size:10px}
+
+  .split{display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--space-3)}
+  .edge-link{font-family:var(--font-mono);font-size:10px;color:var(--color-muted);display:flex;align-items:center;gap:6px;margin-top:6px}
+
+  /* bottom infra row */
+  .infra{display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--space-4)}
+
+  section.notes{max-width:1180px;margin:0 auto;padding:0 var(--space-6) var(--space-8)}
+  .note-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)}
+  .panel{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-5)}
+  .panel h3{font-size:15px;margin-bottom:var(--space-3);display:flex;align-items:center;gap:8px}
+  .flowstep{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--color-border);font-size:12.5px}
+  .flowstep:last-child{border-bottom:none}
+  .flowstep .num{font-family:var(--font-mono);font-size:11px;color:#fff;background:var(--color-accent);width:18px;height:18px;border-radius:50%;display:grid;place-items:center;flex:none}
+  .inv-row{display:flex;gap:10px;padding:6px 0;font-size:12.5px;align-items:baseline}
+  .inv-row .id{font-family:var(--font-mono);font-size:10px;color:var(--color-accent);background:var(--color-accent-soft);border-radius:999px;padding:2px 7px;flex:none}
+  footer{max-width:1180px;margin:0 auto;padding:var(--space-5) var(--space-6) var(--space-8);color:var(--color-muted);font-size:12px;border-top:1px solid var(--color-border)}
+
+  @media (max-width:880px){
+    .band,.flow-wrap{grid-template-columns:1fr}
+    .band-label{justify-content:flex-start;text-align:left;padding-top:0}
+    .flow-wrap>div:first-child{display:none}
+    .services-grid,.split,.infra,.note-grid{grid-template-columns:1fr 1fr}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand"><span class="brand-mark">⇆</span> ServiceHub</div>
+  <div class="sub muted">System Architecture · v0.1.1 · NestJS 11 · Next.js 16 · PostgreSQL 18 · Redis · BullMQ · Caddy</div>
+  <span class="spacer"></span>
+  <span class="legend-pill">Multi-tenant ITSM</span>
+  <button class="theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle theme">🌙</button>
+</header>
+
+<main class="canvas">
+
+  <!-- CLIENTS -->
+  <div class="band">
+    <div class="band-label">Clients<br/>(web)</div>
+    <div class="band-body zone">
+      <div class="row center">
+        <div class="node persona"><span class="ic">🧑‍💻</span><span class="t">Employee</span><span class="d">Submits &amp; tracks requests</span></div>
+        <div class="node persona"><span class="ic">🎧</span><span class="t">Help Desk Agent</span><span class="d">Triages, comments, resolves</span></div>
+        <div class="node persona"><span class="ic">📊</span><span class="t">IT Manager / Admin</span><span class="d">Queues, SLA, reports, admin</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-wrap"><div></div><div><div class="flow"><div class="line"></div><span class="cap mono">HTTPS · JWT bearer + httpOnly refresh cookie · WSS</span><div class="line"></div><div class="chev">▼</div></div></div></div>
+
+  <!-- EDGE -->
+  <div class="band">
+    <div class="band-label">Edge</div>
+    <div class="band-body">
+      <div class="node accent grow">
+        <div class="t"><span class="ic">🛡️</span>Caddy — TLS edge / reverse proxy</div>
+        <div class="d">Terminates TLS (HTTPS only). Routes <span class="mono">/v1/*</span> &amp; <span class="mono">/api/*</span> → API; everything else → Web. Forces HTTP→HTTPS, sets HSTS, sizes large client-header buffers.</div>
+        <div class="tags"><span class="pill">HTTPS only</span><span class="pill">HTTP→HTTPS redirect</span><span class="pill">HSTS</span><span class="pill inv">SEC-14</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-wrap"><div></div><div><div class="flow"><div class="line"></div><div class="chev">▼</div></div></div></div>
+
+  <!-- PRESENTATION + APP -->
+  <div class="band">
+    <div class="band-label">Presentation</div>
+    <div class="band-body">
+      <div class="split">
+        <div class="node grow" style="grid-column:span 1">
+          <div class="t"><span class="ic">▲</span>Next.js 16 — Web (apps/web)</div>
+          <div class="d">App Router. Marketing landing + app shell (sidebar + header). 13 screens, light/dark.</div>
+          <div class="tags"><span class="pill">TanStack Query v5</span><span class="pill">Tailwind v4</span><span class="pill">shadcn-style</span></div>
+        </div>
+        <div class="node grow">
+          <div class="t"><span class="ic">🔌</span>API client + Realtime</div>
+          <div class="d">Typed fetch → <span class="mono">/v1</span>, Bearer + silent refresh; RFC 9457 errors mapped to fields. socket.io client for live updates.</div>
+          <div class="tags"><span class="pill inv">INV-11/12 tokens</span><span class="pill inv">INV-15 ui-coverage</span></div>
+        </div>
+        <div class="node accent grow">
+          <div class="t"><span class="ic">📦</span>packages/shared</div>
+          <div class="d">DTOs, enums, ticket state machine, error contract constants — shared by web + API.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-wrap"><div></div><div><div class="flow"><div class="line"></div><span class="cap mono">REST /v1 (JSON)</span><div class="line"></div><div class="chev">▼</div></div></div></div>
+
+  <!-- API REQUEST PIPELINE -->
+  <div class="band">
+    <div class="band-label">API request<br/>pipeline<br/>(apps/api)</div>
+    <div class="band-body">
+      <div class="t" style="font-weight:600;font-size:13px;margin-bottom:var(--space-4);display:flex;align-items:center;gap:8px"><span class="ic">⚙️</span>NestJS 11 — every authenticated request flows top → bottom</div>
+      <div class="pipeline">
+        <div class="pstep"><span class="n">1</span><span class="lbl">Helmet · CORS allowlist · Throttler (rate limit)</span><span class="meta">CSP · nosniff · frame DENY</span></div>
+        <div class="pdown">↓</div>
+        <div class="pstep guard"><span class="n">2</span><span class="lbl">JwtAuthGuard → Principal {userId, tenantId, role}</span><span class="meta">@Public bypass</span></div>
+        <div class="pdown">↓</div>
+        <div class="pstep guard"><span class="n">3</span><span class="lbl">RolesGuard — RBAC (@Roles)</span><span class="meta">REQUESTER · AGENT · MANAGER · ADMIN</span></div>
+        <div class="pdown">↓</div>
+        <div class="pstep choke"><span class="n">4</span><span class="lbl">TenantTxInterceptor — opens tx, <span class="mono">SET LOCAL app.tenant_id</span></span><span class="meta">INV-1 · ADR-01</span></div>
+        <div class="pdown">↓</div>
+        <div class="pstep"><span class="n">5</span><span class="lbl">ValidationPipe (whitelist) — strips client SLA/audit fields</span><span class="meta">SEC-11</span></div>
+        <div class="pdown">↓</div>
+        <div class="pstep choke"><span class="n">6</span><span class="lbl">assertResourceAccess — object-level authz (404 to non-owner)</span><span class="meta">INV-2 · SEC-2 / W3</span></div>
+        <div class="pdown">↓</div>
+        <div class="pstep"><span class="n">7</span><span class="lbl">Domain services</span><span class="meta">business logic</span></div>
+      </div>
+
+      <div class="services-grid">
+        <div class="svc">Tickets<small>state machine · @Version (409)</small></div>
+        <div class="svc">Comments<small>internal vs public</small></div>
+        <div class="svc">Attachments<small>magic-byte · gated DL</small></div>
+        <div class="svc">SLA<small>server-side evaluator</small></div>
+        <div class="svc">Auth<small>argon2 · HIBP · anti-enum</small></div>
+        <div class="svc">Users / Catalog<small>RBAC admin</small></div>
+        <div class="svc">Dashboard / Reports<small>metrics · PDF/CSV/JSON</small></div>
+        <div class="svc">Notifications<small>in-app</small></div>
+        <div class="svc">Outbox<small>email + webhook</small></div>
+        <div class="svc">Audit<small>append-only</small></div>
+        <div class="svc">Webhooks (in)<small>verify-before-read</small></div>
+        <div class="svc">Events Gateway<small>socket.io /events</small></div>
+      </div>
+      <div class="pstep" style="margin-top:8px"><span class="n">⤴</span><span class="lbl">ProblemDetailsFilter — all errors as RFC 9457 <span class="mono">application/problem+json</span></span><span class="meta">INV-10 · ADR-07</span></div>
+    </div>
+  </div>
+
+  <div class="flow-wrap"><div></div><div><div class="flow"><div class="line"></div><span class="cap mono">TypeORM (pooled) · tenant tx · RLS enforced as servicehub_app</span><div class="line"></div><div class="chev">▼</div></div></div></div>
+
+  <!-- DATA STORES -->
+  <div class="band">
+    <div class="band-label">Data &amp;<br/>state</div>
+    <div class="band-body">
+      <div class="split">
+        <div class="node store grow">
+          <div class="t"><span class="ic">🐘</span>PostgreSQL 18</div>
+          <div class="d">15 tenant-scoped tables, all with <span class="mono">tenant_id</span>. Row-Level Security policies + FORCE RLS; app connects as non-owner <span class="mono">servicehub_app</span>. Optimistic <span class="mono">@VersionColumn</span>; UNIQUE dedup keys.</div>
+          <div class="tags"><span class="pill inv">INV-3 RLS</span><span class="pill inv">INV-4/5/6/7</span><span class="pill">PITR backups</span></div>
+        </div>
+        <div class="node store grow">
+          <div class="t"><span class="ic">⚡</span>Redis 7</div>
+          <div class="d">Auth rate-limit counters (ip,email), cache for SLA/category lookups, and the BullMQ queue backend. socket.io multi-pod adapter.</div>
+          <div class="tags"><span class="pill inv">INV-9 rate-limit</span><span class="pill">BullMQ broker</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-wrap"><div></div><div><div class="flow"><div class="chev">▲▼</div><span class="cap mono">outbox rows (same tx) · repeatable jobs · pub/sub</span></div></div></div>
+
+  <!-- ASYNC / REALTIME / EXTERNAL -->
+  <div class="band">
+    <div class="band-label">Async,<br/>realtime &amp;<br/>external</div>
+    <div class="band-body zone">
+      <div class="infra">
+        <div class="node accent">
+          <div class="t"><span class="ic">🔁</span>Worker (BullMQ)</div>
+          <div class="d">Repeatable <span class="mono">maintenance</span> tick (30s): drains the email outbox (capped backoff → DLQ) and runs the SLA evaluator per tenant, emitting breach notifications.</div>
+          <div class="tags"><span class="pill inv">ADR-04 outbox</span><span class="pill inv">ADR-05 SLA</span></div>
+        </div>
+        <div class="node">
+          <div class="t"><span class="ic">📡</span>EventsGateway</div>
+          <div class="d">socket.io <span class="mono">/events</span>. JWT handshake + Origin check; per-room (tenant/ticket) authz. Pushes ticket/comment/SLA events back to clients.</div>
+          <div class="tags"><span class="pill inv">SEC-12 · R9</span></div>
+        </div>
+        <div class="node ext">
+          <div class="t"><span class="ic">✉️</span>Resend (external)</div>
+          <div class="d">Transactional email via the outbox (console stub when unconfigured). Inbound delivery webhooks verified HMAC-before-read &amp; deduped.</div>
+          <div class="tags"><span class="pill inv">INV-8 · SEC-8</span></div>
+        </div>
+      </div>
+      <div class="edge-link">↳ Worker ↔ Redis (queue) · Worker → PostgreSQL (drain/evaluate) · Worker → Resend (send) · Gateway ↔ Redis (adapter) ⇄ Clients (WSS)</div>
+    </div>
+  </div>
+
+</main>
+
+<!-- KEY FLOWS + INVARIANTS -->
+<section class="notes">
+  <div class="note-grid">
+    <div class="panel">
+      <h3>🔄 Key data flows</h3>
+      <div class="flowstep"><span class="num">1</span><div><strong>Submit ticket (W1)</strong> — Browser → Caddy → API. Guards → tenant tx (<span class="mono">SET LOCAL</span>) → TicketsService: INSERT ticket + compute SLA + audit event + enqueue confirmation email — <em>all in one transaction</em> → commit → socket emit → 201.</div></div>
+      <div class="flowstep"><span class="num">2</span><div><strong>Guaranteed email/webhook</strong> — Business change writes an outbox row in the same tx (never a synchronous send). The BullMQ worker drains it to Resend with idempotent UNIQUE keys + capped backoff → DLQ.</div></div>
+      <div class="flowstep"><span class="num">3</span><div><strong>Realtime push</strong> — On ticket/comment/SLA changes the API emits to the tenant/ticket room; the socket.io client invalidates the relevant TanStack Query caches.</div></div>
+      <div class="flowstep"><span class="num">4</span><div><strong>Inbound webhook</strong> — <span class="mono">POST /v1/webhooks/resend</span>: HMAC verify over the raw body <em>before any DB read</em>, then dedup via <span class="mono">webhook_events</span> UNIQUE, then process (idempotent).</div></div>
+      <div class="flowstep"><span class="num">5</span><div><strong>Authorization isolation (W3)</strong> — RLS scopes every query to the tenant; <span class="mono">assertResourceAccess</span> adds row-ownership so a requester gets 404 on another user's ticket, sub-resources, and attachments.</div></div>
+    </div>
+    <div class="panel">
+      <h3>🔐 Architectural invariants &amp; boundaries</h3>
+      <div class="inv-row"><span class="id">INV-1</span><span>Tenant queries only via the tenant-transaction wrapper (<span class="mono">SET LOCAL app.tenant_id</span>).</span></div>
+      <div class="inv-row"><span class="id">INV-2</span><span>Object-level authz chokepoint <span class="mono">assertResourceAccess</span> — 404 to non-owners.</span></div>
+      <div class="inv-row"><span class="id">INV-3</span><span>RLS enabled + FORCED on all tenant tables; app is a non-owner role.</span></div>
+      <div class="inv-row"><span class="id">INV-4/5/6/7</span><span>UNIQUE constraints: ticket #, email dedup, webhook dedup, user email.</span></div>
+      <div class="inv-row"><span class="id">INV-8</span><span>Webhook signature verified before any DB read.</span></div>
+      <div class="inv-row"><span class="id">INV-9</span><span>Auth rate-limit fires before the password hash compare.</span></div>
+      <div class="inv-row"><span class="id">INV-10</span><span>All errors via the single RFC 9457 problem+json filter.</span></div>
+      <div class="inv-row"><span class="id">INV-11/12</span><span>Design-token discipline; template <span class="mono">:root</span> copied verbatim.</span></div>
+      <div class="inv-row"><span class="id">INV-13</span><span>argon2 password hashing (no substitution).</span></div>
+      <div class="inv-row"><span class="id">INV-14</span><span>Attachments served only via the ownership-checked download controller.</span></div>
+      <div class="inv-row"><span class="id">INV-15</span><span>UI coverage: every screen routable, every workflow has an e2e test.</span></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <strong>ServiceHub</strong> — derived from <span class="mono">ARCHITECTURE.md</span> §1–§9. Monorepo: <span class="mono">apps/api</span> (NestJS + worker) · <span class="mono">apps/web</span> (Next.js) · <span class="mono">packages/shared</span>. Orchestrated by <span class="mono">docker compose</span> (postgres · redis · migrate · api · worker · web · caddy). Scale tier: medium (1k–50k concurrent) — connection pooling + Redis cache + real BullMQ queue. Legend: <span style="color:var(--color-accent)">accent</span> = chokepoint/key boundary, <span style="color:var(--color-success)">green</span> = data store, dashed = external service.
+</footer>
+
+<script>
+  var tt=document.getElementById('themeToggle');
+  tt.addEventListener('click',function(){
+    var h=document.documentElement,d=h.getAttribute('data-theme')==='dark';
+    h.setAttribute('data-theme',d?'light':'dark');tt.textContent=d?'🌙':'☀️';
+  });
+</script>
+</body>
+</html>
