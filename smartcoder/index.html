@@ -252,8 +252,6 @@
 </style>
 </head>
 <body>
-<a href="../index.html" aria-label="Back to the MDLC examples gallery" data-mdlc-backlink style="position:fixed;bottom:16px;left:16px;z-index:9000;display:inline-flex;align-items:center;gap:7px;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:13px;font-weight:600;line-height:1;color:#fff;background:rgba(13,17,28,.82);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:9px 15px 9px 12px;text-decoration:none;box-shadow:0 10px 30px -10px rgba(0,0,0,.55);transition:background .16s,transform .16s" onmouseover="this.style.background='rgba(37,99,235,.94)';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(13,17,28,.82)';this.style.transform='none'">← All examples</a>
-
 <style>
   /* ===== MDLC preview chrome (shared demo bar) ===== */
   :root{--mdlc-bar-h:41px}
@@ -748,5 +746,6 @@
     tabs.forEach(function(t){t.addEventListener('click',function(e){e.preventDefault();var v=t.getAttribute('data-mdlc');if(v==='landing'){window.showLanding();}else{window.showApp(v);}});});
   })();
 </script>
+<a href="../index.html" aria-label="Back to the MDLC examples gallery" style="position:fixed;top:14px;left:14px;z-index:2147483647;display:inline-flex;align-items:center;gap:7px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#edf0f7;background:rgba(8,13,25,.82);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid #2a3a5c;border-radius:8px;padding:8px 13px;text-decoration:none;box-shadow:0 8px 24px -8px rgba(0,0,0,.7);">&larr; Gallery</a>
 </body>
 </html>
