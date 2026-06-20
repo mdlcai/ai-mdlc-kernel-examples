@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sentinel — Unified AppSec Platform</title>
+<meta name="description" content="Connect a repo, domain, or IP. Run SAST/SCA/DAST/secrets/IaC/port scanners in sandboxed containers. Get one deduped, prioritized findings list." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  /* ===== Design tokens (mirrors apps/web/app/globals.css + RESEARCH Design Language) ===== */
+  :root {
+    --color-primary:#0c7ed4; --color-secondary:#6316ca; --color-accent:#d36f23;
+    --color-background:#fafafa; --color-surface:#f4f5f5; --color-surface-2:#ffffff;
+    --color-text:#161a1d; --color-text-secondary:#5c6770; --color-border:#e5e7eb;
+    --color-success:#1fad53; --color-warning:#ec9c13; --color-error:#df2020;
+    --font-heading:'Space Grotesk',system-ui,sans-serif;
+    --font-body:'Inter',system-ui,sans-serif;
+    --font-mono:'JetBrains Mono',ui-monospace,monospace;
+    --radius:6px; --radius-sm:2px; --radius-lg:10px;
+    --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-6:24px; --sp-8:32px;
+  }
+  [data-theme="dark"] {
+    --color-primary:#0c7ed4; --color-secondary:#7f30e8; --color-accent:#e28f50;
+    --color-background:#090a0c; --color-surface:#121517; --color-surface-2:#15191c;
+    --color-text:#eaebec; --color-text-secondary:#838e95; --color-border:#1f2937;
+    --color-success:#33cc6b; --color-warning:#e2a336; --color-error:#d74242;
+  }
+  * { box-sizing:border-box; }
+  html,body { margin:0; padding:0; }
+  body {
+    font-family:var(--font-body); font-size:14px; line-height:1.55;
+    background:var(--color-background); color:var(--color-text);
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4 { font-family:var(--font-heading); font-weight:600; letter-spacing:-0.01em; margin:0; }
+  a { color:var(--color-primary); text-decoration:none; }
+  code,.mono { font-family:var(--font-mono); font-size:12.5px; }
+  :focus-visible { outline:3px solid var(--color-primary); outline-offset:2px; border-radius:var(--radius-sm); }
+  button { font-family:var(--font-body); cursor:pointer; }
+  ::selection { background:color-mix(in srgb, var(--color-primary) 30%, transparent); }
+
+  /* ===== App shell ===== */
+  .app { display:grid; grid-template-columns:224px 1fr; min-height:100vh; }
+  .sidebar {
+    background:var(--color-surface); border-right:1px solid var(--color-border);
+    display:flex; flex-direction:column; padding:var(--sp-4); gap:var(--sp-6);
+    position:sticky; top:0; height:100vh;
+  }
+  .brand { display:flex; align-items:center; gap:var(--sp-2); font-family:var(--font-heading); font-weight:700; font-size:16.8px; }
+  .brand .logo { width:26px; height:26px; display:grid; place-items:center; background:var(--color-primary); border-radius:var(--radius); color:#fff; }
+  .org { font-size:11.7px; color:var(--color-text-secondary); }
+  .org strong { display:block; color:var(--color-text); font-weight:600; font-size:14px; font-family:var(--font-body); }
+  nav.primary ul { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px; }
+  nav.primary a {
+    display:flex; align-items:center; gap:var(--sp-3); padding:var(--sp-2) var(--sp-3);
+    color:var(--color-text-secondary); border-radius:var(--radius); font-weight:500; cursor:pointer;
+  }
+  nav.primary a:hover { background:color-mix(in srgb, var(--color-text) 6%, transparent); color:var(--color-text); }
+  nav.primary a.active { background:color-mix(in srgb, var(--color-primary) 14%, transparent); color:var(--color-primary); }
+  nav.primary svg { width:16px; height:16px; flex:none; }
+  .sidebar-foot { margin-top:auto; display:flex; flex-direction:column; gap:var(--sp-3); }
+  .theme-toggle { display:inline-flex; border:1px solid var(--color-border); border-radius:var(--radius); overflow:hidden; }
+  .theme-toggle button { background:transparent; border:0; padding:6px 10px; color:var(--color-text-secondary); display:grid; place-items:center; }
+  .theme-toggle button.active { background:var(--color-primary); color:#fff; }
+  .userbox { font-size:11.7px; color:var(--color-text-secondary); }
+  .userbox strong { display:block; color:var(--color-text); font-size:13px; font-weight:600; font-family:var(--font-body); }
+
+  main { padding:var(--sp-8); max-width:1216px; }
+  .page-head { margin-bottom:var(--sp-6); }
+  .page-head h1 { font-size:24.2px; }
+  .page-head p { color:var(--color-text-secondary); margin:var(--sp-1) 0 0; }
+  .row { display:flex; align-items:center; justify-content:space-between; gap:var(--sp-4); }
+
+  .btn { display:inline-flex; align-items:center; gap:var(--sp-2); padding:8px 14px; border-radius:var(--radius);
+    border:1px solid var(--color-primary); background:var(--color-primary); color:#fff; font-weight:600; font-size:13px; }
+  .btn:hover { filter:brightness(1.06); }
+  .btn.secondary { background:transparent; color:var(--color-text); border-color:var(--color-border); }
+
+  .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:var(--sp-4); margin-bottom:var(--sp-6); }
+  .card { background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:var(--radius-lg); padding:var(--sp-4); }
+  .card .label { color:var(--color-text-secondary); font-size:12.5px; }
+  .card .metric { font-family:var(--font-heading); font-size:29px; font-weight:700; line-height:1.1; margin-top:var(--sp-2); }
+  .card .metric.clear { color:var(--color-success); }
+  .card .metric.alert { color:var(--color-error); }
+  .card .sub { font-size:11.7px; color:var(--color-text-secondary); margin-top:2px; }
+
+  .panel { background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:var(--radius-lg); padding:var(--sp-6); margin-bottom:var(--sp-6); }
+  .panel h2 { font-size:16.8px; margin-bottom:var(--sp-4); }
+
+  .sevbreak { display:grid; grid-template-columns:repeat(5,1fr); gap:var(--sp-3); }
+  .sevbreak .b { border:1px solid var(--color-border); border-radius:var(--radius); padding:var(--sp-3); }
+  .sevbreak .b .n { font-family:var(--font-heading); font-size:20.2px; font-weight:700; }
+
+  /* table */
+  table { width:100%; border-collapse:collapse; }
+  thead th { text-align:left; font-size:11.7px; text-transform:uppercase; letter-spacing:0.04em; color:var(--color-text-secondary);
+    font-weight:600; padding:var(--sp-2) var(--sp-3); border-bottom:1px solid var(--color-border); }
+  tbody td { padding:var(--sp-3); border-bottom:1px solid var(--color-border); vertical-align:middle; }
+  tbody tr { transition:transform .12s ease, background .12s ease; cursor:pointer; }
+  tbody tr:hover { background:color-mix(in srgb, var(--color-text) 4%, transparent); transform:translateY(-1px); }
+  .filters { display:flex; gap:var(--sp-3); margin-bottom:var(--sp-4); flex-wrap:wrap; }
+  select { font-family:var(--font-body); font-size:13px; padding:7px 10px; border-radius:var(--radius);
+    border:1px solid var(--color-border); background:var(--color-surface-2); color:var(--color-text); }
+
+  /* severity badge: color + icon + text (a11y — never color alone) */
+  .sev { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; padding:3px 8px; border-radius:var(--radius-sm);
+    border:1px solid transparent; white-space:nowrap; }
+  .sev svg { width:13px; height:13px; }
+  .sev.critical { color:#fff; background:var(--color-error); }
+  .sev.high { color:var(--color-error); background:color-mix(in srgb,var(--color-error) 16%,transparent); border-color:color-mix(in srgb,var(--color-error) 40%,transparent); }
+  .sev.medium { color:var(--color-warning); background:color-mix(in srgb,var(--color-warning) 16%,transparent); border-color:color-mix(in srgb,var(--color-warning) 40%,transparent); }
+  .sev.low { color:var(--color-text-secondary); background:color-mix(in srgb,var(--color-text-secondary) 14%,transparent); }
+  .pill { font-size:11.5px; padding:2px 8px; border-radius:999px; border:1px solid var(--color-border); color:var(--color-text-secondary); }
+  .pill.open { color:var(--color-primary); border-color:color-mix(in srgb,var(--color-primary) 40%,transparent); }
+  .pill.fixed { color:var(--color-success); border-color:color-mix(in srgb,var(--color-success) 40%,transparent); }
+  .type-tag { font-size:11px; font-weight:600; letter-spacing:.03em; color:var(--color-secondary); }
+
+  /* page switching */
+  .view { display:none; }
+  .view.active { display:block; animation:fade .2s ease; }
+  @keyframes fade { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+  @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation:none!important; transition:none!important; } }
+
+  /* landing */
+  .landing-nav { display:flex; align-items:center; justify-content:space-between; padding:var(--sp-4) var(--sp-8);
+    border-bottom:1px solid var(--color-border); position:sticky; top:0; background:color-mix(in srgb,var(--color-background) 88%,transparent); backdrop-filter:blur(8px); }
+  .hero { max-width:1100px; margin:0 auto; padding:80px var(--sp-8) 48px; }
+  .hero .eyebrow { display:inline-flex; align-items:center; gap:8px; font-size:12.5px; color:var(--color-primary);
+    border:1px solid color-mix(in srgb,var(--color-primary) 40%,transparent); border-radius:999px; padding:4px 12px; margin-bottom:var(--sp-6); }
+  .hero h1 { font-size:48px; line-height:1.05; letter-spacing:-0.02em; max-width:18ch; }
+  .hero h1 .grad { color:var(--color-primary); }
+  .hero p.lede { font-size:18px; color:var(--color-text-secondary); max-width:62ch; margin:var(--sp-6) 0 var(--sp-8); }
+  .hero .cta { display:flex; gap:var(--sp-3); flex-wrap:wrap; }
+  .scanrow { display:flex; gap:var(--sp-2); flex-wrap:wrap; margin-top:48px; }
+  .scanrow .chip { font-family:var(--font-mono); font-size:12px; padding:6px 12px; border-radius:var(--radius);
+    border:1px solid var(--color-border); background:var(--color-surface); color:var(--color-text-secondary); }
+  .features { max-width:1100px; margin:0 auto; padding:24px var(--sp-8) 80px; display:grid; grid-template-columns:repeat(3,1fr); gap:var(--sp-4); }
+  .feat { border:1px solid var(--color-border); border-radius:var(--radius-lg); padding:var(--sp-6); background:var(--color-surface-2); }
+  .feat h3 { font-size:16.8px; margin-bottom:var(--sp-2); }
+  .feat p { color:var(--color-text-secondary); margin:0; font-size:13px; }
+  .feat .ic { width:34px; height:34px; border-radius:var(--radius); background:color-mix(in srgb,var(--color-primary) 14%,transparent);
+    color:var(--color-primary); display:grid; place-items:center; margin-bottom:var(--sp-3); }
+  .foot { border-top:1px solid var(--color-border); padding:var(--sp-6) var(--sp-8); color:var(--color-text-secondary); font-size:12.5px; text-align:center; }
+
+  .dl { display:grid; grid-template-columns:140px 1fr; gap:var(--sp-2) var(--sp-4); margin:var(--sp-4) 0; }
+  .dl dt { color:var(--color-text-secondary); font-size:12.5px; }
+  .dl dd { margin:0; }
+  .backlink { color:var(--color-text-secondary); font-size:13px; display:inline-flex; gap:6px; margin-bottom:var(--sp-4); }
+  .note { font-size:12px; color:var(--color-text-secondary); border-left:2px solid var(--color-border); padding-left:var(--sp-3); margin-top:var(--sp-4); }
+  @media (max-width:880px){ .app{grid-template-columns:1fr} .sidebar{display:none} .cards,.features,.sevbreak{grid-template-columns:1fr 1fr} .hero h1{font-size:34px} }
+</style>
+</head>
+<body>
+
+<!-- ============ LANDING ============ -->
+<section class="view landing active" id="view-landing">
+  <div class="landing-nav">
+    <div class="brand"><span class="logo">◈</span> Sentinel</div>
+    <div style="display:flex;gap:12px;align-items:center">
+      <button class="btn secondary" onclick="show('dashboard')">Live demo</button>
+      <button class="btn" onclick="show('dashboard')">Get started</button>
+    </div>
+  </div>
+  <div class="hero">
+    <span class="eyebrow">◆ One platform · five scan types</span>
+    <h1>Unify your security findings into <span class="grad">one short, trustworthy list.</span></h1>
+    <p class="lede">Connect a repo, domain, or IP. Sentinel runs best-of-breed open-source scanners in
+      sandboxed containers, then normalizes, deduplicates, and prioritizes every finding into a single
+      developer-first dashboard — turning a week of tool-wrangling into one connected view.</p>
+    <div class="cta">
+      <button class="btn" onclick="show('dashboard')">Open the dashboard →</button>
+      <button class="btn secondary" onclick="show('findings')">See findings</button>
+    </div>
+    <div class="scanrow">
+      <span class="chip">SAST · Semgrep</span><span class="chip">SCA · Trivy + OSV</span>
+      <span class="chip">DAST · ZAP + Nuclei</span><span class="chip">Secrets · gitleaks</span>
+      <span class="chip">IaC · checkov</span><span class="chip">Ports · nmap</span>
+    </div>
+  </div>
+  <div class="features">
+    <div class="feat"><div class="ic">⛉</div><h3>Sandboxed by design</h3><p>Every scanner runs in an isolated, network-restricted container with full capability drop and resource limits. Untrusted code never touches your stack.</p></div>
+    <div class="feat"><div class="ic">⚖</div><h3>Dedup is the moat</h3><p>One canonical Finding model (SARIF-inspired) collapses the same issue reported by multiple scanners into a single, severity-ranked row.</p></div>
+    <div class="feat"><div class="ic">↺</div><h3>Track to fixed</h3><p>Triage each finding — fixed, ignored, snoozed — and re-scans reconcile status automatically. The list reflects real progress, not repeated noise.</p></div>
+  </div>
+  <div class="foot">Built with the MDLC™ pipeline · Apache-2.0 · This is a static preview of the Sentinel UI.</div>
+</section>
+
+<!-- ============ APP SHELL (dashboard / findings / detail) ============ -->
+<section class="view" id="view-app">
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><span class="logo">◈</span> Sentinel</div>
+      <div class="org">Organization<strong>Acme Security</strong></div>
+      <nav class="primary" aria-label="Primary">
+        <ul>
+          <li><a id="nav-dashboard" onclick="show('dashboard')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg> Dashboard</a></li>
+          <li><a onclick="show('dashboard')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18M3 12h18M3 17h18"/></svg> Projects</a></li>
+          <li><a id="nav-findings" onclick="show('findings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/></svg> Findings</a></li>
+          <li><a onclick="show('dashboard')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg> Settings</a></li>
+        </ul>
+      </nav>
+      <div class="sidebar-foot">
+        <div class="theme-toggle" role="radiogroup" aria-label="Color theme">
+          <button onclick="setTheme('light')" id="t-light" title="Light">☀</button>
+          <button onclick="setTheme('dark')" id="t-dark" title="Dark">☾</button>
+        </div>
+        <div class="userbox"><strong>Dev Engineer</strong>dev@acme.security</div>
+        <button class="btn secondary" onclick="show('landing')">← Back to site</button>
+      </div>
+    </aside>
+
+    <main>
+      <!-- DASHBOARD -->
+      <div class="view active" id="sub-dashboard">
+        <div class="page-head"><h1>Dashboard</h1><p>Security posture across your organization.</p></div>
+        <div class="cards">
+          <div class="card"><div class="label">Open criticals</div><div class="metric clear">0</div><div class="sub">all clear · <a onclick="show('findings')">view →</a></div></div>
+          <div class="card"><div class="label">Open findings</div><div class="metric">4</div><div class="sub">across 1 project</div></div>
+          <div class="card"><div class="label">Projects</div><div class="metric">1</div><div class="sub">Acme Payments</div></div>
+        </div>
+        <div class="panel">
+          <h2>Open findings by severity</h2>
+          <div class="sevbreak">
+            <div class="b"><span class="sev critical">●&nbsp;Critical</span><div class="n">0</div></div>
+            <div class="b"><span class="sev high">▲&nbsp;High</span><div class="n">2</div></div>
+            <div class="b"><span class="sev medium">◆&nbsp;Medium</span><div class="n">2</div></div>
+            <div class="b"><span class="sev low">■&nbsp;Low</span><div class="n">0</div></div>
+            <div class="b"><span class="pill">Info</span><div class="n">0</div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Findings by status</h2>
+          <div class="sevbreak" style="grid-template-columns:repeat(4,1fr)">
+            <div class="b"><div class="label" style="color:var(--color-text-secondary);font-size:12.5px">Open</div><div class="n">4</div></div>
+            <div class="b"><div class="label" style="color:var(--color-text-secondary);font-size:12.5px">Fixed</div><div class="n" style="color:var(--color-success)">1</div></div>
+            <div class="b"><div class="label" style="color:var(--color-text-secondary);font-size:12.5px">Ignored</div><div class="n">0</div></div>
+            <div class="b"><div class="label" style="color:var(--color-text-secondary);font-size:12.5px">Snoozed</div><div class="n">0</div></div>
+          </div>
+          <p class="note">5 total findings tracked · last scan: <span class="mono">demo-sca</span> against <span class="mono">github.com/acme/payments</span></p>
+        </div>
+      </div>
+
+      <!-- FINDINGS -->
+      <div class="view" id="sub-findings">
+        <div class="page-head row">
+          <div><h1>Findings</h1><p>Every security finding across your scanners, deduplicated and ranked.</p></div>
+          <button class="btn secondary">⤓ Export JSON</button>
+        </div>
+        <div class="filters">
+          <select><option>All severities</option><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select>
+          <select><option>All statuses</option><option>Open</option><option>Fixed</option><option>Ignored</option></select>
+          <select><option>All types</option><option>SCA</option><option>SAST</option><option>Secret</option><option>IaC</option><option>DAST</option><option>Port</option></select>
+        </div>
+        <div class="panel" style="padding:0;overflow:hidden">
+          <table aria-label="Security findings">
+            <thead><tr><th>Severity</th><th>Title</th><th>Scanner</th><th>Type</th><th>CVE</th><th>Status</th></tr></thead>
+            <tbody id="findings-body"></tbody>
+          </table>
+        </div>
+        <p class="note">Showing 1–5 of 5 · one row per unique finding (duplicates across scanners collapsed by fingerprint).</p>
+      </div>
+
+      <!-- FINDING DETAIL -->
+      <div class="view" id="sub-detail">
+        <a class="backlink" onclick="show('findings')">← Back to findings</a>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+          <span class="sev critical">●&nbsp;Critical</span>
+          <span class="pill open">Open</span>
+          <span class="type-tag">SCA</span>
+          <span style="color:var(--color-text-secondary);font-size:12.5px">via <span class="mono">demo-sca</span></span>
+        </div>
+        <h1 style="font-size:20.2px;max-width:60ch">CVE-2019-10744: Prototype pollution in lodash defaultsDeep (lodash@4.17.10)</h1>
+        <div class="panel" style="margin-top:16px">
+          <dl class="dl">
+            <dt>CVE</dt><dd><code>CVE-2019-10744</code></dd>
+            <dt>CVSS</dt><dd><strong>9.1</strong> <span style="color:var(--color-text-secondary)">(Critical)</span></dd>
+            <dt>Rule ID</dt><dd><code>GHSA-jf85-cpcp-j695</code></dd>
+            <dt>Location</dt><dd><code>lodash@4.17.10</code> <span style="color:var(--color-text-secondary)">(vulnerable &lt;4.17.12)</span></dd>
+            <dt>Remediation</dt><dd>Upgrade lodash to <code>&gt;=4.17.12</code>.</dd>
+          </dl>
+        </div>
+        <div class="panel">
+          <h2>Triage</h2>
+          <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+            <label style="font-size:12.5px;color:var(--color-text-secondary)">Status
+              <br><select style="margin-top:4px"><option>Open</option><option>Fixed</option><option>Ignored</option><option>Snoozed</option></select>
+            </label>
+            <button class="btn">Save status</button>
+          </div>
+          <p class="note">Ignoring or snoozing a finding requires a reason. Re-scans reconcile status automatically — a fixed finding that reappears is reopened.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<script>
+  // ---- the 5 real demo findings (from packages/scanners fixture, severity-sorted) ----
+  const FINDINGS = [
+    { sev:'critical', icon:'●', title:'CVE-2019-10744: Prototype pollution in lodash defaultsDeep (lodash@4.17.10)', cve:'CVE-2019-10744', detail:true },
+    { sev:'high', icon:'▲', title:'CVE-2023-45857: Axios SSRF / credential leak via XSRF token header (axios@0.21.1)', cve:'CVE-2023-45857' },
+    { sev:'high', icon:'▲', title:'CVE-2022-23529: jsonwebtoken insecure default / RCE via crafted key (jsonwebtoken@8.5.1)', cve:'CVE-2022-23529' },
+    { sev:'medium', icon:'◆', title:'CVE-2024-29041: Open redirect in express.response.location (express@4.17.1)', cve:'CVE-2024-29041' },
+    { sev:'medium', icon:'◆', title:'CVE-2020-7598: Prototype pollution in minimist (minimist@1.2.0)', cve:'CVE-2020-7598' },
+  ];
+  const cap = s => s.charAt(0).toUpperCase()+s.slice(1);
+  document.getElementById('findings-body').innerHTML = FINDINGS.map(f => `
+    <tr ${f.detail ? "onclick=\"show('detail')\"" : ''}>
+      <td><span class="sev ${f.sev}">${f.icon}&nbsp;${cap(f.sev)}</span></td>
+      <td style="max-width:520px">${f.title}</td>
+      <td><span class="mono">demo-sca</span></td>
+      <td><span class="type-tag">SCA</span></td>
+      <td><code>${f.cve}</code></td>
+      <td><span class="pill open">Open</span></td>
+    </tr>`).join('');
+
+  // ---- in-page router ----
+  function show(page){
+    if(page==='landing'){
+      document.getElementById('view-landing').classList.add('active');
+      document.getElementById('view-app').classList.remove('active');
+      window.scrollTo(0,0); return;
+    }
+    document.getElementById('view-landing').classList.remove('active');
+    document.getElementById('view-app').classList.add('active');
+    ['dashboard','findings','detail'].forEach(p=>{
+      document.getElementById('sub-'+p).classList.toggle('active', p===page);
+    });
+    document.getElementById('nav-dashboard').classList.toggle('active', page==='dashboard');
+    document.getElementById('nav-findings').classList.toggle('active', page==='findings'||page==='detail');
+    window.scrollTo(0,0);
+  }
+
+  // ---- theme (persisted) ----
+  function setTheme(t){
+    document.documentElement.setAttribute('data-theme', t);
+    try{ localStorage.setItem('sentinel-theme', t); }catch(e){}
+    document.getElementById('t-light').classList.toggle('active', t==='light');
+    document.getElementById('t-dark').classList.toggle('active', t==='dark');
+  }
+  (function(){
+    let t='dark';
+    try{ t = localStorage.getItem('sentinel-theme')
+      || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light':'dark'); }catch(e){}
+    setTheme(t);
+  })();
+</script>
+<a href="../index.html" aria-label="Back to the MDLC examples gallery" style="position:fixed;top:14px;left:14px;z-index:2147483647;display:inline-flex;align-items:center;gap:7px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#edf0f7;background:rgba(8,13,25,.82);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid #2a3a5c;border-radius:8px;padding:8px 13px;text-decoration:none;box-shadow:0 8px 24px -8px rgba(0,0,0,.7);">\&larr; Gallery</a>
+</body>
+</html>

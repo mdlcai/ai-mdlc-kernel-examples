@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sentinel — Architecture & Tools</title>
+<meta name="description" content="System architecture, data flow, sandboxed scanner tools, monorepo packages, data model, and architectural invariants for the Sentinel unified AppSec platform." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --color-primary:#0c7ed4;--color-secondary:#6316ca;--color-accent:#d36f23;
+    --color-background:#fafafa;--color-surface:#f4f5f5;--color-surface-2:#ffffff;
+    --color-text:#161a1d;--color-text-secondary:#5c6770;--color-border:#e5e7eb;
+    --color-success:#1fad53;--color-warning:#ec9c13;--color-error:#df2020;
+    --font-heading:'Space Grotesk',system-ui,sans-serif;
+    --font-body:'Inter',system-ui,sans-serif;
+    --font-mono:'JetBrains Mono',ui-monospace,monospace;
+    --radius:6px;--radius-sm:2px;--radius-lg:10px;
+  }
+  [data-theme="dark"]{
+    --color-primary:#0c7ed4;--color-secondary:#7f30e8;--color-accent:#e28f50;
+    --color-background:#090a0c;--color-surface:#121517;--color-surface-2:#15191c;
+    --color-text:#eaebec;--color-text-secondary:#838e95;--color-border:#1f2937;
+    --color-success:#33cc6b;--color-warning:#e2a336;--color-error:#d74242;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--font-body);font-size:14px;line-height:1.55;background:var(--color-background);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+  h1,h2,h3,h4{font-family:var(--font-heading);font-weight:600;letter-spacing:-0.01em;margin:0;}
+  a{color:var(--color-primary);text-decoration:none;}
+  code,.mono{font-family:var(--font-mono);font-size:12.5px;}
+  :focus-visible{outline:3px solid var(--color-primary);outline-offset:2px;border-radius:var(--radius-sm);}
+  button{font-family:var(--font-body);cursor:pointer;}
+  @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important;}}
+
+  header.top{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;
+    padding:14px 32px;border-bottom:1px solid var(--color-border);
+    background:color-mix(in srgb,var(--color-background) 86%,transparent);backdrop-filter:blur(8px);}
+  .brand{display:flex;align-items:center;gap:8px;font-family:var(--font-heading);font-weight:700;font-size:16.8px;}
+  .brand .logo{width:26px;height:26px;display:grid;place-items:center;background:var(--color-primary);border-radius:var(--radius);color:#fff;}
+  .top-actions{display:flex;gap:10px;align-items:center;}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:7px 13px;border-radius:var(--radius);
+    border:1px solid var(--color-border);background:transparent;color:var(--color-text);font-weight:600;font-size:13px;}
+  .btn:hover{background:color-mix(in srgb,var(--color-text) 6%,transparent);}
+  .theme-toggle{display:inline-flex;border:1px solid var(--color-border);border-radius:var(--radius);overflow:hidden;}
+  .theme-toggle button{background:transparent;border:0;padding:6px 11px;color:var(--color-text-secondary);}
+  .theme-toggle button.active{background:var(--color-primary);color:#fff;}
+
+  main{max-width:1120px;margin:0 auto;padding:40px 32px 80px;}
+  .lede{color:var(--color-text-secondary);max-width:70ch;font-size:15px;margin:6px 0 0;}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--color-primary);
+    border:1px solid color-mix(in srgb,var(--color-primary) 40%,transparent);border-radius:999px;padding:3px 11px;margin-bottom:14px;}
+  h1.title{font-size:32px;letter-spacing:-0.02em;}
+
+  section{margin-top:48px;}
+  h2.sec{font-size:20.2px;margin-bottom:4px;}
+  .sec-sub{color:var(--color-text-secondary);font-size:13px;margin:0 0 20px;}
+
+  /* architecture layers */
+  .diagram{display:flex;flex-direction:column;gap:0;align-items:center;}
+  .layer{width:100%;background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-lg);
+    padding:16px 18px;position:relative;}
+  .layer + .conn{height:30px;width:2px;background:linear-gradient(var(--color-primary),color-mix(in srgb,var(--color-primary) 20%,transparent));margin:0 auto;position:relative;}
+  .conn::after{content:'▾';position:absolute;left:50%;bottom:-4px;transform:translateX(-50%);color:var(--color-primary);font-size:12px;}
+  .layer .l-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .layer .tag{font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--color-primary);border:1px solid color-mix(in srgb,var(--color-primary) 35%,transparent);border-radius:999px;padding:2px 8px;}
+  .layer h3{font-size:15px;}
+  .layer .l-desc{color:var(--color-text-secondary);font-size:12.5px;margin-bottom:10px;}
+  .boxes{display:flex;gap:10px;flex-wrap:wrap;}
+  .box{flex:1;min-width:150px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:10px 12px;}
+  .box .bt{font-weight:600;font-size:13px;display:flex;align-items:center;gap:7px;}
+  .box .bd{color:var(--color-text-secondary);font-size:11.7px;margin-top:3px;}
+  .dot{width:8px;height:8px;border-radius:2px;flex:none;}
+  .untrusted{border-color:color-mix(in srgb,var(--color-error) 45%,transparent);background:color-mix(in srgb,var(--color-error) 7%,transparent);}
+  .untrusted .tag{color:var(--color-error);border-color:color-mix(in srgb,var(--color-error) 40%,transparent);}
+
+  /* data flow */
+  .flow{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;}
+  .step{flex:1;min-width:120px;background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius);
+    padding:11px 12px;position:relative;}
+  .step .n{font-family:var(--font-mono);font-size:10.5px;color:var(--color-primary);}
+  .step .s{font-weight:600;font-size:13px;margin-top:2px;}
+  .step .sd{color:var(--color-text-secondary);font-size:11.5px;margin-top:2px;}
+
+  /* tools table */
+  table{width:100%;border-collapse:collapse;background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-lg);overflow:hidden;}
+  thead th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--color-text-secondary);font-weight:600;padding:10px 12px;border-bottom:1px solid var(--color-border);}
+  tbody td{padding:10px 12px;border-bottom:1px solid var(--color-border);vertical-align:middle;font-size:12.7px;}
+  tbody tr:last-child td{border-bottom:0;}
+  tbody tr:hover{background:color-mix(in srgb,var(--color-text) 4%,transparent);}
+  .typetag{font-weight:700;font-size:10.5px;letter-spacing:.04em;padding:2px 7px;border-radius:var(--radius-sm);}
+  .t-sca{color:var(--color-primary);background:color-mix(in srgb,var(--color-primary) 14%,transparent);}
+  .t-sast{color:var(--color-secondary);background:color-mix(in srgb,var(--color-secondary) 16%,transparent);}
+  .t-dast{color:var(--color-accent);background:color-mix(in srgb,var(--color-accent) 16%,transparent);}
+  .t-secret{color:var(--color-warning);background:color-mix(in srgb,var(--color-warning) 16%,transparent);}
+  .t-iac{color:var(--color-success);background:color-mix(in srgb,var(--color-success) 16%,transparent);}
+  .t-port{color:var(--color-text-secondary);background:color-mix(in srgb,var(--color-text-secondary) 14%,transparent);}
+  .net{font-size:11px;font-family:var(--font-mono);padding:1px 6px;border-radius:var(--radius-sm);border:1px solid var(--color-border);}
+  .net.none{color:var(--color-success);}
+  .net.restricted{color:var(--color-warning);}
+  .lic{font-family:var(--font-mono);font-size:11px;color:var(--color-text-secondary);}
+  .lic.copyleft{color:var(--color-error);}
+
+  /* grids */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;}
+  .pkg{background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:14px;}
+  .pkg .pn{font-family:var(--font-mono);font-size:12.5px;color:var(--color-primary);font-weight:500;}
+  .pkg .pd{color:var(--color-text-secondary);font-size:12px;margin-top:5px;}
+  .ent{display:flex;flex-direction:column;gap:6px;}
+  .ent .e{background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius);padding:9px 12px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}
+  .ent .e .name{font-family:var(--font-mono);font-weight:600;font-size:12.5px;min-width:130px;}
+  .ent .e .cols{color:var(--color-text-secondary);font-size:11.5px;font-family:var(--font-mono);}
+  .scoped{color:var(--color-primary);}
+
+  .inv{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:10px;}
+  .inv .i{background:var(--color-surface-2);border:1px solid var(--color-border);border-left:3px solid var(--color-primary);border-radius:var(--radius);padding:10px 12px;}
+  .inv .i .id{font-family:var(--font-mono);font-size:11px;color:var(--color-primary);font-weight:600;}
+  .inv .i .r{font-size:12.5px;margin-top:3px;}
+  .inv .i .c{font-size:10.5px;font-family:var(--font-mono);color:var(--color-text-secondary);margin-top:4px;}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{font-family:var(--font-mono);font-size:11.5px;padding:5px 11px;border-radius:var(--radius);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text-secondary);}
+  .chip b{color:var(--color-text);font-weight:600;}
+
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--color-text-secondary);margin-top:14px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .foot{border-top:1px solid var(--color-border);padding:22px 32px;color:var(--color-text-secondary);font-size:12px;text-align:center;}
+  @media (max-width:720px){.boxes,.flow{flex-direction:column;}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo">◈</span> Sentinel <span style="color:var(--color-text-secondary);font-weight:500;font-family:var(--font-body);font-size:13px">/ Architecture</span></div>
+  <div class="top-actions">
+    <a class="btn" href="index.html">← Site preview</a>
+    <div class="theme-toggle" role="radiogroup" aria-label="Color theme">
+      <button onclick="setTheme('light')" id="t-light" title="Light">☀</button>
+      <button onclick="setTheme('dark')" id="t-dark" title="Dark">☾</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <span class="eyebrow">◆ ARCHITECTURE.md · tier: small · comprehensive</span>
+  <h1 class="title">Unified AppSec platform — system architecture</h1>
+  <p class="lede">Sentinel orchestrates best-of-breed OSS security scanners in sandboxed containers, normalizes
+    their output into one canonical <code>Finding</code> model (SARIF-2.1.0-inspired), deduplicates across
+    scanners, and serves a developer-first dashboard. Four runtime processes plus an isolated, untrusted
+    scanner-execution plane.</p>
+
+  <!-- ============ SYSTEM LAYERS ============ -->
+  <section>
+    <h2 class="sec">System layers &amp; data flow</h2>
+    <p class="sec-sub">Each layer hands off to the next; the scanner plane is deliberately isolated from the host.</p>
+    <div class="diagram">
+
+      <div class="layer">
+        <div class="l-head"><span class="tag">Client</span><h3>Browser — Next.js 16 dashboard</h3></div>
+        <div class="l-desc">App Router · Tailwind v4 · TanStack Query v5 · full dark mode. HTTPS, cookie session.</div>
+        <div class="boxes">
+          <div class="box"><div class="bt">Dashboard</div><div class="bd">posture rollups</div></div>
+          <div class="box"><div class="bt">Findings</div><div class="bd">deduped table + triage</div></div>
+          <div class="box"><div class="bt">Targets &amp; Scans</div><div class="bd">connect · verify · run</div></div>
+          <div class="box"><div class="bt">Auth &amp; Settings</div><div class="bd">org / members</div></div>
+        </div>
+      </div>
+      <div class="conn"></div>
+
+      <div class="layer">
+        <div class="l-head"><span class="tag">API</span><h3>Express 5 · REST /v1 · Prisma 7</h3></div>
+        <div class="l-desc">Auth + RBAC · CRUD · triage · ownership verification · signed webhook ingress · rate limiting · audit log · RFC 9457 problem+json errors.</div>
+        <div class="boxes">
+          <div class="box"><div class="bt"><span class="dot" style="background:var(--color-primary)"></span>withOrgScope</div><div class="bd">tenant isolation (INV-1)</div></div>
+          <div class="box"><div class="bt"><span class="dot" style="background:var(--color-primary)"></span>assertResourceAccess</div><div class="bd">object authz (INV-2)</div></div>
+          <div class="box"><div class="bt"><span class="dot" style="background:var(--color-warning)"></span>SSRF + ownership</div><div class="bd">live-scan gates (INV-11/12)</div></div>
+          <div class="box"><div class="bt"><span class="dot" style="background:var(--color-success)"></span>rate limit + audit</div><div class="bd">SEC-5 / SEC-11</div></div>
+        </div>
+      </div>
+      <div class="conn"></div>
+
+      <div class="layer">
+        <div class="l-head"><span class="tag">State</span><h3>Persistence &amp; queue</h3></div>
+        <div class="l-desc">Org-scoped relational data (RLS + app scoping) and the scan job bus.</div>
+        <div class="boxes">
+          <div class="box"><div class="bt"><span class="dot" style="background:var(--color-secondary)"></span>PostgreSQL 18</div><div class="bd">Prisma 7 · RLS · JSONB raw output · Finding(orgId,fingerprint) unique (INV-4)</div></div>
+          <div class="box"><div class="bt"><span class="dot" style="background:var(--color-error)"></span>Redis 8 · BullMQ 5</div><div class="bd">scan queue + parent/child flows</div></div>
+        </div>
+      </div>
+      <div class="conn"></div>
+
+      <div class="layer">
+        <div class="l-head"><span class="tag">Worker</span><h3>BullMQ worker — orchestrator</h3></div>
+        <div class="l-desc">Fans a Scan into per-scanner child jobs, runs each via the hardened SandboxRunner, then aggregates.</div>
+        <div class="boxes">
+          <div class="box"><div class="bt">Fan-out</div><div class="bd">one child job / scanner</div></div>
+          <div class="box"><div class="bt">SandboxRunner</div><div class="bd">launch hardened container (INV-6)</div></div>
+          <div class="box"><div class="bt">Normalize → Enrich</div><div class="bd">adapter → Finding + CVSS/CVE/OSV</div></div>
+          <div class="box"><div class="bt">Dedup → Persist</div><div class="bd">fingerprint collapse (INV-4)</div></div>
+        </div>
+      </div>
+      <div class="conn"></div>
+
+      <div class="layer untrusted">
+        <div class="l-head"><span class="tag">Untrusted</span><h3>Scanner execution plane</h3></div>
+        <div class="l-desc"><code>--network none|restricted · --read-only · --cap-drop ALL · --no-new-privileges · --pids-limit · --memory · --cpus · --rm</code> · gVisor <code>runsc</code> when available. nmap (NPSL) &amp; masscan (AGPL) run as isolated external-process containers only.</div>
+        <div class="boxes">
+          <div class="box"><div class="bt">SCA</div><div class="bd">trivy · osv-scanner</div></div>
+          <div class="box"><div class="bt">SAST</div><div class="bd">semgrep</div></div>
+          <div class="box"><div class="bt">Secrets · IaC</div><div class="bd">gitleaks · checkov</div></div>
+          <div class="box"><div class="bt">DAST · Ports</div><div class="bd">zap · nuclei · nmap · masscan</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><span class="dot" style="background:var(--color-primary)"></span> tenant / authz boundary</span>
+      <span><span class="dot" style="background:var(--color-warning)"></span> abuse / SSRF gate</span>
+      <span><span class="dot" style="background:var(--color-error)"></span> queue / copyleft isolation</span>
+      <span><span class="dot" style="background:var(--color-success)"></span> ops control</span>
+    </div>
+  </section>
+
+  <!-- ============ SCAN PIPELINE ============ -->
+  <section>
+    <h2 class="sec">The spine — one scan, end to end</h2>
+    <p class="sec-sub">The same pipeline runs inline (dev) or via BullMQ (production). Adding a scanner = adding one adapter.</p>
+    <div class="flow">
+      <div class="step"><div class="n">01</div><div class="s">Connect</div><div class="sd">repo / domain / IP target</div></div>
+      <div class="step"><div class="n">02</div><div class="s">Verify</div><div class="sd">ownership for live targets</div></div>
+      <div class="step"><div class="n">03</div><div class="s">Enqueue</div><div class="sd">Scan → BullMQ flow</div></div>
+      <div class="step"><div class="n">04</div><div class="s">Fan-out</div><div class="sd">per-scanner child jobs</div></div>
+      <div class="step"><div class="n">05</div><div class="s">Sandbox</div><div class="sd">hardened container exec</div></div>
+      <div class="step"><div class="n">06</div><div class="s">Normalize</div><div class="sd">adapter → Finding</div></div>
+      <div class="step"><div class="n">07</div><div class="s">Dedup</div><div class="sd">fingerprint collapse</div></div>
+      <div class="step"><div class="n">08</div><div class="s">Triage</div><div class="sd">fixed / ignored / track</div></div>
+    </div>
+  </section>
+
+  <!-- ============ SCANNER TOOLS ============ -->
+  <section>
+    <h2 class="sec">Scanner tools — the orchestrated OSS engines</h2>
+    <p class="sec-sub">Each invoked as an isolated container with the verified machine-readable output flag. The demo SCA engine ships default-on; the rest run behind <code>SCANNERS_DOCKER_ENABLED</code>.</p>
+    <table>
+      <thead><tr><th>Engine</th><th>Type</th><th>Target</th><th>Output</th><th>Network</th><th>License</th></tr></thead>
+      <tbody>
+        <tr><td><b>Trivy</b> <span class="mono" style="color:var(--color-text-secondary)">0.71.2</span></td><td><span class="typetag t-sca">SCA</span></td><td>repo / image</td><td class="mono">--format sarif</td><td><span class="net none">none</span></td><td class="lic">Apache-2.0</td></tr>
+        <tr><td><b>OSV-Scanner</b> <span class="mono" style="color:var(--color-text-secondary)">2.4.0</span></td><td><span class="typetag t-sca">SCA</span></td><td>lockfiles</td><td class="mono">--format json</td><td><span class="net none">none</span></td><td class="lic">Apache-2.0</td></tr>
+        <tr><td><b>Semgrep</b> <span class="mono" style="color:var(--color-text-secondary)">1.167</span></td><td><span class="typetag t-sast">SAST</span></td><td>source repo</td><td class="mono">--sarif</td><td><span class="net none">none</span></td><td class="lic">LGPL-2.1</td></tr>
+        <tr><td><b>gitleaks</b> <span class="mono" style="color:var(--color-text-secondary)">8.30.1</span></td><td><span class="typetag t-secret">SECRET</span></td><td>git history</td><td class="mono">--report-format sarif</td><td><span class="net none">none</span></td><td class="lic">MIT</td></tr>
+        <tr><td><b>checkov</b> <span class="mono" style="color:var(--color-text-secondary)">3.3</span></td><td><span class="typetag t-iac">IaC</span></td><td>IaC files</td><td class="mono">-o sarif</td><td><span class="net none">none</span></td><td class="lic">Apache-2.0</td></tr>
+        <tr><td><b>OWASP ZAP</b> <span class="mono" style="color:var(--color-text-secondary)">2.17</span></td><td><span class="typetag t-dast">DAST</span></td><td>live URL</td><td class="mono">-J report.json</td><td><span class="net restricted">restricted</span></td><td class="lic">Apache-2.0</td></tr>
+        <tr><td><b>Nuclei</b> <span class="mono" style="color:var(--color-text-secondary)">3.9.0</span></td><td><span class="typetag t-dast">DAST</span></td><td>live URL</td><td class="mono">-jsonl</td><td><span class="net restricted">restricted</span></td><td class="lic">MIT</td></tr>
+        <tr><td><b>nmap</b> <span class="mono" style="color:var(--color-text-secondary)">7.99</span></td><td><span class="typetag t-port">PORT</span></td><td>host / IP</td><td class="mono">-oX (→ JSON)</td><td><span class="net restricted">restricted</span></td><td class="lic copyleft">NPSL · isolated</td></tr>
+        <tr><td><b>masscan</b> <span class="mono" style="color:var(--color-text-secondary)">1.3.2</span></td><td><span class="typetag t-port">PORT</span></td><td>IP ranges</td><td class="mono">-oJ</td><td><span class="net restricted">restricted</span></td><td class="lic copyleft">AGPL-3.0 · isolated</td></tr>
+      </tbody>
+    </table>
+    <div class="legend">
+      <span><span class="net none">none</span> = no egress (code mounted read-only)</span>
+      <span><span class="net restricted">restricted</span> = egress only after ownership verification</span>
+      <span><span class="lic copyleft">copyleft</span> = external-process container only, never linked</span>
+    </div>
+  </section>
+
+  <!-- ============ MONOREPO PACKAGES ============ -->
+  <section>
+    <h2 class="sec">Monorepo packages</h2>
+    <p class="sec-sub">Three apps + four shared packages. ESM JavaScript on Node 22 (backend) · TypeScript (web).</p>
+    <div class="grid">
+      <div class="pkg"><div class="pn">apps/web</div><div class="pd">Next.js dashboard — 11 screens, full design-token system, dark + light.</div></div>
+      <div class="pkg"><div class="pn">apps/api</div><div class="pd">Express REST API — auth, projects, targets, scans, findings, webhooks, health.</div></div>
+      <div class="pkg"><div class="pn">apps/worker</div><div class="pd">BullMQ worker — scan orchestration + sandboxed execution.</div></div>
+      <div class="pkg"><div class="pn">packages/core</div><div class="pd">Finding model + dedup, RFC 9457 errors, authz chokepoint, SSRF, argon2 hashing, validation.</div></div>
+      <div class="pkg"><div class="pn">packages/db</div><div class="pd">Prisma schema + in-memory repo + the withOrgScope wrapper.</div></div>
+      <div class="pkg"><div class="pn">packages/scanners</div><div class="pd">Engine adapters, SandboxRunner, the normalize→dedup→persist orchestrator.</div></div>
+      <div class="pkg"><div class="pn">packages/config</div><div class="pd">Env loading/validation + secrets resolution (env → AWS Secrets Manager).</div></div>
+      <div class="pkg"><div class="pn">scripts/invariant-lint.mjs</div><div class="pd">Machine-checks ARCHITECTURE §9 / invariants.json — wired into CI &amp; the drift gate.</div></div>
+    </div>
+  </section>
+
+  <!-- ============ DATA MODEL ============ -->
+  <section>
+    <h2 class="sec">Data model</h2>
+    <p class="sec-sub"><span class="scoped">●</span> org-scoped tables carry <code>orgId</code> and are reached only via <code>withOrgScope</code>. Spine: User → Org → Project → Target → Scan → Finding.</p>
+    <div class="ent">
+      <div class="e"><span class="name">User</span><span class="cols">email · passwordHash (argon2id) · name</span></div>
+      <div class="e"><span class="name">Org</span><span class="cols">name · slug · (tenant root)</span></div>
+      <div class="e"><span class="name">Membership</span><span class="cols">userId · orgId · role(owner|admin|member) · unique(userId,orgId)</span></div>
+      <div class="e"><span class="name">Session</span><span class="cols">userId · tokenHash · expiresAt</span></div>
+      <div class="e"><span class="name scoped">● Project</span><span class="cols">orgId · name · slug · unique(orgId,slug)</span></div>
+      <div class="e"><span class="name scoped">● Target</span><span class="cols">orgId · kind(repo|domain|ip) · value · ownershipVerified · ownershipToken</span></div>
+      <div class="e"><span class="name scoped">● Scan</span><span class="cols">orgId · status(queued→running→completed|partial|failed) · scanners[]</span></div>
+      <div class="e"><span class="name scoped">● Finding</span><span class="cols">orgId · type · severity · cvss · cve · location · fingerprint · status · unique(orgId,fingerprint) ◀ INV-4</span></div>
+      <div class="e"><span class="name scoped">● AuditLog</span><span class="cols">orgId · actorUserId · action · entity · meta (immutable, 1-yr)</span></div>
+      <div class="e"><span class="name">WebhookDelivery</span><span class="cols">provider · deliveryId · unique(provider,deliveryId) ◀ idempotency</span></div>
+    </div>
+  </section>
+
+  <!-- ============ INVARIANTS ============ -->
+  <section>
+    <h2 class="sec">Architectural invariants (§9 · machine-checked)</h2>
+    <p class="sec-sub">Each rule has a <code>invariants.json</code> entry the lint runner enforces in CI and at the drift gate. 11 machine-checkable · 2 manual.</p>
+    <div class="inv">
+      <div class="i"><div class="id">INV-1 · forbidden-pattern</div><div class="r">Tenant data only through <code>withOrgScope</code>; no direct ORM on scoped tables.</div><div class="c">packages/db/src/index.js</div></div>
+      <div class="i"><div class="id">INV-2 · required-file</div><div class="r">Object-level authz centralized in <code>assertResourceAccess</code>.</div><div class="c">packages/core/src/authz.js</div></div>
+      <div class="i"><div class="id">INV-3 · forbidden-pattern</div><div class="r">argon2id only — no bcrypt/plaintext substitution.</div><div class="c">apps/api/src/auth</div></div>
+      <div class="i"><div class="id">INV-4 · unique-constraint</div><div class="r">Dedup enforced by DB <code>unique(orgId, fingerprint)</code>, not app logic.</div><div class="c">packages/db/prisma/schema.prisma</div></div>
+      <div class="i"><div class="id">INV-5 · forbidden-pattern</div><div class="r">No hardcoded secrets / provider key patterns in source.</div><div class="c">repo-wide</div></div>
+      <div class="i"><div class="id">INV-6 · forbidden-pattern</div><div class="r">Scanners run only through the SandboxRunner.</div><div class="c">packages/scanners/src/runner.js</div></div>
+      <div class="i"><div class="id">INV-7 · boundary-order</div><div class="r">Webhooks verify signature before any DB access.</div><div class="c">apps/api/src/routes/webhooks.js</div></div>
+      <div class="i"><div class="id">INV-8 · required-file</div><div class="r">API errors use the RFC 9457 problem+json helper.</div><div class="c">packages/core/src/errors.js</div></div>
+      <div class="i"><div class="id">INV-9 · forbidden-pattern</div><div class="r">Design tokens are the single source of color — no hardcoded hex in components.</div><div class="c">apps/web</div></div>
+      <div class="i"><div class="id">INV-11 · required-file</div><div class="r">SSRF denylist applied before any live scan.</div><div class="c">packages/core/src/ssrf.js</div></div>
+      <div class="i"><div class="id">INV-12 · manual</div><div class="r">Live (domain/IP) scan rejected while <code>ownershipVerified=false</code>.</div><div class="c">apps/api scan-create path</div></div>
+      <div class="i"><div class="id">INV-13 · manual</div><div class="r">Every UI screen routes &amp; every Key Workflow completes through the UI.</div><div class="c">apps/web ↔ SPEC §UI Surface</div></div>
+    </div>
+  </section>
+
+  <!-- ============ STACK ============ -->
+  <section>
+    <h2 class="sec">Stack &amp; cross-cutting concerns</h2>
+    <p class="sec-sub">Tier: small (&lt;1k concurrent). HTTPS only · multi-tenant · structured JSON logs · Sentry · daily Postgres snapshots.</p>
+    <div class="chips">
+      <span class="chip"><b>Next.js</b> 16</span><span class="chip"><b>React</b> 19</span><span class="chip"><b>Express</b> 5</span>
+      <span class="chip"><b>Prisma</b> 7</span><span class="chip"><b>PostgreSQL</b> 18</span><span class="chip"><b>Redis</b> 8</span>
+      <span class="chip"><b>BullMQ</b> 5</span><span class="chip"><b>TanStack Query</b> 5</span><span class="chip"><b>Tailwind</b> 4</span>
+      <span class="chip"><b>argon2id</b></span><span class="chip"><b>zod</b></span><span class="chip"><b>Resend</b></span>
+      <span class="chip"><b>Sentry</b></span><span class="chip"><b>AWS Secrets Manager</b></span><span class="chip"><b>Docker</b> + gVisor</span>
+      <span class="chip"><b>Caddy</b> TLS · HSTS</span>
+    </div>
+  </section>
+</main>
+
+<div class="foot">Sentinel · ARCHITECTURE.md + invariants.json · Built with the MDLC™ pipeline · static self-contained diagram.</div>
+
+<script>
+  function setTheme(t){
+    document.documentElement.setAttribute('data-theme',t);
+    try{localStorage.setItem('sentinel-theme',t);}catch(e){}
+    document.getElementById('t-light').classList.toggle('active',t==='light');
+    document.getElementById('t-dark').classList.toggle('active',t==='dark');
+  }
+  (function(){
+    let t='dark';
+    try{t=localStorage.getItem('sentinel-theme')||(window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');}catch(e){}
+    setTheme(t);
+  })();
+</script>
+<a href="../index.html" aria-label="Back to the MDLC examples gallery" style="position:fixed;top:14px;left:14px;z-index:2147483647;display:inline-flex;align-items:center;gap:7px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#edf0f7;background:rgba(8,13,25,.82);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid #2a3a5c;border-radius:8px;padding:8px 13px;text-decoration:none;box-shadow:0 8px 24px -8px rgba(0,0,0,.7);">\&larr; Gallery</a>
+</body>
+</html>

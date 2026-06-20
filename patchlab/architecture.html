@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PatchLAB — Architecture</title>
+<meta name="description" content="System architecture diagram for PatchLAB: Next.js + FastAPI + PostgreSQL behind an nginx TLS proxy, with a deterministic DSP engine." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --color-bg: #f6f7f9; --color-surface: #ffffff; --color-surface-2: #f1f5f9;
+    --color-fg: #0f172a; --color-muted: #475569; --color-border: #e2e8f0;
+    --color-accent: #7c3aed; --color-accent-soft: rgba(37, 99, 235, 0.10);
+    --color-accent-hover: #6d28d9; --color-on-accent: #ffffff;
+    --color-teal: #0d9488; --color-success: #16a34a; --color-warning: #d97706; --color-error: #dc2626;
+    --font-display: 'Manrope', system-ui, sans-serif;
+    --font-body: 'Inter', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+    --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px;
+    --radius-sm: 2px; --radius-md: 4px; --radius-lg: 6px;
+    --shadow-sm: 0 1px 2px rgba(15,23,42,0.06); --shadow-md: 0 2px 6px rgba(15,23,42,0.08);
+    --shadow-lg: 0 16px 48px rgba(15,23,42,0.14);
+    --teal-soft: rgba(13,148,136,0.12); --warn-soft: rgba(217,119,6,0.12);
+  }
+  [data-theme="dark"] {
+    --color-bg: #0a0f1c; --color-surface: #111a2e; --color-surface-2: #1a2540;
+    --color-fg: #f1f5f9; --color-muted: #94a3b8; --color-border: #2a3956;
+    --color-accent: #7c3aed; --color-accent-soft: rgba(37,99,235,0.16);
+    --color-accent-hover: #8b5cf6; --color-on-accent: #ffffff;
+    --color-teal: #2dd4bf; --color-success: #22c55e; --color-warning: #f59e0b; --color-error: #ef4444;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.4); --shadow-md: 0 2px 8px rgba(0,0,0,0.45);
+    --shadow-lg: 0 24px 64px rgba(0,0,0,0.55);
+    --teal-soft: rgba(45,212,191,0.14); --warn-soft: rgba(245,158,11,0.14);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-family: var(--font-body); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  h1,h2,h3,h4 { font-family: var(--font-display); letter-spacing: -0.02em; margin: 0; }
+  .mono { font-family: var(--font-mono); }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 var(--space-6) var(--space-8); }
+
+  /* header */
+  header { position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--color-bg) 84%, transparent); backdrop-filter: blur(12px); border-bottom: 1px solid var(--color-border); }
+  .head-inner { max-width: 1180px; margin: 0 auto; padding: var(--space-4) var(--space-6); display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
+  .logo { display: flex; align-items: center; gap: var(--space-3); font-family: var(--font-display); font-weight: 800; font-size: 17px; }
+  .mark { width: 28px; height: 28px; border-radius: var(--radius-md); background: var(--color-accent); display: grid; place-items: center; }
+  .accent { color: var(--color-accent); }
+  .head-meta { display: flex; align-items: center; gap: var(--space-4); }
+  .pill { font-family: var(--font-mono); font-size: 11px; color: var(--color-muted); border: 1px solid var(--color-border); border-radius: 999px; padding: 4px 10px; }
+  .theme-toggle { width: 38px; height: 38px; display: grid; place-items: center; cursor: pointer; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-fg); }
+  .theme-toggle:hover { border-color: var(--color-accent); color: var(--color-accent); }
+  .theme-toggle:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--color-accent); }
+  .icon { width: 16px; height: 16px; }
+
+  .title-block { padding: var(--space-7) 0 var(--space-5); }
+  .eyebrow { font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--color-muted); }
+  .title-block h1 { font-size: clamp(28px, 4vw, 40px); font-weight: 800; margin: var(--space-2) 0 var(--space-3); }
+  .title-block p { color: var(--color-muted); max-width: 70ch; margin: 0; }
+
+  /* legend */
+  .legend { display: flex; flex-wrap: wrap; gap: var(--space-4); margin: var(--space-5) 0; padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--color-muted); }
+  .swatch { width: 13px; height: 13px; border-radius: 3px; border: 1px solid var(--color-border); }
+  .sw-web { background: var(--color-accent-soft); border-color: var(--color-accent); }
+  .sw-api { background: var(--color-surface-2); }
+  .sw-data { background: var(--teal-soft); border-color: var(--color-teal); }
+  .sw-sec { background: var(--warn-soft); border-color: var(--color-warning); }
+
+  /* diagram primitives */
+  .section-label { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--color-muted); margin: var(--space-7) 0 var(--space-3); display: flex; align-items: center; gap: var(--space-3); }
+  .section-label::after { content: ""; flex: 1; height: 1px; background: var(--color-border); }
+
+  .tier { border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); padding: var(--space-4); position: relative; }
+  .tier-head { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-display); font-weight: 700; font-size: 14px; margin-bottom: var(--space-3); }
+  .tier-head .tag { font-family: var(--font-mono); font-weight: 500; font-size: 10px; text-transform: uppercase; color: var(--color-muted); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 2px 6px; margin-left: auto; }
+
+  .flow { display: grid; gap: var(--space-3); }
+  .node { border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); padding: var(--space-3) var(--space-4); }
+  .node .nh { display: flex; align-items: center; gap: var(--space-2); font-weight: 700; font-size: 14px; font-family: var(--font-display); }
+  .node .ns { font-family: var(--font-mono); font-size: 11px; color: var(--color-muted); }
+  .node p { margin: 6px 0 0; font-size: 12.5px; color: var(--color-muted); }
+  .node.web { background: var(--color-accent-soft); border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border)); }
+  .node.data { background: var(--teal-soft); border-color: color-mix(in srgb, var(--color-teal) 45%, var(--color-border)); }
+  .ico { width: 16px; height: 16px; flex: none; }
+  .ico.b { color: var(--color-accent); } .ico.t { color: var(--color-teal); } .ico.w { color: var(--color-warning); }
+
+  .arrow { text-align: center; color: var(--color-muted); font-size: 18px; line-height: 1; }
+  .arrow small { display: block; font-family: var(--font-mono); font-size: 10px; margin-top: 2px; }
+
+  .topology { display: grid; grid-template-columns: 1fr; gap: var(--space-3); }
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+
+  /* backend layers */
+  .layers { display: grid; gap: 0; border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; }
+  .layer { display: grid; grid-template-columns: 150px 1fr; gap: var(--space-4); padding: var(--space-4); border-bottom: 1px solid var(--color-border); align-items: center; }
+  .layer:last-child { border-bottom: none; }
+  .layer:nth-child(odd) { background: var(--color-surface); }
+  .layer:nth-child(even) { background: var(--color-surface-2); }
+  .layer .lname { font-family: var(--font-display); font-weight: 700; font-size: 14px; }
+  .layer .lname .lp { display: block; font-family: var(--font-mono); font-size: 10px; color: var(--color-muted); font-weight: 500; margin-top: 2px; }
+  .layer .ldesc { font-size: 13px; color: var(--color-muted); }
+  .layer .ldesc b { color: var(--color-fg); font-weight: 600; }
+  .badge { display: inline-block; font-family: var(--font-mono); font-size: 10px; padding: 1px 6px; border-radius: var(--radius-sm); border: 1px solid var(--color-border); color: var(--color-muted); margin-left: 4px; }
+  .badge.warn { color: var(--color-warning); border-color: var(--color-warning); background: var(--warn-soft); }
+
+  /* grids of small cards */
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
+  .grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }
+  .cell { border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); padding: var(--space-3) var(--space-4); }
+  .cell h4 { font-size: 13.5px; display: flex; align-items: center; gap: 7px; }
+  .cell ul { margin: 8px 0 0; padding-left: 16px; }
+  .cell li { font-size: 12.5px; color: var(--color-muted); margin: 2px 0; }
+  .cell .mono { font-size: 11.5px; }
+
+  /* data model */
+  .erd { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-4); }
+  .entity { border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); overflow: hidden; }
+  .entity .et { background: var(--color-surface-2); padding: 8px 12px; font-family: var(--font-mono); font-weight: 600; font-size: 12.5px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--color-border); }
+  .entity .et small { color: var(--color-teal); font-weight: 500; }
+  .entity .ef { padding: 6px 12px; font-family: var(--font-mono); font-size: 11.5px; display: flex; justify-content: space-between; gap: var(--space-3); border-bottom: 1px solid var(--color-border); }
+  .entity .ef:last-child { border-bottom: none; }
+  .entity .ef .k { color: var(--color-muted); }
+  .entity .ef .pk { color: var(--color-accent); }
+  .entity .ef .uq { color: var(--color-warning); }
+  .entity .ef .fk { color: var(--color-teal); }
+
+  /* request trace */
+  .trace { counter-reset: step; display: grid; gap: var(--space-2); }
+  .step { display: grid; grid-template-columns: 28px 1fr; gap: var(--space-3); align-items: start; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); padding: var(--space-3) var(--space-4); }
+  .step::before { counter-increment: step; content: counter(step); width: 24px; height: 24px; border-radius: 50%; background: var(--color-accent); color: var(--color-on-accent); font-family: var(--font-mono); font-size: 12px; font-weight: 600; display: grid; place-items: center; }
+  .step .sd { font-size: 13px; }
+  .step .sd b { font-weight: 600; }
+  .step .sd .mono { font-size: 11.5px; color: var(--color-muted); display: block; margin-top: 1px; }
+
+  /* invariants */
+  .invs { display: grid; grid-template-columns: repeat(2,1fr); gap: var(--space-2) var(--space-4); }
+  .inv { display: flex; gap: var(--space-2); font-size: 12.5px; align-items: baseline; }
+  .inv .id { font-family: var(--font-mono); font-size: 11px; color: var(--color-accent); flex: none; width: 52px; }
+  .inv .it { color: var(--color-muted); }
+
+  footer { border-top: 1px solid var(--color-border); margin-top: var(--space-8); }
+  .foot { max-width: 1180px; margin: 0 auto; padding: var(--space-5) var(--space-6); display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--space-3); font-size: 12.5px; color: var(--color-muted); }
+  .foot a { color: var(--color-accent); text-decoration: none; }
+
+  @media (max-width: 860px) {
+    .split, .grid3, .grid2, .erd, .invs, .layer { grid-template-columns: 1fr; }
+    .layer { gap: var(--space-2); }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-inner">
+    <div class="logo">
+      <span class="mark" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="1" y="6" width="2.4" height="4" fill="#fff"/><rect x="5" y="3" width="2.4" height="10" fill="#fff"/><rect x="9" y="5" width="2.4" height="6" fill="#fff"/><rect x="12.6" y="2" width="2.4" height="12" fill="#fff"/></svg></span>
+      Patch<span class="accent">LAB</span>
+    </div>
+    <div class="head-meta">
+      <span class="pill">v0.1.1 · ARCHITECTURE.md</span>
+      <button class="theme-toggle" id="themeBtn" aria-label="Toggle light/dark theme">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="title-block">
+    <span class="eyebrow">System Architecture · saas archetype</span>
+    <h1>PatchLAB architecture</h1>
+    <p>Prompt → deterministic DSP → downloadable WAV / Vital preset / ZIP pack. A Next.js 16 frontend and a layered FastAPI backend sit behind an nginx TLS proxy, over PostgreSQL and a disk asset store. Generation is local, offline, and reproducible — no external AI dependency.</p>
+  </div>
+
+  <div class="legend" aria-label="Legend">
+    <span><span class="swatch sw-web"></span> Frontend / edge</span>
+    <span><span class="swatch sw-api"></span> Backend service</span>
+    <span><span class="swatch sw-data"></span> Data / storage</span>
+    <span><span class="swatch sw-sec"></span> Security control</span>
+    <span class="mono" style="margin-left:auto">↓ request / data flow</span>
+  </div>
+
+  <!-- DEPLOYMENT TOPOLOGY -->
+  <div class="section-label">Deployment topology — single <span class="mono" style="margin:0 4px">docker compose up</span> (db · api · web · proxy)</div>
+
+  <div class="topology">
+    <div class="node">
+      <div class="nh"><svg class="ico b" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg> Browser</div>
+      <p>Next.js client — Studio / Library / Packs / Presets / Settings. Session via HttpOnly cookies; mutating requests carry <span class="mono">X-Requested-With: patchlab</span>.</p>
+    </div>
+
+    <div class="arrow">↓ <small>HTTPS only</small></div>
+
+    <div class="node" style="border-color: color-mix(in srgb, var(--color-warning) 45%, var(--color-border)); background: var(--warn-soft)">
+      <div class="nh"><svg class="ico w" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> nginx — reverse proxy &amp; TLS termination <span class="mono" style="margin-left:auto;font-size:11px;color:var(--color-muted)">infra/nginx</span></div>
+      <p>Terminates TLS · forces HTTP→HTTPS 301 · HSTS · large header buffers (16k/8×32k) · security headers · trusts <span class="mono">X-Real-IP</span> from itself only. Routes <span class="mono">/</span> → web, <span class="mono">/v1</span> &amp; <span class="mono">/api</span> → api.</p>
+    </div>
+
+    <div class="arrow">↓</div>
+
+    <div class="split">
+      <div class="node web">
+        <div class="nh"><svg class="ico b" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3zM3 9h18M9 21V9"/></svg> web — Next.js 16</div>
+        <div class="ns">App Router · React 19 · Tailwind v4 · Zustand 5</div>
+        <p>Standalone server. Token-only styling (<span class="mono">globals.css</span>), typed API client mapping RFC 9457 errors to fields, SVG waveform preview, dark-default theme.</p>
+      </div>
+      <div class="node">
+        <div class="nh"><svg class="ico" style="color:var(--color-fg)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v6H4zM4 14h16v6H4zM8 7h.01M8 17h.01"/></svg> api — FastAPI 0.137</div>
+        <div class="ns">Python 3.13 · uvicorn · SQLAlchemy 2.0 async</div>
+        <p>REST under <span class="mono">/v1</span>, health at <span class="mono">/api/health</span>. Runs <span class="mono">alembic upgrade head</span> on boot. Layered router → service → repository.</p>
+      </div>
+    </div>
+
+    <div class="arrow">↓</div>
+
+    <div class="split">
+      <div class="node data">
+        <div class="nh"><svg class="ico t" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5M3 12c0 1.7 4 3 9 3s9-1.3 9-3"/></svg> PostgreSQL 18</div>
+        <div class="ns">asyncpg · Alembic migrations</div>
+        <p>users · refresh_tokens · sounds · packs. SQLite used for tests/dev.</p>
+      </div>
+      <div class="node data">
+        <div class="nh"><svg class="ico t" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12H2M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg> Asset store (volume)</div>
+        <div class="ns">ASSET_ROOT · UUID paths</div>
+        <p>Generated WAV / ZIP files. Traversal-safe resolver; per-user quota; anon TTL cleanup.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- BACKEND LAYERING -->
+  <div class="section-label">Backend layering — dependencies point downward only (<span class="mono" style="margin:0 4px">backend/app/</span>)</div>
+
+  <div class="layers">
+    <div class="layer">
+      <div class="lname">Routers <span class="lp">api/v1/ · deps.py</span></div>
+      <div class="ldesc">HTTP I/O, Pydantic validation, auth dependencies, rate-limit &amp; CSRF guards. <b>Never touch the DB session.</b><span class="badge">auth · sounds · packs</span></div>
+    </div>
+    <div class="layer">
+      <div class="lname">Services <span class="lp">services/</span></div>
+      <div class="ldesc"><b>Business logic + ALL DB writes</b> — the scoped-write &amp; ownership chokepoint (<span class="mono">assert_owner</span>). Owns transactions/commits.<span class="badge warn">INV-12</span></div>
+    </div>
+    <div class="layer">
+      <div class="lname">Repositories <span class="lp">repositories/</span></div>
+      <div class="ldesc">Read-only query construction over <span class="mono">AsyncSession</span> — parameterized SQLAlchemy selects, no string SQL.<span class="badge warn">INV-1</span></div>
+    </div>
+    <div class="layer">
+      <div class="lname">Models <span class="lp">models/</span></div>
+      <div class="ldesc">SQLAlchemy 2.0 declarative entities with the UNIQUE constraints the auth flow depends on.<span class="badge warn">INV-5 · INV-6</span></div>
+    </div>
+  </div>
+
+  <div class="split" style="margin-top: var(--space-3)">
+    <div class="tier">
+      <div class="tier-head"><svg class="ico t" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13M9 9l12-2M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg> Audio engine <span class="tag">app/audio · pure DSP, no DB/HTTP</span></div>
+      <div class="flow">
+        <div class="node" style="padding:10px 14px"><div class="nh" style="font-size:13px"><span class="mono">prompt_parser</span></div><p style="margin-top:3px">Allow-list keyword → params. Untrusted text, never <span class="mono">eval</span>'d. <span class="badge warn">INV-2</span></p></div>
+        <div class="arrow">↓</div>
+        <div class="node" style="padding:10px 14px"><div class="nh" style="font-size:13px"><span class="mono">synth → render</span></div><p style="margin-top:3px">NumPy/SciPy oscillators, ADSR, filter, distortion, reverb → <span class="mono">soundfile</span> PCM WAV. Seeded &amp; reproducible; caps before allocation.</p></div>
+        <div class="arrow">↓</div>
+        <div class="node" style="padding:10px 14px"><div class="nh" style="font-size:13px"><span class="mono">variations · preset · pack</span></div><p style="margin-top:3px">N seeded takes · Vital <span class="mono">.vital</span> JSON · bounded-budget ZIP (zip-bomb guard).</p></div>
+      </div>
+    </div>
+
+    <div class="tier">
+      <div class="tier-head"><svg class="ico w" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 5v6c0 5 3.4 8.5 8 11 4.6-2.5 8-6 8-11V5z"/></svg> Cross-cutting core <span class="tag">app/core</span></div>
+      <div class="grid2">
+        <div class="cell"><h4><svg class="ico w" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> security</h4><ul><li>Argon2id hashing</li><li>PyJWT, alg pinned</li><li>cookie sessions + rotation</li></ul></div>
+        <div class="cell"><h4><svg class="ico w" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg> ratelimit</h4><ul><li>slowapi per-route</li><li>auth before hash</li><li>per-IP downloads</li></ul></div>
+        <div class="cell"><h4><svg class="ico t" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> storage</h4><ul><li>UUID paths only</li><li>realpath confinement</li><li><span class="badge warn">INV-11</span></li></ul></div>
+        <div class="cell"><h4><svg class="ico" style="color:var(--color-fg)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4zM4 9h16M9 4v16"/></svg> config · logging · errors</h4><ul><li>pydantic-settings</li><li>JSON logs, redaction</li><li>RFC 9457 problem+json</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DATA MODEL -->
+  <div class="section-label">Data model <span class="mono" style="margin:0 4px">PostgreSQL · SQLAlchemy 2.0</span></div>
+
+  <div class="erd">
+    <div class="entity">
+      <div class="et">users <small>1 → ∞ sounds, packs</small></div>
+      <div class="ef"><span class="pk">id</span><span class="k">UUID PK</span></div>
+      <div class="ef"><span class="uq">email</span><span class="k">UNIQUE · INV-5</span></div>
+      <div class="ef"><span>password_hash</span><span class="k">argon2id</span></div>
+      <div class="ef"><span>display_name · is_active</span><span class="k">—</span></div>
+    </div>
+    <div class="entity">
+      <div class="et">refresh_tokens <small>∞ → 1 user</small></div>
+      <div class="ef"><span class="pk">id</span><span class="k">UUID PK</span></div>
+      <div class="ef"><span class="fk">user_id</span><span class="k">FK → users</span></div>
+      <div class="ef"><span class="uq">jti</span><span class="k">UNIQUE · INV-6</span></div>
+      <div class="ef"><span>expires_at · revoked</span><span class="k">rotation + reuse</span></div>
+    </div>
+    <div class="entity">
+      <div class="et">sounds <small>∞ → user · pack · parent</small></div>
+      <div class="ef"><span class="pk">id</span><span class="k">UUID PK</span></div>
+      <div class="ef"><span class="fk">owner_id</span><span class="k">FK · NULL = anon</span></div>
+      <div class="ef"><span class="fk">pack_id · parent_id</span><span class="k">FK (refine lineage)</span></div>
+      <div class="ef"><span>prompt · params · seed</span><span class="k">reproducible</span></div>
+      <div class="ef"><span>file_path · expires_at</span><span class="k">asset + TTL</span></div>
+    </div>
+    <div class="entity">
+      <div class="et">packs <small>1 → ∞ sounds</small></div>
+      <div class="ef"><span class="pk">id</span><span class="k">UUID PK</span></div>
+      <div class="ef"><span class="fk">owner_id</span><span class="k">FK → users</span></div>
+      <div class="ef"><span>name · theme</span><span class="k">—</span></div>
+      <div class="ef"><span>file_path · size_bytes</span><span class="k">ZIP on download</span></div>
+    </div>
+  </div>
+
+  <!-- REQUEST TRACE -->
+  <div class="section-label">Request flow — <span class="mono" style="margin:0 4px">POST /v1/sounds/generate</span> (workflow W1)</div>
+
+  <div class="trace">
+    <div class="step"><div class="sd"><b>Browser → nginx</b> over HTTPS<span class="mono">prompt + X-Requested-With header; HTTP→HTTPS redirect + HSTS</span></div></div>
+    <div class="step"><div class="sd"><b>nginx → FastAPI router</b> <span class="mono">/v1/sounds/generate</span><span class="mono">rate-limit (per-user / per-IP) · CSRF guard · optional auth dependency</span></div></div>
+    <div class="step"><div class="sd"><b>Router → Pydantic validation</b><span class="mono">prompt 1–500 chars · variations 1–8 · sample_rate/bit_depth enum · aggregate sample cap</span></div></div>
+    <div class="step"><div class="sd"><b>SoundService</b> (business logic + writes)<span class="mono">quota check · prompt_parser (allow-list) · seeded variations</span></div></div>
+    <div class="step"><div class="sd"><b>Audio engine</b> renders each take<span class="mono">synth → soundfile WAV bytes; written via traversal-safe resolver</span></div></div>
+    <div class="step"><div class="sd"><b>Persist + commit</b> in the service layer<span class="mono">sounds rows (owner or anon+TTL) · INV-12 scoped write</span></div></div>
+    <div class="step"><div class="sd"><b>201 response</b> → variation table renders<span class="mono">download_url / preset_url per take; FileResponse streams the WAV on download</span></div></div>
+  </div>
+
+  <!-- INVARIANTS -->
+  <div class="section-label">Architectural invariants — machine-checked by <span class="mono" style="margin:0 4px">invariants.json</span></div>
+
+  <div class="tier">
+    <div class="invs">
+      <div class="inv"><span class="id">INV-1</span><span class="it">No string-interpolated SQL — parameterized queries only</span></div>
+      <div class="inv"><span class="id">INV-2</span><span class="it">No <span class="mono">eval/exec</span> of dynamic strings (prompt-injection guard)</span></div>
+      <div class="inv"><span class="id">INV-5/6</span><span class="it">UNIQUE on <span class="mono">users.email</span> &amp; <span class="mono">refresh_tokens.jti</span></span></div>
+      <div class="inv"><span class="id">INV-7</span><span class="it">Color only from the token layer — no ad-hoc hex</span></div>
+      <div class="inv"><span class="id">INV-10</span><span class="it">UI coverage — every screen, endpoint &amp; workflow wired + e2e</span></div>
+      <div class="inv"><span class="id">INV-11</span><span class="it">Asset paths built only by the traversal-safe resolver</span></div>
+      <div class="inv"><span class="id">INV-12</span><span class="it">All DB writes live in <span class="mono">services/</span> — routers never mutate</span></div>
+      <div class="inv"><span class="id">INV-13</span><span class="it">JWT decode pins the algorithm; secret from config</span></div>
+      <div class="inv"><span class="id">INV-14</span><span class="it">nginx enforces HTTPS redirect + HSTS + header buffers</span></div>
+      <div class="inv"><span class="id">+ more</span><span class="it">14 total · 12 machine-checkable · 2 manual</span></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="foot">
+    <span>PatchLAB · generated from <a href="#">ARCHITECTURE.md</a> + <a href="#">invariants.json</a> · source of truth: SPEC.md → ARCHITECTURE.md</span>
+    <span class="mono">Next.js · FastAPI · PostgreSQL · NumPy/SciPy DSP · Docker Compose · HTTPS only</span>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var html = document.documentElement, btn = document.getElementById('themeBtn');
+    var saved = localStorage.getItem('pl-theme');
+    if (saved) html.setAttribute('data-theme', saved);
+    btn.addEventListener('click', function () {
+      var next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('pl-theme', next);
+    });
+  })();
+</script>
+<a href="../index.html" aria-label="Back to the MDLC examples gallery" style="position:fixed;top:14px;left:14px;z-index:2147483647;display:inline-flex;align-items:center;gap:7px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#edf0f7;background:rgba(8,13,25,.82);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid #2a3a5c;border-radius:8px;padding:8px 13px;text-decoration:none;box-shadow:0 8px 24px -8px rgba(0,0,0,.7);">\&larr; Gallery</a>
+</body>
+</html>

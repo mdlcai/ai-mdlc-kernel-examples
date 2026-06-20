@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PatchLAB — AI sound design for FL Studio</title>
+<meta name="description" content="Describe the sound. Download the WAV. PatchLAB generates production-ready samples, presets, and packs from a prompt." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  /* ---- Design tokens (copied verbatim from PatchLAB DESIGN-TEMPLATE.html) ---- */
+  :root {
+    --color-bg: #f6f7f9; --color-surface: #ffffff; --color-surface-2: #f1f5f9;
+    --color-fg: #0f172a; --color-muted: #475569; --color-border: #e2e8f0;
+    --color-accent: #7c3aed; --color-accent-soft: rgba(37, 99, 235, 0.10);
+    --color-accent-hover: #6d28d9; --color-on-accent: #ffffff;
+    --color-teal: #0d9488; --color-success: #16a34a; --color-warning: #d97706; --color-error: #dc2626;
+    --font-display: 'Manrope', system-ui, sans-serif;
+    --font-body: 'Inter', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+    --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px;
+    --radius-sm: 2px; --radius-md: 4px; --radius-lg: 6px;
+    --shadow-sm: 0 1px 2px rgba(15,23,42,0.06); --shadow-md: 0 2px 6px rgba(15,23,42,0.08);
+    --shadow-lg: 0 16px 48px rgba(15,23,42,0.14);
+  }
+  [data-theme="dark"] {
+    --color-bg: #0a0f1c; --color-surface: #111a2e; --color-surface-2: #1a2540;
+    --color-fg: #f1f5f9; --color-muted: #94a3b8; --color-border: #2a3956;
+    --color-accent: #7c3aed; --color-accent-soft: rgba(37,99,235,0.14);
+    --color-accent-hover: #8b5cf6; --color-on-accent: #ffffff;
+    --color-teal: #2dd4bf; --color-success: #22c55e; --color-warning: #f59e0b; --color-error: #ef4444;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.4); --shadow-md: 0 2px 8px rgba(0,0,0,0.45);
+    --shadow-lg: 0 24px 64px rgba(0,0,0,0.55);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--color-bg); color: var(--color-fg);
+    font-family: var(--font-body); font-size: 16px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; margin: 0; }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 var(--space-6); }
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 12px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-muted);
+  }
+  .accent { color: var(--color-accent); }
+  .mono { font-family: var(--font-mono); }
+  .muted { color: var(--color-muted); }
+
+  /* ---- Buttons ---- */
+  .btn {
+    display: inline-flex; align-items: center; gap: var(--space-2);
+    font-family: var(--font-display); font-weight: 600; font-size: 15px;
+    padding: 12px 24px; border-radius: var(--radius-md); border: 1px solid transparent;
+    cursor: pointer; transition: all .2s ease; min-height: 44px;
+  }
+  .btn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--color-accent); }
+  .btn-primary { background: var(--color-accent); color: var(--color-on-accent); }
+  .btn-primary:hover { background: var(--color-accent-hover); transform: translateY(-1px); box-shadow: 0 6px 18px var(--color-accent-soft); }
+  .btn-ghost { background: transparent; color: var(--color-fg); border-color: var(--color-border); }
+  .btn-ghost:hover { border-color: var(--color-accent); color: var(--color-accent); }
+  .btn-sm { padding: 7px 14px; font-size: 13px; min-height: 36px; }
+  .icon { width: 16px; height: 16px; flex: none; }
+
+  /* ---- Nav ---- */
+  .nav {
+    position: sticky; top: 0; z-index: 50;
+    background: color-mix(in srgb, var(--color-bg) 82%, transparent);
+    backdrop-filter: blur(12px); border-bottom: 1px solid var(--color-border);
+  }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+  .nav-logo { display: flex; align-items: center; gap: var(--space-3); font-family: var(--font-display); font-weight: 800; font-size: 18px; }
+  .mark { width: 30px; height: 30px; border-radius: var(--radius-md); background: var(--color-accent); display: grid; place-items: center; }
+  .nav-links { display: flex; gap: var(--space-6); }
+  .nav-links a { font-size: 14px; color: var(--color-muted); transition: color .2s; }
+  .nav-links a:hover { color: var(--color-fg); }
+  .nav-right { display: flex; align-items: center; gap: var(--space-3); }
+  .theme-toggle {
+    width: 40px; height: 40px; display: grid; place-items: center; cursor: pointer;
+    border: 1px solid var(--color-border); border-radius: var(--radius-md);
+    background: var(--color-surface); color: var(--color-fg);
+  }
+  .theme-toggle:hover { border-color: var(--color-accent); color: var(--color-accent); }
+
+  /* ---- Hero ---- */
+  .hero { display: grid; grid-template-columns: minmax(0,0.92fr) minmax(0,1.08fr); gap: var(--space-8); align-items: center; padding: var(--space-8) 0; }
+  .badge { display: inline-flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: 12px; color: var(--color-muted); border: 1px solid var(--color-border); border-radius: 999px; padding: 5px 12px; background: var(--color-surface); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-teal); box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-teal) 45%, transparent); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--color-teal) 45%,transparent);} 70%{box-shadow:0 0 0 7px color-mix(in srgb,var(--color-teal) 0%,transparent);} 100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--color-teal) 0%,transparent);} }
+  .hero h1 { font-size: clamp(40px, 5vw, 60px); font-weight: 800; line-height: 1.05; margin: var(--space-5) 0; }
+  .lead { font-size: 18px; color: var(--color-muted); max-width: 46ch; }
+  .hero-actions { display: flex; gap: var(--space-3); margin-top: var(--space-6); flex-wrap: wrap; }
+  .hero-meta { display: flex; gap: var(--space-7); margin-top: var(--space-7); }
+  .stat .num { font-family: var(--font-display); font-weight: 800; font-size: 24px; }
+  .stat .lbl { font-family: var(--font-mono); font-size: 12px; color: var(--color-muted); }
+
+  /* ---- App mockup card (reused for key areas) ---- */
+  .app { border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: var(--shadow-lg); overflow: hidden; }
+  .app-bar { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-border); background: var(--color-surface-2); }
+  .lights { display: flex; gap: 6px; }
+  .lights i { width: 11px; height: 11px; border-radius: 50%; background: var(--color-border); display: block; }
+  .app-bar .title { font-family: var(--font-mono); font-size: 12px; color: var(--color-muted); }
+  .app-body { display: grid; grid-template-columns: 168px 1fr; min-height: 320px; }
+  .app-side { border-right: 1px solid var(--color-border); padding: var(--space-4); background: var(--color-surface-2); }
+  .side-group { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--color-muted); margin: var(--space-4) 0 var(--space-2); }
+  .side-group:first-child { margin-top: 0; }
+  .side-item { display: flex; align-items: center; gap: var(--space-2); font-size: 13px; padding: 7px 10px; border-radius: var(--radius-sm); color: var(--color-muted); }
+  .side-item.active { background: var(--color-accent-soft); color: var(--color-accent); font-weight: 600; }
+  .app-main { padding: var(--space-5); }
+
+  .prompt { display: flex; align-items: center; gap: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 10px 12px; background: var(--color-bg); }
+  .prompt .txt { flex: 1; font-size: 14px; }
+  .caret { display: inline-block; width: 2px; height: 16px; background: var(--color-accent); margin-left: 1px; animation: blink 1s steps(1) infinite; vertical-align: middle; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .genbar { margin: var(--space-4) 0; }
+  .genbar .meta { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 11px; color: var(--color-muted); margin-bottom: 6px; }
+  .track { height: 4px; border-radius: 2px; background: var(--color-surface-2); overflow: hidden; }
+  .track > i { display: block; height: 100%; width: 74%; background: var(--color-accent); border-radius: 2px; }
+
+  /* ---- Variation / data tables ---- */
+  table { width: 100%; border-collapse: collapse; }
+  thead th { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--color-muted); text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--color-border); font-weight: 500; }
+  tbody td { padding: 10px; border-bottom: 1px solid var(--color-border); font-size: 14px; vertical-align: middle; }
+  tbody tr:hover { background: var(--color-accent-soft); }
+  tbody tr.sel { background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
+  .play { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-accent); display: grid; place-items: center; cursor: pointer; }
+  .play:hover { border-color: var(--color-accent); }
+  .wave { display: flex; align-items: center; gap: 2px; height: 22px; }
+  .wave i { width: 3px; background: var(--color-teal); border-radius: 1px; display: block; opacity: .8; }
+  .tag { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; padding: 2px 7px; border-radius: var(--radius-sm); border: 1px solid var(--color-border); color: var(--color-muted); }
+  .iconbtn { width: 30px; height: 30px; border-radius: var(--radius-sm); border: 1px solid transparent; background: transparent; color: var(--color-muted); cursor: pointer; display: inline-grid; place-items: center; }
+  .iconbtn:hover { color: var(--color-accent); border-color: var(--color-border); }
+  .row-actions { display: flex; gap: 4px; justify-content: flex-end; }
+
+  /* ---- Sections ---- */
+  section { padding: var(--space-8) 0; }
+  .sec-head { max-width: 60ch; margin-bottom: var(--space-7); }
+  .sec-head h2 { font-size: clamp(26px, 3vw, 34px); font-weight: 700; margin-top: var(--space-2); }
+  .features-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-4); }
+  .feature { border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-5); background: var(--color-surface); transition: all .2s; }
+  .feature:hover { transform: translateY(-2px); border-color: var(--color-accent); box-shadow: var(--shadow-md); }
+  .ficon { width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--color-accent-soft); color: var(--color-accent); display: grid; place-items: center; margin-bottom: var(--space-3); }
+  .feature h3 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+  .feature p { color: var(--color-muted); font-size: 14px; margin: 0; }
+  .kbd { font-family: var(--font-mono); font-size: 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 2px 8px; display: inline-block; margin-top: var(--space-3); color: var(--color-fg); background: var(--color-bg); }
+
+  /* ---- Key-area tabs ---- */
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; border-bottom: 1px solid var(--color-border); margin-bottom: var(--space-6); }
+  .tab { font-family: var(--font-display); font-weight: 600; font-size: 14px; padding: 10px 16px; border: none; background: none; color: var(--color-muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tab:hover { color: var(--color-fg); }
+  .tab.active { color: var(--color-accent); border-bottom-color: var(--color-accent); }
+  .tab:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--color-accent); border-radius: var(--radius-sm); }
+  .panel { display: none; }
+  .panel.active { display: block; animation: fade .25s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .panel-note { font-size: 14px; color: var(--color-muted); margin: 0 0 var(--space-4); }
+
+  /* ---- Forms (packs builder) ---- */
+  .field { margin-bottom: var(--space-4); }
+  .field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  .input { width: 100%; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg); color: var(--color-fg); font-size: 14px; font-family: var(--font-body); }
+  .input:focus { outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 3px var(--color-accent-soft); }
+  .chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .chip { font-family: var(--font-mono); font-size: 12px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-muted); cursor: pointer; }
+  .chip[aria-pressed="true"] { background: var(--color-accent-soft); border-color: var(--color-accent); color: var(--color-accent); font-weight: 600; }
+  .cards { display: grid; grid-template-columns: repeat(2,1fr); gap: var(--space-4); }
+  .card { border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); padding: var(--space-5); }
+  .card h4 { font-size: 16px; font-weight: 700; }
+  .card .sub { font-family: var(--font-mono); font-size: 11px; color: var(--color-muted); margin-top: 2px; }
+  .pack-items { margin-top: var(--space-4); display: flex; flex-direction: column; gap: 6px; }
+  .pack-item { display: flex; align-items: center; justify-content: space-between; font-size: 13px; padding: 6px 0; border-top: 1px solid var(--color-border); }
+  .nm { font-family: var(--font-mono); font-size: 12px; }
+
+  /* ---- Empty state ---- */
+  .empty { text-align: center; padding: var(--space-8) var(--space-5); border: 1px dashed var(--color-border); border-radius: var(--radius-lg); }
+  .empty h4 { font-size: 16px; margin-bottom: 6px; }
+  .empty p { color: var(--color-muted); font-size: 14px; margin: 0 0 var(--space-4); }
+
+  /* ---- CTA + footer ---- */
+  .cta { border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: linear-gradient(120deg, var(--color-accent-soft), transparent); padding: var(--space-8); text-align: center; }
+  .cta h2 { font-size: clamp(26px,3vw,34px); font-weight: 800; }
+  .cta p { color: var(--color-muted); max-width: 50ch; margin: var(--space-3) auto var(--space-6); }
+  footer { border-top: 1px solid var(--color-border); padding: var(--space-6) 0; }
+  .foot-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-4); }
+  .foot-links { display: flex; gap: var(--space-5); font-size: 14px; color: var(--color-muted); }
+  .foot-links a:hover { color: var(--color-fg); }
+
+  @media (max-width: 940px) {
+    .hero, .features-grid, .cards, .app-body { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+    .app-side { display: none; }
+    .hero-meta { gap: var(--space-5); }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="nav-logo" href="#top">
+      <span class="mark" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="6" width="2.4" height="4" fill="#fff"/><rect x="5" y="3" width="2.4" height="10" fill="#fff"/><rect x="9" y="5" width="2.4" height="6" fill="#fff"/><rect x="12.6" y="2" width="2.4" height="12" fill="#fff"/></svg>
+      </span>
+      Patch<span class="accent">LAB</span>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#features">How it works</a>
+      <a href="#areas">Key areas</a>
+      <a href="#workflow">FL Studio</a>
+      <a href="#cta">Pricing</a>
+    </nav>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeBtn" aria-label="Toggle theme" title="Toggle light/dark">
+        <svg class="icon" id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <a class="btn btn-ghost btn-sm" href="#areas">Sign in</a>
+      <a class="btn btn-primary btn-sm" href="#cta">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg>
+        Generate free
+      </a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+<div class="wrap">
+
+  <!-- HERO -->
+  <section class="hero" style="padding-top: var(--space-7)">
+    <div>
+      <span class="badge"><span class="dot" aria-hidden="true"></span> Built for FL Studio producers</span>
+      <h1>Describe the sound.<br/>Download the <span class="accent">WAV</span>.</h1>
+      <p class="lead">PatchLAB turns a plain-language prompt into production-ready samples, synth presets, and sample packs — generated in seconds by a deterministic offline DSP engine. No credits, no cloud lock-in.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#areas">Generate a sound</a>
+        <a class="btn btn-ghost" href="#workflow">See the workflow</a>
+      </div>
+      <div class="hero-meta">
+        <div class="stat"><div class="num">~6s</div><div class="lbl">prompt → WAV</div></div>
+        <div class="stat"><div class="num">24-bit</div><div class="lbl">FL-ready PCM</div></div>
+        <div class="stat"><div class="num">∞</div><div class="lbl">variations</div></div>
+      </div>
+    </div>
+
+    <!-- product mockup -->
+    <div class="app" aria-label="PatchLAB studio preview">
+      <div class="app-bar">
+        <span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="title">patchlab / new-session.flp</span>
+      </div>
+      <div class="app-body">
+        <aside class="app-side">
+          <div class="side-group">Workspace</div>
+          <div class="side-item active">▣ Generate</div>
+          <div class="side-item">≡ Library</div>
+          <div class="side-item">◈ Presets</div>
+          <div class="side-group">Packs</div>
+          <div class="side-item">▤ Techno Kit 01</div>
+          <div class="side-item">▤ Analog Bass</div>
+        </aside>
+        <div class="app-main">
+          <div class="prompt">
+            <svg class="icon" style="color:var(--color-warning)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2h6c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z"/></svg>
+            <span class="txt mono">dark analog bass with distortion<span class="caret"></span></span>
+            <span class="btn btn-primary btn-sm">Generate</span>
+          </div>
+          <div class="genbar">
+            <div class="meta"><span>RENDERING · 4 / 4</span><span>74%</span></div>
+            <div class="track"><i></i></div>
+          </div>
+          <table>
+            <tbody>
+              <tr class="sel"><td><button class="play" aria-label="Play Take A">▶</button></td><td class="mono">Take A</td><td><span class="wave" data-wave></span></td><td class="mono muted">0:02</td><td class="row-actions"><button class="iconbtn" aria-label="Download">↓</button></td></tr>
+              <tr><td><button class="play" aria-label="Play Take B">▶</button></td><td class="mono">Take B</td><td><span class="wave" data-wave></span></td><td class="mono muted">0:02</td><td class="row-actions"><button class="iconbtn" aria-label="Download">↓</button></td></tr>
+              <tr><td><button class="play" aria-label="Play Take C">▶</button></td><td class="mono">Take C</td><td><span class="wave" data-wave></span></td><td class="mono muted">0:02</td><td class="row-actions"><button class="iconbtn" aria-label="Download">↓</button></td></tr>
+              <tr><td><button class="play" aria-label="Play Take D">▶</button></td><td class="mono">Take D</td><td><span class="wave" data-wave></span></td><td class="mono muted">0:02</td><td class="row-actions"><button class="iconbtn" aria-label="Download">↓</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features">
+    <div class="sec-head">
+      <span class="eyebrow">Prompt → Generate → Preview → Refine → Download</span>
+      <h2>Everything from idea to import, without leaving the flow.</h2>
+    </div>
+    <div class="features-grid">
+      <div class="feature">
+        <div class="ficon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V5h16v2M9 20h6M12 5v15"/></svg></div>
+        <h3>Text-to-sound generation</h3>
+        <p>Describe a kick, bass, pad, or FX in plain words. A deterministic DSP engine renders FL-ready PCM WAV — same prompt, same result.</p>
+      </div>
+      <div class="feature">
+        <div class="ficon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></div>
+        <h3>Variations on demand</h3>
+        <p>Every prompt returns multiple takes. Audition each with an inline waveform player and keep the one that fits.</p>
+      </div>
+      <div class="feature">
+        <div class="ficon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></div>
+        <h3>Refine by instruction</h3>
+        <p>Type a tweak and PatchLAB re-renders linked variations from the parent sound.</p>
+        <span class="kbd">make it punchier ⏎</span>
+      </div>
+      <div class="feature">
+        <div class="ficon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></div>
+        <h3>FL Studio-native export</h3>
+        <p>Download 16/24-bit WAV at 44.1/48 kHz, Vital <span class="mono">.vital</span> presets, or a whole pack as a ZIP — drop straight into your project.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- KEY AREAS -->
+  <section id="areas">
+    <div class="sec-head">
+      <span class="eyebrow">The app, area by area</span>
+      <h2>Key areas</h2>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Key areas">
+      <button class="tab active" role="tab" aria-selected="true" data-tab="studio">Studio</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="library">Library</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="packs">Packs</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="presets">Presets</button>
+    </div>
+
+    <!-- STUDIO -->
+    <div class="panel active" id="studio" role="tabpanel">
+      <p class="panel-note">Generate &amp; refine. Enter a prompt, get takes, preview the waveform, refine by instruction, and download — workflows W1–W3.</p>
+      <div class="app">
+        <div class="app-bar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span><span class="title">/studio</span></div>
+        <div class="app-main" style="padding: var(--space-5)">
+          <div class="prompt">
+            <svg class="icon" style="color:var(--color-warning)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2h6c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z"/></svg>
+            <span class="txt mono">cinematic pad, wide and warm</span>
+            <span class="btn btn-primary btn-sm">Generate</span>
+          </div>
+          <table style="margin-top: var(--space-5)">
+            <thead><tr><th></th><th>Take</th><th>Waveform</th><th>Length</th><th>Category</th><th style="text-align:right">Actions</th></tr></thead>
+            <tbody>
+              <tr class="sel"><td><button class="play" aria-label="Play">▶</button></td><td class="mono">cinematic pad — Take A</td><td><span class="wave" data-wave></span></td><td class="mono muted">0:03</td><td><span class="tag">pad</span></td><td class="row-actions"><button class="iconbtn" aria-label="Refine">✎</button><button class="iconbtn" aria-label="Preset">◈</button><button class="iconbtn" aria-label="Download">↓</button></td></tr>
+              <tr><td><button class="play" aria-label="Play">▶</button></td><td class="mono">cinematic pad — Take B</td><td><span class="wave" data-wave></span></td><td class="mono muted">0:03</td><td><span class="tag">pad</span></td><td class="row-actions"><button class="iconbtn" aria-label="Refine">✎</button><button class="iconbtn" aria-label="Preset">◈</button><button class="iconbtn" aria-label="Download">↓</button></td></tr>
+              <tr><td><button class="play" aria-label="Play">▶</button></td><td class="mono">↳ punchier — Take A</td><td><span class="wave" data-wave></span></td><td class="mono muted">0:03</td><td><span class="tag">pad</span></td><td class="row-actions"><button class="iconbtn" aria-label="Refine">✎</button><button class="iconbtn" aria-label="Preset">◈</button><button class="iconbtn" aria-label="Download">↓</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIBRARY -->
+    <div class="panel" id="library" role="tabpanel">
+      <p class="panel-note">Search, filter, preview, re-download, and delete your personal sound library — workflow W5/W6.</p>
+      <div class="app">
+        <div class="app-bar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span><span class="title">/library</span></div>
+        <div class="app-main" style="padding: var(--space-5)">
+          <div style="display:flex; gap:var(--space-3); margin-bottom: var(--space-4); flex-wrap: wrap">
+            <input class="input" style="max-width:280px" placeholder="Search sounds…" value="bass" aria-label="Search" />
+            <span class="chip" aria-pressed="true">bass</span>
+            <span class="chip" aria-pressed="false">kick</span>
+            <span class="chip" aria-pressed="false">oneshot</span>
+          </div>
+          <table>
+            <thead><tr><th></th><th>Name</th><th>Prompt</th><th>Format</th><th>Category</th><th style="text-align:right">Actions</th></tr></thead>
+            <tbody>
+              <tr><td><button class="play" aria-label="Play">▶</button></td><td class="mono">dark analog bass — Take A</td><td class="muted">dark analog bass with distortion</td><td class="mono muted">24-bit / 48k</td><td><span class="tag">bass</span></td><td class="row-actions"><button class="iconbtn" aria-label="Download">↓</button><button class="iconbtn" aria-label="Delete">🗑</button></td></tr>
+              <tr><td><button class="play" aria-label="Play">▶</button></td><td class="mono">sub bass — Take C</td><td class="muted">deep sub, clean</td><td class="mono muted">24-bit / 48k</td><td><span class="tag">bass</span></td><td class="row-actions"><button class="iconbtn" aria-label="Download">↓</button><button class="iconbtn" aria-label="Delete">🗑</button></td></tr>
+              <tr><td><button class="play" aria-label="Play">▶</button></td><td class="mono">808 bass — Take B</td><td class="muted">fat 808 with glide</td><td class="mono muted">16-bit / 44.1k</td><td><span class="tag">bass</span></td><td class="row-actions"><button class="iconbtn" aria-label="Download">↓</button><button class="iconbtn" aria-label="Delete">🗑</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PACKS -->
+    <div class="panel" id="packs" role="tabpanel">
+      <p class="panel-note">Build a themed multi-category pack and download it as a ZIP — workflow W4/W6.</p>
+      <div class="cards" style="grid-template-columns: 360px 1fr; align-items:start">
+        <div class="card">
+          <h4 style="margin-bottom:var(--space-4)">New pack</h4>
+          <div class="field"><label for="pn">Name</label><input class="input" id="pn" value="Techno Kit 01" /></div>
+          <div class="field"><label for="pt">Theme</label><input class="input" id="pt" value="dark techno" /></div>
+          <div class="field"><label>Categories</label>
+            <div class="chips">
+              <span class="chip" aria-pressed="true">kick</span>
+              <span class="chip" aria-pressed="true">bass</span>
+              <span class="chip" aria-pressed="true">perc</span>
+              <span class="chip" aria-pressed="false">fx</span>
+              <span class="chip" aria-pressed="false">lead</span>
+            </div>
+          </div>
+          <button class="btn btn-primary" style="width:100%">Generate pack</button>
+        </div>
+        <div>
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start">
+              <div><h4>Techno Kit 01</h4><div class="sub">dark techno · 6 sounds</div></div>
+              <span class="btn btn-ghost btn-sm">Download ZIP</span>
+            </div>
+            <div class="pack-items">
+              <div class="pack-item"><span class="nm">kick/dark-techno-kick-a.wav</span><span class="tag">kick</span></div>
+              <div class="pack-item"><span class="nm">bass/dark-techno-bass-a.wav</span><span class="tag">bass</span></div>
+              <div class="pack-item"><span class="nm">perc/dark-techno-perc-a.wav</span><span class="tag">perc</span></div>
+              <div class="pack-item"><span class="nm">perc/dark-techno-perc-b.wav</span><span class="tag">perc</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRESETS -->
+    <div class="panel" id="presets" role="tabpanel">
+      <p class="panel-note">Export any generated sound as a Vital <span class="mono">.vital</span> preset — workflow W3/W6.</p>
+      <div class="app">
+        <div class="app-bar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span><span class="title">/presets</span></div>
+        <div class="app-main" style="padding: var(--space-5)">
+          <table>
+            <thead><tr><th>Preset</th><th>Style</th><th>Format</th><th>Created</th><th style="text-align:right">Actions</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">cinematic pad — Take A</td><td><span class="tag">pad</span></td><td class="mono muted">.vital</td><td class="muted">just now</td><td class="row-actions"><button class="iconbtn" aria-label="Download preset">↓ .vital</button></td></tr>
+              <tr><td class="mono">dark analog bass — Take A</td><td><span class="tag">bass</span></td><td class="mono muted">.vital</td><td class="muted">2m ago</td><td class="row-actions"><button class="iconbtn" aria-label="Download preset">↓ .vital</button></td></tr>
+            </tbody>
+          </table>
+          <div class="empty" style="margin-top:var(--space-5)">
+            <h4>Save any sound as a preset</h4>
+            <p>Generate in Studio, then choose “Save .vital preset” on any take to add it here.</p>
+            <a class="btn btn-ghost btn-sm" href="#studio">Open Studio</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORKFLOW / CTA -->
+  <section id="workflow">
+    <div class="cta" id="cta">
+      <span class="eyebrow">Prompt → Download → Import into FL Studio</span>
+      <h2>Stop hunting for sounds. Start making them.</h2>
+      <p>Generate unique, royalty-clear sounds in seconds — locally, deterministically, and FL-Studio-ready. No per-generation credits.</p>
+      <div style="display:flex; gap:var(--space-3); justify-content:center; flex-wrap:wrap">
+        <a class="btn btn-primary" href="#top">Generate your first sound</a>
+        <a class="btn btn-ghost" href="#features">See the workflow</a>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap foot-inner">
+    <div class="nav-logo" style="font-size:15px">
+      <span class="mark" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1" y="6" width="2.4" height="4" fill="#fff"/><rect x="5" y="3" width="2.4" height="10" fill="#fff"/><rect x="9" y="5" width="2.4" height="6" fill="#fff"/><rect x="12.6" y="2" width="2.4" height="12" fill="#fff"/></svg></span>
+      <span class="muted" style="font-weight:500">© 2026 PatchLAB — AI sound design for FL Studio.</span>
+    </div>
+    <div class="foot-links">
+      <a href="#features">How it works</a>
+      <a href="#areas">Key areas</a>
+      <a href="#workflow">FL Studio guide</a>
+      <a href="#cta">Pricing</a>
+    </div>
+  </div>
+</footer>
+</main>
+
+<script>
+  // Theme toggle (dark default, persisted)
+  (function () {
+    var html = document.documentElement, btn = document.getElementById('themeBtn');
+    var saved = localStorage.getItem('pl-theme');
+    if (saved) html.setAttribute('data-theme', saved);
+    btn.addEventListener('click', function () {
+      var next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('pl-theme', next);
+    });
+  })();
+
+  // Tabs for key areas
+  (function () {
+    var tabs = document.querySelectorAll('.tab');
+    tabs.forEach(function (t) {
+      t.addEventListener('click', function () {
+        tabs.forEach(function (x) { x.classList.remove('active'); x.setAttribute('aria-selected', 'false'); });
+        document.querySelectorAll('.panel').forEach(function (p) { p.classList.remove('active'); });
+        t.classList.add('active'); t.setAttribute('aria-selected', 'true');
+        document.getElementById(t.dataset.tab).classList.add('active');
+      });
+    });
+  })();
+
+  // Procedural waveform bars (deterministic-ish per element)
+  (function () {
+    document.querySelectorAll('[data-wave]').forEach(function (el, idx) {
+      var n = 34, seed = idx * 9301 + 49297, html = '';
+      for (var i = 0; i < n; i++) {
+        seed = (seed * 9301 + 49297) % 233280;
+        var h = 4 + (seed / 233280) * 18;
+        html += '<i style="height:' + h.toFixed(1) + 'px"></i>';
+      }
+      el.innerHTML = html;
+    });
+  })();
+</script>
+<a href="../index.html" aria-label="Back to the MDLC examples gallery" style="position:fixed;top:14px;left:14px;z-index:2147483647;display:inline-flex;align-items:center;gap:7px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#edf0f7;background:rgba(8,13,25,.82);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid #2a3a5c;border-radius:8px;padding:8px 13px;text-decoration:none;box-shadow:0 8px 24px -8px rgba(0,0,0,.7);">\&larr; Gallery</a>
+</body>
+</html>

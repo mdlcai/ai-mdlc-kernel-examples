@@ -4,9 +4,9 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>MDLC™ — Example Builds</title>
-<meta name="description" content="Eight real applications, each built end-to-end by the MDLC methodology — from a one-page blueprint to a gate-passing build." />
+<meta name="description" content="Ten real applications, each built end-to-end by the MDLC methodology — from a one-page blueprint to a gate-passing build." />
 <meta property="og:title" content="MDLC™ — Example Builds" />
-<meta property="og:description" content="Eight real applications, each built end-to-end by the MDLC methodology. Live previews, architecture, and the full build report for each." />
+<meta property="og:description" content="Ten real applications, each built end-to-end by the MDLC methodology. Live previews, architecture, and the full build report for each." />
 <meta property="og:type" content="website" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -201,19 +201,39 @@
 
   <header class="hero">
     <div class="eyebrow"><span class="gl">✦</span> Reference Builds <span class="gl">→</span> Built with MDLC™</div>
-    <h1>Eight real apps,<br><em>built by the methodology.</em></h1>
+    <h1>Ten real apps,<br><em>built by the methodology.</em></h1>
     <p class="sub">Each app below started as a one-page <code>RESEARCH.md</code> blueprint and came out the other side as a working, reviewed application — with the architecture, the spec, the decisions, and the full build report to prove it.</p>
     <div class="actions">
       <a class="btn btn-primary" href="https://mdlc.ai/catches.html">What MDLC catches →</a>
     </div>
     <div class="stats">
-      <span>8 apps, 0 hand-written</span>
-      <span>139 smoke flows passed</span>
+      <span>10 apps, 0 hand-written</span>
+      <span>172 smoke flows passed</span>
       <span>every gate, with receipts</span>
     </div>
   </header>
 
   <section class="grid" id="gallery">
+
+    <article class="card">
+      <a class="shot" href="patchlab/index.html"><img src="patchlab/preview.png" alt="PatchLAB" loading="lazy"><span class="open"><span>Open live preview →</span></span></a>
+      <div class="body">
+        <h3>PatchLAB <span class="badge">Audio</span></h3>
+        <p>AI sound design for FL Studio producers: a plain-language prompt becomes production-ready WAV samples, synth presets, and sample packs — generated in seconds by a deterministic offline DSP engine. No credits, no cloud lock-in.</p>
+        <div class="gates"><span class="gate">33 tests</span><span class="gate">10/10 smoke</span><span class="gate">Security PASS</span></div>
+        <div class="links"><a class="lead" href="patchlab/index.html">Live preview</a><a href="patchlab/architecture.html">Architecture</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/patchlab/REPORT.md">Build report</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/tree/main/patchlab">Files ↗</a></div>
+      </div>
+    </article>
+
+    <article class="card">
+      <a class="shot" href="sentinel/index.html"><img src="sentinel/preview.png" alt="Sentinel" loading="lazy"><span class="open"><span>Open live preview →</span></span></a>
+      <div class="body">
+        <h3>Sentinel <span class="badge">Security</span></h3>
+        <p>Unified AppSec scanning: runs best-of-breed open-source scanners (SAST, SCA, DAST, secrets, IaC) in sandboxed containers, then normalizes, deduplicates, and prioritizes every finding into one developer-first dashboard.</p>
+        <div class="gates"><span class="gate">21 tests</span><span class="gate">23/23 smoke</span><span class="gate">Security PASS</span></div>
+        <div class="links"><a class="lead" href="sentinel/index.html">Live preview</a><a href="sentinel/architecture.html">Architecture</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/sentinel/REPORT.md">Build report</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/tree/main/sentinel">Files ↗</a></div>
+      </div>
+    </article>
 
     <article class="card">
       <a class="shot" href="pulse/index.html"><img src="pulse/preview.png" alt="Pulse" loading="lazy"><span class="open"><span>Open live preview →</span></span></a>
