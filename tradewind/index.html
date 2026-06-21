@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tradewind — Escrow Marketplace (Static Preview)</title>
+<meta name="description" content="Milestone-based escrow with a double-entry ledger that always balances. Static single-file preview of the key screens." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  /* ── Design tokens (RESEARCH.md Design Language · saas · light only) ── */
+  :root {
+    --primary: #4f46e5; --primary-hover: #4338ca;
+    --secondary: #dd4ed5; --accent: #d5db6e;
+    --bg: #fafafa; --surface: #f4f4f5; --white: #fff;
+    --text: #16161d; --muted: #5d5c70; --border: #e5e7eb;
+    --success: #1fad53; --warning: #ec9c13; --error: #df2020;
+    --radius: 2px;
+    --font-head: 'Space Grotesk', system-ui, sans-serif;
+    --font-body: 'Inter', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: var(--font-body); font-size: 14px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 { font-family: var(--font-head); font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  :where(a, button, input, select, [tabindex]):focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+  .money { font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; }
+  .mono { font-family: var(--font-mono); }
+
+  /* buttons */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 10px 16px; min-height: 44px; font: inherit; font-weight: 500; font-size: 14px;
+    border: 1px solid transparent; border-radius: var(--radius); cursor: pointer; transition: background .15s, border-color .15s; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: var(--primary-hover); text-decoration: none; }
+  .btn-secondary { background: var(--surface); color: var(--text); border-color: var(--border); }
+  .btn-secondary:hover { background: var(--border); text-decoration: none; }
+  .btn-danger { background: var(--error); color: #fff; }
+  .btn-sm { min-height: 36px; padding: 6px 12px; font-size: 13px; }
+
+  .card { background: var(--white); border: 1px solid var(--border); padding: 24px; }
+  .muted { color: var(--muted); }
+  .small { font-size: 12px; }
+
+  /* status badges */
+  .badge { display: inline-block; padding: 2px 8px; font-size: 12px; font-weight: 500; border: 1px solid; border-radius: 0; white-space: nowrap; }
+  .b-pending  { background: rgba(236,156,19,.12); color: #9a6608; border-color: rgba(236,156,19,.4); }
+  .b-active   { background: rgba(79,70,229,.10);  color: var(--primary); border-color: rgba(79,70,229,.3); }
+  .b-delivered{ background: rgba(221,78,213,.10); color: #a32c9c; border-color: rgba(221,78,213,.4); }
+  .b-success  { background: rgba(31,173,83,.14);  color: #14702f; border-color: rgba(31,173,83,.4); }
+  .b-dispute  { background: rgba(223,32,32,.10);  color: var(--error); border-color: rgba(223,32,32,.4); }
+  .b-neutral  { background: var(--surface); color: var(--muted); border-color: var(--border); }
+  .b-split    { background: rgba(213,219,110,.35); color: #5a5e15; border-color: var(--accent); }
+
+  /* tables */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--white); }
+  thead tr { background: var(--surface); }
+  th { text-align: left; font-weight: 500; color: var(--muted); padding: 10px 16px; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 16px; border-bottom: 1px solid var(--border); }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr:hover { background: var(--surface); }
+  .num { text-align: right; }
+
+  /* form fields */
+  .field { display: block; margin-bottom: 16px; }
+  .field > span { display: block; font-weight: 500; margin-bottom: 6px; }
+  .field input, .field select { width: 100%; padding: 10px 12px; min-height: 44px; font: inherit; font-size: 14px;
+    background: #fff; border: 1px solid var(--border); border-radius: var(--radius); }
+  .field .err { display: flex; gap: 4px; color: var(--error); font-size: 12px; margin-top: 4px; }
+  .field input.invalid { border-color: var(--error); }
+
+  /* layout: marketing vs app */
+  .view { display: none; }
+  .view.active { display: block; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* top utility bar to switch preview modes */
+  .preview-bar { position: sticky; top: 0; z-index: 20; background: #16161d; color: #eaeaec;
+    display: flex; align-items: center; gap: 14px; padding: 8px 16px; font-size: 13px; }
+  .preview-bar strong { font-family: var(--font-head); }
+  .preview-bar .seg { margin-left: auto; display: inline-flex; border: 1px solid #3a3a44; border-radius: var(--radius); overflow: hidden; }
+  .preview-bar .seg button { background: transparent; color: #c9c8d4; border: 0; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+  .preview-bar .seg button.on { background: var(--primary); color: #fff; }
+
+  /* marketing */
+  .mk-header { border-bottom: 1px solid var(--border); background: #fff; }
+  .mk-wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  .mk-nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; }
+  .logo { font-family: var(--font-head); font-weight: 700; font-size: 18px; letter-spacing: -0.02em; }
+  .hero { padding: 72px 0 48px; }
+  .hero .eyebrow { color: var(--primary); font-weight: 500; font-size: 13px; margin-bottom: 12px; }
+  .hero h1 { font-size: 44px; max-width: 760px; }
+  .hero p { color: var(--muted); font-size: 18px; max-width: 640px; margin-top: 18px; }
+  .hero .cta { margin-top: 28px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .features { border-top: 1px solid var(--border); background: #fff; }
+  .features .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; padding: 56px 0; }
+  .features h3 { font-size: 17px; }
+  .features p { color: var(--muted); margin-top: 8px; font-size: 14px; }
+  .mk-footer { border-top: 1px solid var(--border); background: #fff; }
+  .mk-footer .row { display: flex; justify-content: space-between; padding: 22px 0; font-size: 12px; color: var(--muted); }
+
+  /* auth */
+  .auth-wrap { min-height: 70vh; display: flex; align-items: center; justify-content: center; padding: 40px 16px; }
+  .auth-card { width: 100%; max-width: 380px; }
+  .auth-card .logo { display: block; text-align: center; margin-bottom: 20px; }
+
+  /* app shell */
+  .app { display: flex; min-height: calc(100vh - 39px); }
+  .sidebar { width: 224px; flex-shrink: 0; background: #fff; border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+  .sidebar .brand { padding: 18px 20px; border-bottom: 1px solid var(--border); }
+  .sidebar nav { flex: 1; padding: 10px 8px; }
+  .sidebar nav a { display: block; padding: 9px 12px; border-radius: var(--radius); color: var(--text); font-size: 14px; }
+  .sidebar nav a:hover { background: var(--surface); text-decoration: none; }
+  .sidebar nav a.on { background: var(--primary); color: #fff; }
+  .sidebar .who { padding: 16px; border-top: 1px solid var(--border); font-size: 13px; }
+  .content { flex: 1; min-width: 0; max-width: 1216px; padding: 24px 32px; }
+  .page-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .page-h h1 { font-size: 24px; }
+  .grid-2 { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .stack > * + * { margin-top: 12px; }
+  .row-between { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .kpi { font-size: 28px; margin-top: 4px; }
+  .divider { border: 0; border-top: 1px solid var(--border); margin: 16px 0; }
+  .breadcrumb { font-size: 13px; margin-bottom: 8px; }
+  .note { background: rgba(79,70,229,.06); border: 1px solid rgba(79,70,229,.2); padding: 10px 12px; font-size: 13px; }
+
+  @media (max-width: 860px) {
+    .grid-2, .grid-3, .features .grid { grid-template-columns: 1fr; }
+    .sidebar { width: 64px; } .sidebar .brand p, .sidebar nav a span, .sidebar .who { display: none; }
+    .hero h1 { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Preview-mode switcher (not part of the product UI) ── -->
+<div class="preview-bar">
+  <strong>Tradewind</strong> <span class="small" style="opacity:.7">static single-file preview — no backend</span>
+  <span class="seg" role="tablist" aria-label="Preview mode">
+    <button id="mode-marketing" class="on" onclick="setMode('marketing')">Marketing</button>
+    <button id="mode-auth" onclick="setMode('auth')">Sign in</button>
+    <button id="mode-app" onclick="setMode('app')">App</button>
+  </span>
+</div>
+
+<!-- ════════════════ MARKETING (Landing) ════════════════ -->
+<section id="view-marketing" class="view active">
+  <header class="mk-header">
+    <div class="mk-wrap mk-nav">
+      <span class="logo">Tradewind</span>
+      <nav style="display:flex; gap:16px; align-items:center;">
+        <a href="#" onclick="setMode('auth');return false;">Sign in</a>
+        <a href="#" class="btn btn-primary btn-sm" onclick="setMode('auth');return false;">Get started</a>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <section class="hero"><div class="mk-wrap">
+      <p class="eyebrow">Milestone escrow · double-entry ledger</p>
+      <h1>Hold funds in escrow. Release on approval. Every cent reconciles.</h1>
+      <p>Tradewind is a services marketplace where clients fund milestones up front, freelancers deliver,
+        and money releases on approval — minus a transparent platform fee. Every movement is an immutable
+        double-entry ledger entry that always balances.</p>
+      <div class="cta">
+        <a href="#" class="btn btn-primary" onclick="setMode('auth');return false;">Create an account</a>
+        <a href="#" class="btn btn-secondary" onclick="setMode('app');return false;">View the app</a>
+      </div>
+    </div></section>
+    <section class="features"><div class="mk-wrap grid">
+      <div><h3>Milestone-gated escrow</h3><p>Clients fund a milestone via Stripe Checkout. Funds are held
+        until the work is approved — the redirect is never proof of payment; the verified webhook is.</p></div>
+      <div><h3>A ledger that always balances</h3><p>Every fund, release, refund, split, and payout posts
+        balanced double-entry legs. An automated reconciliation proves total debits equal credits.</p></div>
+      <div><h3>Disputes, resolved fairly</h3><p>Either party can dispute a delivered milestone. An admin
+        refunds, releases, or splits the funds — every action captured in an immutable audit trail.</p></div>
+    </div></section>
+  </main>
+  <footer class="mk-footer"><div class="mk-wrap row">
+    <span>Tradewind — reference build, Stripe test mode only.</span>
+    <span>Built with the AI MDLC™ Kernel</span>
+  </div></footer>
+</section>
+
+<!-- ════════════════ AUTH (Login / Register) ════════════════ -->
+<section id="view-auth" class="view">
+  <div class="auth-wrap">
+    <!-- LOGIN -->
+    <div id="auth-login" class="auth-card screen active">
+      <span class="logo">Tradewind</span>
+      <div class="card">
+        <h1 style="font-size:20px;">Sign in</h1>
+        <p class="muted small" style="margin:4px 0 18px;">Welcome back.</p>
+        <label class="field"><span>Email</span><input type="email" value="client@demo.test" /></label>
+        <label class="field"><span>Password</span><input type="password" value="Tradewind-demo-2026!" /></label>
+        <button class="btn btn-primary" style="width:100%;" onclick="setMode('app')">Sign in</button>
+      </div>
+      <p class="muted small" style="text-align:center; margin-top:16px;">No account?
+        <a href="#" onclick="showScreen('auth','auth-register');return false;">Create one</a></p>
+      <p class="muted small" style="text-align:center; margin-top:10px;">Demo: client@demo.test ·
+        freelancer@demo.test · admin@demo.test — <span class="mono">Tradewind-demo-2026!</span></p>
+    </div>
+    <!-- REGISTER -->
+    <div id="auth-register" class="auth-card screen">
+      <span class="logo">Tradewind</span>
+      <div class="card">
+        <h1 style="font-size:20px;">Create your account</h1>
+        <p class="muted small" style="margin:4px 0 18px;">Use a passphrase of at least 15 characters.</p>
+        <label class="field"><span>Display name</span><input value="Ada Lovelace" /></label>
+        <label class="field"><span>Email</span><input type="email" value="ada@example.com" /></label>
+        <label class="field"><span>Password</span>
+          <input type="password" class="invalid" value="short" />
+          <span class="err"><span aria-hidden="true">⚠</span> Use at least 15 characters (a passphrase is ideal).</span>
+        </label>
+        <label class="field"><span>I am a…</span>
+          <select><option>Client (I hire and fund work)</option><option>Freelancer (I deliver work and get paid)</option></select>
+        </label>
+        <button class="btn btn-primary" style="width:100%;" onclick="showScreen('auth','auth-login')">Create account</button>
+      </div>
+      <p class="muted small" style="text-align:center; margin-top:16px;">Already have an account?
+        <a href="#" onclick="showScreen('auth','auth-login');return false;">Sign in</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ APP (signed in) ════════════════ -->
+<section id="view-app" class="view">
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><span class="logo">Tradewind</span><p class="muted small">Escrow marketplace</p></div>
+      <nav aria-label="Primary">
+        <a href="#" class="on" data-screen="app-dashboard" onclick="appNav(this);return false;"><span>Dashboard</span></a>
+        <a href="#" data-screen="app-projects" onclick="appNav(this);return false;"><span>Projects</span></a>
+        <a href="#" data-screen="app-milestone" onclick="appNav(this);return false;"><span>Milestone</span></a>
+        <a href="#" data-screen="app-payouts" onclick="appNav(this);return false;"><span>Payouts</span></a>
+        <a href="#" data-screen="app-disputes" onclick="appNav(this);return false;"><span>Disputes</span></a>
+        <a href="#" data-screen="app-ledger" onclick="appNav(this);return false;"><span>Ledger</span></a>
+      </nav>
+      <div class="who"><div style="font-weight:500;">Demo Admin</div><div class="muted small">ADMIN</div>
+        <a href="#" class="small" onclick="setMode('marketing');return false;">Sign out</a></div>
+    </aside>
+
+    <main class="content">
+      <!-- DASHBOARD -->
+      <section id="app-dashboard" class="screen active">
+        <div class="page-h"><div><h1>Welcome, Demo Admin</h1><p class="muted small">Signed in as ADMIN.</p></div></div>
+        <div class="grid-3" style="margin-bottom:16px;">
+          <div class="card"><p class="muted small">Ledger reconciliation</p>
+            <p class="kpi" style="color:var(--success);">Balanced ✓</p>
+            <p class="muted small">6 transactions · system total <span class="mono">0</span></p></div>
+          <div class="card"><p class="muted small">Funds in escrow</p>
+            <p class="kpi money">$1,250.00</p><span class="muted small">across 3 milestones</span></div>
+          <div class="card"><p class="muted small">Open disputes</p>
+            <p class="kpi">1</p><span class="muted small">awaiting admin resolution</span></div>
+        </div>
+        <div class="card">
+          <div class="row-between" style="margin-bottom:12px;"><h2 style="font-size:16px;">Recent ledger activity</h2>
+            <a href="#" onclick="appNav(document.querySelector('[data-screen=app-ledger]'));return false;">View full ledger →</a></div>
+          <table>
+            <thead><tr><th>Date</th><th>Kind</th><th>Account</th><th class="num">Amount</th></tr></thead>
+            <tbody>
+              <tr><td class="muted">Jun 21, 14:02</td><td>RELEASE</td><td>PLATFORM_FEE</td><td class="money">$10.00</td></tr>
+              <tr><td class="muted">Jun 21, 14:02</td><td>RELEASE</td><td>FREELANCER_PAYABLE</td><td class="money">$90.00</td></tr>
+              <tr><td class="muted">Jun 21, 14:02</td><td>RELEASE</td><td>ESCROW_HELD</td><td class="money">-$100.00</td></tr>
+              <tr><td class="muted">Jun 21, 13:40</td><td>FUND</td><td>ESCROW_HELD</td><td class="money">$100.00</td></tr>
+              <tr><td class="muted">Jun 21, 13:40</td><td>FUND</td><td>EXTERNAL</td><td class="money">-$100.00</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- PROJECTS -->
+      <section id="app-projects" class="screen">
+        <div class="page-h"><h1>Projects</h1></div>
+        <div class="grid-2">
+          <div class="stack">
+            <a href="#" onclick="appNav(document.querySelector('[data-screen=app-milestone]'));return false;" style="color:inherit;">
+              <div class="card row-between" style="cursor:pointer;">
+                <div><div style="font-weight:500;">Brand redesign</div><p class="muted small">2 milestones</p></div>
+                <span class="badge b-active">IN PROGRESS</span></div></a>
+            <div class="card row-between"><div><div style="font-weight:500;">Mobile app build</div>
+              <p class="muted small">3 milestones</p></div><span class="badge b-active">IN PROGRESS</span></div>
+            <div class="card row-between"><div><div style="font-weight:500;">Marketing site copy</div>
+              <p class="muted small">1 milestone</p></div><span class="badge b-success">COMPLETED</span></div>
+          </div>
+          <div class="card" style="height:fit-content;">
+            <h2 style="font-size:16px; margin-bottom:12px;">New project</h2>
+            <label class="field"><span>Title</span><input placeholder="e.g. Brand redesign" /></label>
+            <label class="field"><span>Description</span><input placeholder="Optional" /></label>
+            <button class="btn btn-primary" style="width:100%;">Create project</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- MILESTONE DETAIL -->
+      <section id="app-milestone" class="screen">
+        <div class="breadcrumb"><a href="#" onclick="appNav(document.querySelector('[data-screen=app-projects]'));return false;">← Brand redesign</a></div>
+        <div class="page-h"><h1>Phase 1 — Logo & identity</h1><span class="badge b-delivered">DELIVERED</span></div>
+        <div class="grid-2">
+          <div class="stack">
+            <div class="card"><p class="muted small">Milestone amount</p>
+              <p class="kpi money">$100.00 <span class="muted" style="font-size:14px;">USD</span></p></div>
+            <div class="card">
+              <h2 style="font-size:16px; margin-bottom:12px;">Ledger</h2>
+              <table>
+                <thead><tr><th>Date</th><th>Kind</th><th>Account</th><th class="num">Amount</th></tr></thead>
+                <tbody>
+                  <tr><td class="muted">Jun 21, 13:40</td><td>FUND</td><td>EXTERNAL</td><td class="money">-$100.00</td></tr>
+                  <tr><td class="muted">Jun 21, 13:40</td><td>FUND</td><td>ESCROW_HELD</td><td class="money">$100.00</td></tr>
+                </tbody>
+              </table>
+              <p class="muted small" style="margin-top:10px;">Legs always sum to zero — this milestone holds <span class="mono">$100.00</span> in escrow.</p>
+            </div>
+          </div>
+          <div class="card" style="height:fit-content;">
+            <h2 style="font-size:16px; margin-bottom:12px;">Actions</h2>
+            <div class="stack">
+              <button class="btn btn-primary" style="width:100%;">Approve &amp; release funds</button>
+              <button class="btn btn-secondary" style="width:100%;">Open a dispute</button>
+            </div>
+            <hr class="divider" />
+            <p class="muted small">As the client, approving releases <span class="mono">$90.00</span> to the
+              freelancer and <span class="mono">$10.00</span> as the platform fee (10%).</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- PAYOUTS -->
+      <section id="app-payouts" class="screen">
+        <div class="page-h"><h1>Payouts</h1></div>
+        <div class="grid-2">
+          <div class="card" style="height:fit-content;">
+            <p class="muted small">Available balance</p>
+            <p class="kpi money" style="margin-bottom:16px;">$90.00 <span class="muted" style="font-size:14px;">USD</span></p>
+            <label class="field"><span>Payout amount (USD)</span><input type="number" value="90.00" /></label>
+            <button class="btn btn-primary" style="width:100%;">Request payout</button>
+            <p class="muted small" style="margin-top:8px;">Requires Stripe Connect onboarding.</p>
+          </div>
+          <div>
+            <h2 style="font-size:16px; margin-bottom:12px;">History</h2>
+            <table>
+              <thead><tr><th>Date</th><th class="num">Amount</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td class="muted">Jun 20, 09:14</td><td class="money">$420.00</td><td><span class="badge b-success">PAID</span></td></tr>
+                <tr><td class="muted">Jun 18, 16:50</td><td class="money">$150.00</td><td><span class="badge b-success">PAID</span></td></tr>
+                <tr><td class="muted">Jun 15, 11:02</td><td class="money">$75.00</td><td><span class="badge b-dispute">FAILED</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- DISPUTES -->
+      <section id="app-disputes" class="screen">
+        <div class="page-h"><div><h1>Disputes</h1><p class="muted small">Resolve open disputes by refunding, releasing, or splitting the escrowed funds.</p></div></div>
+        <div class="stack">
+          <div class="card">
+            <div class="row-between" style="align-items:flex-start;">
+              <div><a href="#" onclick="appNav(document.querySelector('[data-screen=app-milestone]'));return false;" style="font-weight:500;">Phase 2 — Marketing pages</a>
+                <p class="muted small" style="margin-top:4px;">Delivered work does not match the agreed scope.</p>
+                <p class="muted small">Opened Jun 21, 15:20 · <span class="mono">$250.00</span> in escrow</p></div>
+              <span class="badge b-dispute">OPEN</span>
+            </div>
+            <hr class="divider" />
+            <div style="display:flex; flex-wrap:wrap; align-items:flex-end; gap:8px;">
+              <button class="btn btn-secondary btn-sm">Refund client</button>
+              <button class="btn btn-secondary btn-sm">Release to freelancer</button>
+              <label class="field" style="width:96px; margin:0;"><span class="small">Client %</span><input type="number" value="40" style="min-height:36px;" /></label>
+              <button class="btn btn-primary btn-sm">Split</button>
+            </div>
+          </div>
+          <div class="card row-between"><div><div style="font-weight:500;">Phase 1 — Logo &amp; identity</div>
+            <p class="muted small">Resolved via SPLIT (40% client)</p></div><span class="badge b-split">RESOLVED</span></div>
+        </div>
+      </section>
+
+      <!-- LEDGER -->
+      <section id="app-ledger" class="screen">
+        <div class="page-h"><h1>Ledger</h1>
+          <div style="display:flex; gap:8px;">
+            <a class="btn btn-secondary btn-sm" href="#" onclick="return false;">Export CSV</a>
+            <a class="btn btn-secondary btn-sm" href="#" onclick="return false;">Export PDF</a></div></div>
+        <div class="card" style="margin-bottom:16px;">
+          <div class="row-between">
+            <div><p class="muted small">Reconciliation (debits = credits, closed system)</p>
+              <p style="font-size:18px; margin-top:4px;"><strong style="color:var(--success);">Balanced ✓</strong>
+                <span class="muted small" style="margin-left:8px;">6 txns · system total <span class="mono">0</span></span></p></div>
+          </div>
+        </div>
+        <div style="border:1px solid var(--border); overflow-x:auto;">
+          <table>
+            <thead><tr><th>Date</th><th>Kind</th><th>Account</th><th class="num">Amount</th></tr></thead>
+            <tbody>
+              <tr><td class="muted">Jun 21, 14:02</td><td>RELEASE</td><td>PLATFORM_FEE</td><td class="money">$10.00</td></tr>
+              <tr><td class="muted">Jun 21, 14:02</td><td>RELEASE</td><td>FREELANCER_PAYABLE</td><td class="money">$90.00</td></tr>
+              <tr><td class="muted">Jun 21, 14:02</td><td>RELEASE</td><td>ESCROW_HELD</td><td class="money">-$100.00</td></tr>
+              <tr><td class="muted">Jun 21, 13:40</td><td>FUND</td><td>ESCROW_HELD</td><td class="money">$100.00</td></tr>
+              <tr><td class="muted">Jun 21, 13:40</td><td>FUND</td><td>EXTERNAL</td><td class="money">-$100.00</td></tr>
+              <tr><td class="muted">Jun 20, 09:14</td><td>PAYOUT_PAID</td><td>EXTERNAL</td><td class="money">$420.00</td></tr>
+              <tr><td class="muted">Jun 20, 09:14</td><td>PAYOUT_PAID</td><td>PAYOUT_CLEARING</td><td class="money">-$420.00</td></tr>
+              <tr><td class="muted">Jun 19, 10:05</td><td>SPLIT</td><td>FREELANCER_PAYABLE</td><td class="money">$135.00</td></tr>
+              <tr><td class="muted">Jun 19, 10:05</td><td>SPLIT</td><td>PLATFORM_FEE</td><td class="money">$15.00</td></tr>
+              <tr><td class="muted">Jun 19, 10:05</td><td>SPLIT</td><td>EXTERNAL</td><td class="money">$100.00</td></tr>
+              <tr><td class="muted">Jun 19, 10:05</td><td>SPLIT</td><td>ESCROW_HELD</td><td class="money">-$250.00</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note" style="margin-top:16px;">Every transaction's legs sum to zero, and the sum of all
+          account balances across the closed system is always <span class="mono">0</span> — verified by an
+          automated reconciliation job (SOC2 processing integrity).</p>
+      </section>
+    </main>
+  </div>
+</section>
+
+<script>
+  function setMode(mode) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + mode).classList.add('active');
+    ['marketing','auth','app'].forEach(m =>
+      document.getElementById('mode-' + m).classList.toggle('on', m === mode));
+    window.scrollTo(0, 0);
+  }
+  function showScreen(view, id) {
+    document.querySelectorAll('#view-' + view + ' .screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+  function appNav(el) {
+    document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('on'));
+    el.classList.add('on');
+    showScreen('app', el.dataset.screen);
+    document.querySelector('.content').scrollTo(0, 0);
+  }
+</script>
+<a href="../index.html" aria-label="Back to the MDLC examples gallery" style="position:fixed;top:14px;left:14px;z-index:2147483647;display:inline-flex;align-items:center;gap:7px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#edf0f7;background:rgba(8,13,25,.82);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid #2a3a5c;border-radius:8px;padding:8px 13px;text-decoration:none;box-shadow:0 8px 24px -8px rgba(0,0,0,.7);">\&larr; Gallery</a>
+</body>
+</html>

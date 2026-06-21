@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tradewind — Architecture</title>
+<meta name="description" content="System architecture of Tradewind: a milestone-escrow marketplace with an immutable double-entry ledger." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --primary: #4f46e5; --primary-hover: #4338ca;
+    --secondary: #dd4ed5; --accent: #d5db6e;
+    --bg: #fafafa; --surface: #f4f4f5; --white: #fff;
+    --text: #16161d; --muted: #5d5c70; --border: #e5e7eb;
+    --success: #1fad53; --warning: #ec9c13; --error: #df2020;
+    --radius: 2px;
+    --font-head: 'Space Grotesk', system-ui, sans-serif;
+    --font-body: 'Inter', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 14px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  h1,h2,h3,h4 { font-family: var(--font-head); font-weight: 600; letter-spacing: -0.01em; line-height: 1.25; }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code, .mono { font-family: var(--font-mono); font-size: .92em; }
+  :where(a,button,[tabindex]):focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+  /* top bar */
+  .topbar { position: sticky; top: 0; z-index: 30; background: #16161d; color: #eaeaec; display: flex; align-items: center; gap: 12px; padding: 12px 24px; }
+  .topbar .logo { font-family: var(--font-head); font-weight: 700; letter-spacing: -0.02em; }
+  .topbar .tag { font-size: 12px; color: #9b9aa9; }
+  .topbar .links { margin-left: auto; display: flex; gap: 16px; font-size: 13px; }
+  .topbar .links a { color: #c9c8d4; }
+
+  /* layout: TOC + content */
+  .layout { display: grid; grid-template-columns: 240px 1fr; max-width: 1280px; margin: 0 auto; }
+  .toc { position: sticky; top: 49px; align-self: start; height: calc(100vh - 49px); overflow-y: auto; border-right: 1px solid var(--border); padding: 24px 16px; background: var(--white); }
+  .toc h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 16px 0 6px; }
+  .toc a { display: block; padding: 5px 10px; color: var(--text); font-size: 13px; border-radius: var(--radius); }
+  .toc a:hover { background: var(--surface); text-decoration: none; }
+  .content { padding: 40px 48px 80px; min-width: 0; }
+
+  .lead { font-size: 16px; color: var(--muted); max-width: 760px; }
+  section { padding-top: 40px; margin-top: 4px; }
+  section > h2 { font-size: 24px; padding-bottom: 8px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  section h3 { font-size: 17px; margin: 22px 0 8px; }
+  p { margin-bottom: 12px; max-width: 820px; }
+  ul { margin: 0 0 12px 20px; } li { margin-bottom: 6px; max-width: 800px; }
+
+  .card { background: var(--white); border: 1px solid var(--border); padding: 20px; }
+  .muted { color: var(--muted); }
+  .small { font-size: 12px; }
+  .pill { display: inline-block; padding: 2px 8px; font-size: 11px; font-weight: 500; border: 1px solid var(--border); background: var(--surface); color: var(--muted); border-radius: 0; }
+  .tag-inv { background: rgba(79,70,229,.08); color: var(--primary); border-color: rgba(79,70,229,.3); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--white); border: 1px solid var(--border); margin-bottom: 8px; }
+  thead tr { background: var(--surface); }
+  th { text-align: left; font-weight: 500; color: var(--muted); padding: 9px 14px; border-bottom: 1px solid var(--border); }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: 0; }
+
+  /* diagrams */
+  .diagram { background: var(--white); border: 1px solid var(--border); padding: 24px; overflow-x: auto; }
+  .node { fill: #fff; stroke: var(--border); stroke-width: 1.5; }
+  .node-primary { fill: rgba(79,70,229,.06); stroke: var(--primary); }
+  .node-db { fill: rgba(31,173,83,.06); stroke: var(--success); }
+  .node-ext { fill: rgba(221,78,213,.06); stroke: var(--secondary); }
+  .lbl { font: 600 13px var(--font-head); fill: var(--text); }
+  .sub { font: 400 10px var(--font-mono); fill: var(--muted); }
+  .edge { stroke: #b6b6c2; stroke-width: 1.5; fill: none; marker-end: url(#arrow); }
+  .edge-lbl { font: 400 10px var(--font-mono); fill: var(--muted); }
+
+  /* flow steps */
+  .flow { display: grid; gap: 10px; }
+  .step { display: grid; grid-template-columns: 34px 1fr; gap: 14px; background: var(--white); border: 1px solid var(--border); padding: 14px 16px; }
+  .step .n { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; background: var(--primary); color: #fff; font-family: var(--font-head); font-weight: 600; border-radius: var(--radius); }
+  .step h4 { font-size: 14px; }
+  .legs { font-family: var(--font-mono); font-size: 12px; background: var(--surface); border: 1px solid var(--border); padding: 8px 10px; margin-top: 8px; display: inline-block; }
+  .legs .cr { color: #14702f; } .legs .dr { color: var(--error); }
+
+  /* accounts */
+  .accounts { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; }
+  .acct { background: var(--white); border: 1px solid var(--border); padding: 12px; text-align: center; }
+  .acct .nm { font-family: var(--font-mono); font-size: 12px; font-weight: 500; }
+  .acct .ds { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .note { background: rgba(79,70,229,.05); border: 1px solid rgba(79,70,229,.2); padding: 12px 14px; font-size: 13px; }
+  .tree { font-family: var(--font-mono); font-size: 12.5px; line-height: 1.7; background: var(--white); border: 1px solid var(--border); padding: 16px 18px; overflow-x: auto; white-space: pre; }
+  .tree b { color: var(--primary); font-weight: 600; }
+
+  footer { border-top: 1px solid var(--border); background: var(--white); margin-top: 56px; }
+  footer .row { max-width: 1280px; margin: 0 auto; padding: 20px 48px; font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; } .toc { display: none; }
+    .content { padding: 28px 20px 60px; } .accounts { grid-template-columns: 1fr 1fr; } .grid2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="logo">Tradewind</span>
+  <span class="tag">Architecture · v0.2.1</span>
+  <span class="links">
+    <a href="index.html">UI preview</a>
+    <a href="#invariants">Invariants</a>
+    <a href="#threat">Threat model</a>
+  </span>
+</div>
+
+<div class="layout">
+  <!-- TABLE OF CONTENTS -->
+  <nav class="toc" aria-label="Contents">
+    <h4>Architecture</h4>
+    <a href="#overview">1 · System overview</a>
+    <a href="#topology">2 · Topology</a>
+    <a href="#moneypath">3 · The money path</a>
+    <a href="#accounts">4 · Chart of accounts</a>
+    <a href="#modules">5 · Modules &amp; layers</a>
+    <a href="#data">6 · Data model</a>
+    <a href="#auth">7 · Auth &amp; tenancy</a>
+    <a href="#infra">8 · Cross-cutting infra</a>
+    <a href="#decisions">9 · Key decisions</a>
+    <a href="#invariants">10 · Invariants (§9)</a>
+    <a href="#threat">11 · Threat model</a>
+    <a href="#stack">12 · Tech stack</a>
+  </nav>
+
+  <main class="content">
+    <h1 style="font-size:34px;">System Architecture</h1>
+    <p class="lead" style="margin-top:10px;">Tradewind is a milestone-escrow services marketplace. Money is
+      held in escrow on the Stripe <strong>platform balance</strong> and mirrored in an immutable, always-balanced
+      <strong>double-entry ledger</strong> in PostgreSQL. Three roles — client, freelancer, admin — operate over a
+      strict escrow + dispute + payout state machine. Stripe (Checkout + Connect Express, <em>test mode</em>) is the
+      payment rail.</p>
+    <p class="small muted" style="margin-top:8px;">Source of truth for architecture; behavior lives in
+      <code>SPEC.md</code>. Precedence: RESEARCH &gt; ARCHITECTURE &gt; SPEC. Build depth: comprehensive.</p>
+
+    <!-- 1 OVERVIEW -->
+    <section id="overview">
+      <h2>1 · System overview</h2>
+      <div class="grid2">
+        <div class="card">
+          <h3 style="margin-top:0;">Design goals</h3>
+          <ul>
+            <li><strong>Money correctness above all.</strong> The ledger always balances; no funds lost or double-paid.</li>
+            <li><strong>Provider is the source of truth.</strong> Funding is confirmed by a verified Stripe webhook, never the browser redirect.</li>
+            <li><strong>Exactly-once effects.</strong> At-least-once webhooks + retried requests yield one business effect.</li>
+            <li><strong>Isolation.</strong> No cross-tenant or same-tenant cross-user access to projects, balances, or disputes.</li>
+            <li><strong>Auditability.</strong> Every fund-moving and privileged admin action is captured.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0;">Scale tier — <span class="pill">small (&lt;1k concurrent)</span></h3>
+          <p class="small">Single managed Postgres + framework pool. No Redis, no queue broker, no replicas. The
+            worker polls Postgres. The <code>has_payments</code> domain signal bumps one concern above the tier:
+            <strong>concurrency-safe money moves</strong> via row locks at any scale.</p>
+          <p class="small muted" style="margin-bottom:0;">Single Docker Compose: <code>postgres · api · web · worker</code>.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 TOPOLOGY -->
+    <section id="topology">
+      <h2>2 · Topology</h2>
+      <p>Four services behind a TLS-terminating reverse proxy. The browser talks to the API directly and to Stripe
+        hosted Checkout — <strong>card data never enters Tradewind</strong> (PCI SAQ-A).</p>
+      <div class="diagram">
+        <svg viewBox="0 0 880 430" width="100%" role="img" aria-label="Service topology diagram">
+          <defs>
+            <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L7,3 L0,6 z" fill="#b6b6c2"></path>
+            </marker>
+          </defs>
+          <!-- nodes -->
+          <g>
+            <rect class="node" x="20" y="30" width="150" height="58" rx="2"></rect>
+            <text class="lbl" x="95" y="55" text-anchor="middle">Browser</text>
+            <text class="sub" x="95" y="72" text-anchor="middle">React client</text>
+          </g>
+          <g>
+            <rect class="node node-primary" x="250" y="30" width="150" height="58" rx="2"></rect>
+            <text class="lbl" x="325" y="55" text-anchor="middle">web</text>
+            <text class="sub" x="325" y="72" text-anchor="middle">Next.js 15 · :3000</text>
+          </g>
+          <g>
+            <rect class="node node-primary" x="480" y="30" width="160" height="58" rx="2"></rect>
+            <text class="lbl" x="560" y="55" text-anchor="middle">api</text>
+            <text class="sub" x="560" y="72" text-anchor="middle">Express 5 · Prisma · :4000</text>
+          </g>
+          <g>
+            <rect class="node node-db" x="715" y="30" width="145" height="58" rx="2"></rect>
+            <text class="lbl" x="787" y="55" text-anchor="middle">postgres</text>
+            <text class="sub" x="787" y="72" text-anchor="middle">ledger + business</text>
+          </g>
+          <g>
+            <rect class="node node-ext" x="250" y="200" width="150" height="58" rx="2"></rect>
+            <text class="lbl" x="325" y="225" text-anchor="middle">Stripe (test)</text>
+            <text class="sub" x="325" y="242" text-anchor="middle">Checkout · Connect</text>
+          </g>
+          <g>
+            <rect class="node" x="480" y="200" width="160" height="58" rx="2"></rect>
+            <text class="lbl" x="560" y="225" text-anchor="middle">worker</text>
+            <text class="sub" x="560" y="242" text-anchor="middle">outbox + reconcile</text>
+          </g>
+          <g>
+            <rect class="node node-db" x="715" y="200" width="145" height="58" rx="2"></rect>
+            <text class="lbl" x="787" y="225" text-anchor="middle">Resend / Sentry</text>
+            <text class="sub" x="787" y="242" text-anchor="middle">email · errors</text>
+          </g>
+          <!-- edges -->
+          <path class="edge" d="M170,59 L248,59"></path>
+          <text class="edge-lbl" x="209" y="50" text-anchor="middle">HTTPS</text>
+          <path class="edge" d="M400,59 L478,59"></path>
+          <text class="edge-lbl" x="439" y="50" text-anchor="middle">REST /v1</text>
+          <path class="edge" d="M640,59 L713,59"></path>
+          <text class="edge-lbl" x="676" y="50" text-anchor="middle">SQL</text>
+          <!-- browser -> stripe checkout -->
+          <path class="edge" d="M70,88 C70,150 200,150 270,198"></path>
+          <text class="edge-lbl" x="120" y="150" text-anchor="middle">hosted Checkout</text>
+          <!-- stripe webhook -> api -->
+          <path class="edge" d="M400,229 L478,229"></path>
+          <text class="edge-lbl" x="439" y="220" text-anchor="middle">webhook (signed)</text>
+          <!-- api -> stripe sdk -->
+          <path class="edge" d="M520,198 C500,150 420,130 360,90"></path>
+          <text class="edge-lbl" x="470" y="150" text-anchor="middle">Stripe SDK</text>
+          <!-- worker -> postgres -->
+          <path class="edge" d="M640,229 L713,229"></path>
+          <text class="edge-lbl" x="676" y="220" text-anchor="middle">poll</text>
+          <!-- worker -> api db (vertical) -->
+          <path class="edge" d="M787,200 L787,90"></path>
+          <text class="edge-lbl" x="812" y="150" text-anchor="middle">shared DB</text>
+        </svg>
+      </div>
+      <p class="small muted" style="margin-top:10px;">Legend: <span class="pill tag-inv">app</span> Tradewind
+        services · <span class="pill" style="border-color:var(--success);color:#14702f;">data</span> stores ·
+        <span class="pill" style="border-color:var(--secondary);color:#a32c9c;">ext</span> third-party.</p>
+    </section>
+
+    <!-- 3 MONEY PATH -->
+    <section id="moneypath">
+      <h2>3 · The money path</h2>
+      <p>Every state-mutating money action runs in <strong>one serializable transaction</strong> that emits balanced
+        ledger legs (sum = 0), an <code>audit_logs</code> row, and — where a party must be notified — a
+        <code>pending_emails</code> outbox row. Network calls to Stripe happen <em>after</em> commit with an
+        idempotency key.</p>
+      <div class="flow">
+        <div class="step"><div class="n">1</div><div>
+          <h4>Fund <span class="pill">W3</span></h4>
+          <p class="small" style="margin:4px 0;">Client clicks <em>Fund</em> → API creates a Checkout Session
+            (<code>idempotencyKey = fund:&lt;id&gt;</code>) → browser pays on Stripe → <code>payment_intent.succeeded</code>
+            webhook → API verifies signature, dedupes the event, then posts:</p>
+          <span class="legs"><span class="dr">EXTERNAL −$100.00</span> &nbsp;/&nbsp; <span class="cr">ESCROW_HELD +$100.00</span> &nbsp;= 0</span>
+        </div></div>
+        <div class="step"><div class="n">2</div><div>
+          <h4>Deliver <span class="pill">W4</span></h4>
+          <p class="small" style="margin:4px 0 0;">Freelancer marks the milestone <code>DELIVERED</code> — a guarded state transition, no money movement.</p>
+        </div></div>
+        <div class="step"><div class="n">3</div><div>
+          <h4>Approve &amp; release <span class="pill">W5</span></h4>
+          <p class="small" style="margin:4px 0;">Client approves → API locks the escrow account
+            (<code>SELECT … FOR UPDATE</code>), asserts held ≥ amount, and posts (10% fee):</p>
+          <span class="legs"><span class="dr">ESCROW_HELD −$100.00</span> &nbsp;/&nbsp; <span class="cr">FREELANCER_PAYABLE +$90.00</span> &nbsp;/&nbsp; <span class="cr">PLATFORM_FEE +$10.00</span> &nbsp;= 0</span>
+          <p class="small muted" style="margin:6px 0 0;">Double-release is impossible: row lock + one-way transition + <code>UNIQUE(release:&lt;id&gt;)</code>.</p>
+        </div></div>
+        <div class="step"><div class="n">4</div><div>
+          <h4>Payout <span class="pill">W6</span></h4>
+          <p class="small" style="margin:4px 0;">Freelancer requests a payout → API locks <code>FREELANCER_PAYABLE</code>,
+            asserts available ≥ amount, posts the move to clearing, then creates a Stripe Transfer:</p>
+          <span class="legs"><span class="dr">FREELANCER_PAYABLE −amt</span> &nbsp;/&nbsp; <span class="cr">PAYOUT_CLEARING +amt</span></span>
+          <p class="small muted" style="margin:6px 0 0;">On <code>payout.paid</code> → clearing → EXTERNAL (PAID). On
+            <code>payout.failed</code> → reverse clearing → payable (funds returned).</p>
+        </div></div>
+        <div class="step"><div class="n">5</div><div>
+          <h4>Dispute &amp; resolve <span class="pill">W7</span></h4>
+          <p class="small" style="margin:4px 0 0;">Either party disputes a funded/delivered milestone → admin resolves:
+            <strong>refund</strong> (escrow → external), <strong>release</strong> (as W5), or <strong>split</strong>
+            (escrow → external + payable + fee). Every resolution writes an audit entry; admins cannot move funds without one.</p>
+        </div></div>
+      </div>
+    </section>
+
+    <!-- 4 ACCOUNTS -->
+    <section id="accounts">
+      <h2>4 · Chart of accounts</h2>
+      <p>A <strong>closed double-entry system</strong>. Balances are <em>derived</em> (sum of immutable ledger
+        entries), never stored. Every transaction's legs sum to zero, and the sum of all account balances across the
+        whole system is always zero — verified by the reconciliation job.</p>
+      <div class="accounts">
+        <div class="acct"><div class="nm">EXTERNAL</div><div class="ds">the outside world / Stripe</div></div>
+        <div class="acct"><div class="nm">ESCROW_HELD</div><div class="ds">per-milestone funds in custody</div></div>
+        <div class="acct"><div class="nm">FREELANCER_PAYABLE</div><div class="ds">per-freelancer available balance</div></div>
+        <div class="acct"><div class="nm">PLATFORM_FEE</div><div class="ds">platform revenue</div></div>
+        <div class="acct"><div class="nm">PAYOUT_CLEARING</div><div class="ds">funds in flight to a connected account</div></div>
+      </div>
+      <p class="note" style="margin-top:14px;">Money is always <code>BigInt</code> integer minor units (cents) + a
+        currency code — <strong>never floats</strong>. Corrections are reversing entries, never updates or deletes.</p>
+    </section>
+
+    <!-- 5 MODULES -->
+    <section id="modules">
+      <h2>5 · Modules &amp; layers</h2>
+      <p>The <strong>service boundary</strong> is the central rule: no route handler calls Prisma on a scoped table
+        directly — every scoped read/write goes through <code>services/*</code>. This centralizes tenant + object-level
+        authorization so a new sub-resource cannot silently inherit only a tenant filter.</p>
+      <div class="tree">apps/api/src/
+  index.ts            <span class="muted"># bootstrap, middleware order, route mounting</span>
+  config/env.ts       <span class="muted"># zod-validated env (fail-fast)</span>
+  lib/                <span class="muted"># prisma · logger(pino) · errors · money · stripe · sentry · metrics</span>
+  middleware/         <span class="muted"># auth · authorize · rateLimit · csrf · validate · error</span>
+  <b>services/</b>            <span class="muted"># ALL scoped DB writes live here (INV-1)</span>
+    auth · ledger · account · project · escrow · payout
+    dispute · webhook · audit · outbox · reconciliation · report
+  routes/             <span class="muted"># thin controllers → services; zod input validation</span>
+  validation/         <span class="muted"># zod schemas
+</span>apps/web/app/        <span class="muted"># Next.js App Router — 13 screens, sidebar + content</span>
+prisma/              <span class="muted"># schema · migrations · seed</span>
+scripts/invariant-lint.mjs  <span class="muted"># machine-checks ARCHITECTURE §9 / invariants.json</span></div>
+    </section>
+
+    <!-- 6 DATA MODEL -->
+    <section id="data">
+      <h2>6 · Data model</h2>
+      <p>PostgreSQL via Prisma. Money columns are <code>BigInt amountMinor</code> + <code>currency CHAR(3)</code>.
+        The accounting tables are immutable and append-only.</p>
+      <table>
+        <thead><tr><th>Table</th><th>Purpose</th><th>Key constraints</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">users</td><td>CLIENT · FREELANCER · ADMIN; scrypt password hash; Connect account id</td><td><code>email</code> unique</td></tr>
+          <tr><td class="mono">sessions</td><td>server-side session tokens (only the hash is stored)</td><td><code>token_hash</code> unique</td></tr>
+          <tr><td class="mono">projects</td><td>owned by a client</td><td>FK clientId</td></tr>
+          <tr><td class="mono">milestones</td><td>escrow state machine: PENDING → ACCEPTED → FUNDED → DELIVERED → RELEASED / DISPUTED → REFUNDED / SPLIT</td><td>indexed by status</td></tr>
+          <tr><td class="mono">accounts</td><td>chart of accounts (5 types)</td><td>unique <code>(type, ownerUserId, milestoneId)</code></td></tr>
+          <tr><td class="mono">ledger_transactions</td><td>immutable; one per money operation</td><td><strong>unique <code>idempotency_key</code></strong> (INV-3)</td></tr>
+          <tr><td class="mono">ledger_entries</td><td>immutable, append-only; one signed row per leg</td><td>per-txn Σ amountMinor = 0 (INV-7)</td></tr>
+          <tr><td class="mono">payouts</td><td>REQUESTED → PAID / FAILED</td><td>FK freelancerId</td></tr>
+          <tr><td class="mono">disputes</td><td>OPEN → RESOLVED (REFUND / RELEASE / SPLIT)</td><td>one open per milestone</td></tr>
+          <tr><td class="mono">webhook_events</td><td>idempotency dedupe (≥30-day retention)</td><td><strong>unique <code>stripe_event_id</code></strong> (INV-4)</td></tr>
+          <tr><td class="mono">pending_emails</td><td>transactional outbox (pending → sent / failed / dlq)</td><td>unique <code>(to, template, ref)</code></td></tr>
+          <tr><td class="mono">audit_logs</td><td>append-only audit trail of every money/admin action</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 7 AUTH -->
+    <section id="auth">
+      <h2>7 · Auth, authorization &amp; tenancy</h2>
+      <div class="grid2">
+        <div class="card">
+          <h3 style="margin-top:0;">Authentication</h3>
+          <ul>
+            <li>Session cookie — <code>httpOnly</code> + <code>Secure</code> + <code>SameSite=Lax</code>; only the token hash is stored.</li>
+            <li><strong>scrypt</strong> verifier (N=16384) with constant-time compare.</li>
+            <li><strong>HIBP</strong> k-anonymity breach screening + 15-char minimum (NIST 800-63B); no composition rules, no forced rotation.</li>
+            <li>Anti-enumeration: identical register/login response shape <em>and</em> timing; rate-limit before the hash compare.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0;">Authorization (two layers)</h3>
+          <ul>
+            <li><strong>Tenant/ownership scope</strong> — services filter by owner; cross-owner reads return <code>404 NOT_FOUND</code> (existence never leaks).</li>
+            <li><strong>Object-level</strong> — <code>assertResourceAccess(row, principal)</code> on every owned route <em>and every sub-resource</em> (the classic IDOR miss).</li>
+            <li>Admin actions require explicit <code>requireRole('ADMIN')</code> — never an implicit bypass.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8 INFRA -->
+    <section id="infra">
+      <h2>8 · Cross-cutting infrastructure</h2>
+      <table>
+        <thead><tr><th>Concern</th><th>Approach</th></tr></thead>
+        <tbody>
+          <tr><td>Logging</td><td>pino structured JSON; request id; secrets / PAN-like values redacted (INV-9).</td></tr>
+          <tr><td>Metrics + alerting</td><td><code>/metrics</code> (Prometheus text) — funds held, releases, payouts, <code>reconciliation_imbalance_cents</code>.</td></tr>
+          <tr><td>Error reporting</td><td>Sentry (<code>@sentry/node</code> · <code>@sentry/nextjs</code>); no-op without a DSN.</td></tr>
+          <tr><td>Rate limiting</td><td>In-memory token bucket keyed per route dimension (small tier → no Redis).</td></tr>
+          <tr><td>Dual-write / email</td><td>Transactional <strong>outbox</strong> — enqueued in the same txn as the business write; a drain worker delivers via Resend with capped backoff → dlq.</td></tr>
+          <tr><td>Reconciliation</td><td>Worker every N minutes + admin <code>GET /v1/ledger/reconcile</code>: per-txn Σ=0 and closed-system Σ=0; alert on imbalance.</td></tr>
+          <tr><td>CI/CD</td><td><code>ci.yml</code>: install → typecheck → lint → test → build → invariant lint.</td></tr>
+          <tr><td>TLS</td><td>HTTPS only — reverse proxy terminates TLS, forces HTTP→HTTPS + HSTS; header buffers sized 32 KB.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 9 DECISIONS -->
+    <section id="decisions">
+      <h2>9 · Key technical decisions &amp; alternatives</h2>
+      <table>
+        <thead><tr><th>Decision</th><th>Chosen</th><th>Alternatives</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td>Escrow mechanism</td><td>Separate charges &amp; transfers (hold on platform, Transfer on approval)</td><td>Destination charges</td><td>Destination charges move funds immediately — no milestone-gated hold.</td></tr>
+          <tr><td>Ledger balances</td><td>Derived (sum of entries)</td><td>Stored mutable column</td><td>Stored balances drift; derived is provably correct at small scale.</td></tr>
+          <tr><td>Idempotency</td><td>DB <code>UNIQUE</code> (event id + business key)</td><td>App-level read-then-check</td><td>Closes the TOCTOU race at the database.</td></tr>
+          <tr><td>Auth</td><td>Server session cookie + scrypt</td><td>JWT · Auth.js</td><td>Simplest correct multi-role + revocation; no client token storage.</td></tr>
+          <tr><td>Email / dual-write</td><td>Outbox + drain worker</td><td>Synchronous provider call</td><td>Guaranteed delivery; decouples request latency from provider health.</td></tr>
+          <tr><td>Money type</td><td><code>BigInt</code> minor units</td><td>Float · Decimal</td><td>Float corrupts totals; integer cents match Stripe.</td></tr>
+          <tr><td>Concurrency</td><td>Serializable txn + <code>FOR UPDATE</code></td><td>Optimistic version only</td><td><code>has_payments</code> bumps concurrency-safety above the small-tier baseline.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 10 INVARIANTS -->
+    <section id="invariants">
+      <h2>10 · Architectural invariants (§9)</h2>
+      <p>Each rule has a machine-checkable or <code>manual</code> entry in <code>invariants.json</code> (same id).
+        The Stage 4 build lint pass and the ship-time Drift Detection Gate evaluate them. <strong>All 12 pass.</strong></p>
+      <table>
+        <thead><tr><th>ID</th><th>Rule</th><th>Check</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">INV-1</td><td>All scoped DB reads/writes go through <code>services/*</code> — no direct <code>prisma.&lt;model&gt;</code> outside.</td><td><span class="pill tag-inv">forbidden-pattern</span></td></tr>
+          <tr><td class="mono">INV-2</td><td>Money is never floating point — <code>BigInt</code> minor units only.</td><td><span class="pill tag-inv">forbidden-pattern</span></td></tr>
+          <tr><td class="mono">INV-3</td><td>Ledger transactions enforce a unique idempotency key (run-at-most-once).</td><td><span class="pill tag-inv">unique-constraint</span></td></tr>
+          <tr><td class="mono">INV-4</td><td>Webhook events deduped by a unique <code>stripe_event_id</code>.</td><td><span class="pill tag-inv">unique-constraint</span></td></tr>
+          <tr><td class="mono">INV-5</td><td>Webhook signature verification precedes any DB read.</td><td><span class="pill tag-inv">boundary-order</span></td></tr>
+          <tr><td class="mono">INV-6</td><td>An executable invariant-lint runner exists and is wired into CI.</td><td><span class="pill tag-inv">required-file</span></td></tr>
+          <tr><td class="mono">INV-7</td><td>The ledger posting function asserts every transaction's legs sum to zero.</td><td><span class="pill">manual</span></td></tr>
+          <tr><td class="mono">INV-8</td><td>Object-level authorization on owned resources <em>and</em> every sub-resource.</td><td><span class="pill">manual</span></td></tr>
+          <tr><td class="mono">INV-9</td><td>No raw card data (PAN/CVV) stored or logged — tokens + last4/brand only.</td><td><span class="pill tag-inv">forbidden-pattern</span></td></tr>
+          <tr><td class="mono">INV-10</td><td>Every screen routable; every endpoint UI-reachable; every workflow has an e2e test.</td><td><span class="pill tag-inv">ui-coverage</span></td></tr>
+          <tr><td class="mono">INV-11</td><td>Payout amount can never exceed available balance, enforced under a row lock.</td><td><span class="pill">manual</span></td></tr>
+          <tr><td class="mono">INV-12</td><td>The chart of accounts is a closed system — all balances sum to zero.</td><td><span class="pill">manual</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 11 THREAT MODEL -->
+    <section id="threat">
+      <h2>11 · Threat model (STRIDE by trust boundary)</h2>
+      <div class="grid2">
+        <div class="card"><h3 style="margin-top:0;">Browser ↔ API</h3>
+          <p class="small" style="margin-bottom:0;">Session auth + object-level authz (IDOR). Server is the sole
+            authority on amounts/state — client amounts are never trusted. Audit log per money action. <strong>Card
+            data never crosses this boundary</strong> → SAQ-A.</p></div>
+        <div class="card"><h3 style="margin-top:0;">API ↔ Stripe</h3>
+          <p class="small" style="margin-bottom:0;">Idempotency keys on every charge / transfer / payout. Secret keys
+            server-side, test-mode, never logged. Pre-transfer balance assertion under a lock.</p></div>
+        <div class="card"><h3 style="margin-top:0;">Stripe webhook ↔ API</h3>
+          <p class="small" style="margin-bottom:0;">HMAC signature verified <strong>before</strong> any DB read.
+            Timestamp tolerance + persisted <code>event.id</code> dedupe (at-least-once → idempotent). Bad signature → 400, never 500.</p></div>
+        <div class="card"><h3 style="margin-top:0;">API ↔ DB</h3>
+          <p class="small" style="margin-bottom:0;">Least-privilege role; mandatory owner predicate. Money moves in
+            serializable, row-locked transactions with Σ=0 enforced and verified by reconciliation. Append-only ledger.</p></div>
+      </div>
+      <p class="small muted" style="margin-top:12px;">Top risks mitigated: ledger imbalance · negative / over-drawn
+        balance · double-release · webhook replay/spoof · concurrent-move races · same-tenant IDOR · cross-tenant leakage ·
+        secret leakage · dispute-authz bypass · PCI scope creep.</p>
+    </section>
+
+    <!-- 12 STACK -->
+    <section id="stack">
+      <h2>12 · Technology stack</h2>
+      <table>
+        <thead><tr><th>Layer</th><th>Technology</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Web</td><td>Next.js 15 (App Router) · Tailwind · React Context</td><td>13 screens; tokens in <code>globals.css</code>.</td></tr>
+          <tr><td>API</td><td>Express 5 · REST under <code>/v1/</code></td><td>Typed error contract; zod validation.</td></tr>
+          <tr><td>ORM / DB</td><td>Prisma 6 · PostgreSQL 16</td><td>Serializable txns, CHECK constraints, row locks.</td></tr>
+          <tr><td>Payments</td><td>Stripe (Checkout + Connect Express), test mode</td><td>Stub-aware adapter; webhooks signed/verified with the real SDK.</td></tr>
+          <tr><td>Worker</td><td>Node poll-loop</td><td>Outbox drain + reconciliation; no broker.</td></tr>
+          <tr><td>Email / errors</td><td>Resend (outbox) · Sentry</td><td>Guaranteed-delivery email; error reporting.</td></tr>
+          <tr><td>Container</td><td>Single Docker Compose</td><td><code>postgres · api · web · worker</code>.</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+</div>
+
+<footer><div class="row">
+  <span>Tradewind architecture · generated from ARCHITECTURE.md · v0.2.1</span>
+  <span>Built with the AI MDLC™ Kernel — MARKDOWN DEVELOPMENT LIFE CYCLE™</span>
+</div></footer>
+
+<a href="../index.html" aria-label="Back to the MDLC examples gallery" style="position:fixed;top:14px;left:14px;z-index:2147483647;display:inline-flex;align-items:center;gap:7px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#edf0f7;background:rgba(8,13,25,.82);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid #2a3a5c;border-radius:8px;padding:8px 13px;text-decoration:none;box-shadow:0 8px 24px -8px rgba(0,0,0,.7);">\&larr; Gallery</a>
+</body>
+</html>
