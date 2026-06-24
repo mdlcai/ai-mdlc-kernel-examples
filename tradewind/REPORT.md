@@ -1,6 +1,6 @@
 # REPORT.md — Tradewind Build Report
 
-Project `ef67c195-1b53-4113-9197-3c676f65d43d` · MDLC™ pipeline · build_depth: comprehensive.
+Project `ef67c195-1b53-4113-9197-3c676f65d43d` · MDLC pipeline · build_depth: comprehensive.
 
 ## Build Input Reconciliation
 
