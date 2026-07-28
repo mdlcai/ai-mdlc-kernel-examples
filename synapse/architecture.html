@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Synapse · Architecture</title>
+<style>
+  :root{
+    --void:#04070f; --deep:#080d19; --surface:#0d1221; --raised:#111a2e;
+    --border:#1c2740; --border-soft:#141d31;
+    --text:#e9eef8; --text-2:#93a1bd; --muted:#4d5876;
+    --cyan:#00d4ee; --violet:#8b7cff; --up:#22d39a; --warn:#f5b73d; --down:#ff5a6a;
+    --mono:ui-monospace,"SFMono-Regular","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:ui-sans-serif,system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--void);color:var(--text);font-family:var(--sans);line-height:1.5;
+    -webkit-font-smoothing:antialiased;padding:48px 20px 80px;
+    background-image:
+      radial-gradient(1000px 560px at 80% -10%, rgba(0,212,238,.06), transparent 70%),
+      radial-gradient(700px 460px at 0% 4%, rgba(139,124,255,.05), transparent 70%),
+      radial-gradient(rgba(147,161,189,.045) 1px, transparent 1px);
+    background-size:auto,auto,32px 32px;min-height:100vh}
+  .wrap{max-width:1000px;margin:0 auto}
+  .mono{font-family:var(--mono)}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--cyan)}
+  h1{font-size:clamp(28px,4.4vw,44px);font-weight:700;letter-spacing:-.02em;margin:12px 0 8px}
+  .sub{color:var(--text-2);font-size:16px;max-width:660px}
+
+  .tier-label{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--muted);margin:22px 0 10px 2px}
+  .row{display:grid;gap:14px}
+  .r1{grid-template-columns:1fr} .r2{grid-template-columns:1fr 1fr}
+  .r3{grid-template-columns:repeat(3,1fr)} .r4{grid-template-columns:repeat(4,1fr)}
+
+  .node{background:linear-gradient(180deg,var(--surface),var(--deep));border:1px solid var(--border-soft);
+    border-radius:13px;padding:15px 17px;position:relative;overflow:hidden}
+  .node::before{content:"";position:absolute;inset:0 0 auto 0;height:2px;background:var(--edge,var(--border));opacity:.85}
+  .node .tt{display:flex;align-items:center;gap:9px}
+  .node h3{font-size:14.5px;font-weight:600;letter-spacing:-.01em}
+  .node .kind{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-left:auto}
+  .node p{color:var(--text-2);font-size:12.5px;margin-top:6px}
+  .node code{font-family:var(--mono);font-size:11.5px;color:var(--cyan)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .chip{font-family:var(--mono);font-size:10.5px;color:var(--text-2);background:rgba(147,161,189,.07);
+    border:1px solid var(--border-soft);border-radius:6px;padding:2px 8px}
+  .ico{width:29px;height:29px;border-radius:8px;display:grid;place-items:center;font-size:14px;
+    border:1px solid var(--border);background:rgba(0,212,238,.06)}
+
+  .c-cyan{--edge:var(--cyan)} .c-violet{--edge:var(--violet)} .c-up{--edge:var(--up)}
+  .c-warn{--edge:var(--warn)} .c-grey{--edge:var(--border)}
+  .c-cyan .ico{color:var(--cyan);border-color:rgba(0,212,238,.3);background:rgba(0,212,238,.08)}
+  .c-violet .ico{color:var(--violet);border-color:rgba(139,124,255,.3);background:rgba(139,124,255,.08)}
+  .c-up .ico{color:var(--up);border-color:rgba(34,211,154,.3);background:rgba(34,211,154,.08)}
+  .c-warn .ico{color:var(--warn);border-color:rgba(245,183,61,.3);background:rgba(245,183,61,.08)}
+
+  .flow{display:flex;justify-content:center;padding:5px 0}
+  .flow span{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted);border:1px solid var(--border-soft);border-radius:999px;padding:4px 14px;
+    background:var(--deep);display:inline-flex;align-items:center;gap:8px}
+  .flow span::before{content:"▼";color:var(--cyan);font-size:8px}
+
+  .zone{border:1px dashed var(--border);border-radius:16px;padding:18px 16px 16px;position:relative}
+  .zone-tag{position:absolute;top:-9px;left:16px;background:var(--void);padding:0 10px;
+    font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan)}
+  .foundation{margin-top:14px;border:1px solid var(--border-soft);border-radius:12px;background:var(--deep);padding:12px 14px}
+  .foundation .fl{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+  .frow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .fitem{border:1px solid var(--border-soft);border-radius:9px;padding:9px 11px;background:var(--surface)}
+  .fitem .fn{font-family:var(--mono);font-size:12px;color:var(--text)}
+  .fitem .fd{font-size:11px;color:var(--text-2);margin-top:3px}
+
+  .pipeline{margin-top:24px;background:var(--deep);border:1px solid var(--border-soft);border-radius:14px;padding:18px}
+  .pipe-steps{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-top:12px;font-family:var(--mono);font-size:11.5px}
+  .pipe-steps .s{border:1px solid var(--border);border-radius:8px;padding:6px 11px;color:var(--text);background:var(--surface)}
+  .pipe-steps .a{color:var(--cyan)}
+
+  .gate{margin-top:20px;border:1px solid rgba(245,183,61,.28);background:rgba(245,183,61,.05);border-radius:14px;padding:18px}
+  .gate .eyebrow{color:var(--warn)}
+  .gate ul{list-style:none;margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:9px 24px}
+  .gate li{font-family:var(--mono);font-size:12px;color:var(--text-2);padding-left:18px;position:relative}
+  .gate li::before{content:"✓";position:absolute;left:0;color:var(--up)}
+  .gate li b{color:var(--text);font-weight:600}
+
+  .foot{margin-top:30px;text-align:center}
+  .builtwith{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:12px;
+    letter-spacing:.1em;color:var(--text-2);border:1px solid var(--border);border-radius:999px;padding:8px 18px}
+  .builtwith b{color:var(--text)}
+
+  @media(max-width:820px){.r4,.r3,.r2,.frow,.gate ul{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">// Reference build · system architecture</div>
+  <h1>Synapse application architecture</h1>
+  <p class="sub">The MDLC reference build: one Next.js application, four vertical slices over a shared library, one Postgres database. Generated from RESEARCH.md and hardened by the security gate.</p>
+
+  <!-- CLIENTS -->
+  <div class="tier-label">Clients</div>
+  <div class="row r2">
+    <div class="node c-grey"><div class="tt"><span class="ico">◱</span><h3>Anonymous</h3><span class="kind">no signup</span></div>
+      <p>Runs the four free diagnostic tools at <code>/tools/*</code>.</p></div>
+    <div class="node c-grey"><div class="tt"><span class="ico">◨</span><h3>Signed-in user</h3><span class="kind">session</span></div>
+      <p>Owns monitors, alert channels, and the dashboard. Sees only their own rows.</p></div>
+  </div>
+
+  <div class="flow"><span>HTTPS</span></div>
+
+  <!-- THE APP -->
+  <div class="zone">
+    <span class="zone-tag">Next.js app · single deployment (App Router + TypeScript)</span>
+    <div class="row r4">
+      <div class="node c-cyan"><div class="tt"><span class="ico">◈</span><h3>Diagnostics</h3></div>
+        <p><code>/tools/*</code> + <code>/api/diagnostics/{dns,ssl,http,propagation}</code>. Every outbound call goes through the SSRF guard.</p></div>
+      <div class="node c-up"><div class="tt"><span class="ico">◨</span><h3>Accounts</h3></div>
+        <p><code>/auth/*</code> sign-in / sign-up, password sessions, ownership context.</p></div>
+      <div class="node c-violet"><div class="tt"><span class="ico">◉</span><h3>Monitoring</h3></div>
+        <p><code>/monitors</code>, <code>/api/monitors</code>, <code>/api/alert-channels</code>. Create, list, detail; all ownership-scoped.</p></div>
+      <div class="node c-warn"><div class="tt"><span class="ico">◷</span><h3>Check runner</h3></div>
+        <p><code>/api/cron</code>, shared-secret only. Runs due monitors, writes results, opens/closes alerts.</p></div>
+    </div>
+
+    <div class="foundation">
+      <div class="fl">Shared foundation · lib/</div>
+      <div class="frow">
+        <div class="fitem"><div class="fn">lib/db</div><div class="fd">Postgres access; ownership filter on every query.</div></div>
+        <div class="fitem"><div class="fn">lib/auth</div><div class="fd">KDF password hash, sessions, getSessionUser().</div></div>
+        <div class="fitem"><div class="fn">lib/ssrf</div><div class="fd">assertPublicUrl() + address pinning.</div></div>
+        <div class="fitem"><div class="fn">lib/dispatch</div><div class="fd">One alert per status transition.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCHEDULER -->
+  <div class="flow"><span>every interval · shared secret</span></div>
+  <div class="row r1">
+    <div class="node c-grey"><div class="tt"><span class="ico">⏱</span><h3>External scheduler</h3><span class="kind">cron</span></div>
+      <p>A platform cron (or any scheduler) calls <code>/api/cron</code> on an interval to drive the always-on checks. Not publicly triggerable.</p></div>
+  </div>
+
+  <div class="flow"><span>reads / writes · outbound</span></div>
+
+  <!-- DATA + EXTERNAL -->
+  <div class="row r2">
+    <div class="node c-up"><div class="tt"><span class="ico">▦</span><h3>Postgres</h3><span class="kind">single DB</span></div>
+      <p>Tables: users, monitors, checks, alert_channels, alerts. A partial unique index keeps at most one open alert per monitor.</p>
+      <div class="chips"><span class="chip">ownership in data layer</span><span class="chip">alerts_one_open_per_monitor</span></div></div>
+    <div class="node c-grey"><div class="tt"><span class="ico">◎</span><h3>External endpoints</h3><span class="kind">via SSRF guard</span></div>
+      <p>Public DoH resolvers (Google / Cloudflare) and the target hosts each check probes; webhook and email alert destinations.</p>
+      <div class="chips"><span class="chip">DoH</span><span class="chip">webhook (https)</span><span class="chip">email</span></div></div>
+  </div>
+
+  <!-- CHECK PIPELINE -->
+  <div class="pipeline">
+    <div class="eyebrow">Check pipeline · the always-on path</div>
+    <div class="pipe-steps">
+      <span class="s">scheduler</span><span class="a">→</span>
+      <span class="s">/api/cron</span><span class="a">→</span>
+      <span class="s">select due monitors</span><span class="a">→</span>
+      <span class="s">run check + SSRF guard</span><span class="a">→</span>
+      <span class="s">write check · update status</span><span class="a">→</span>
+      <span class="s" style="color:var(--cyan)">on transition · dispatch alert</span>
+    </div>
+  </div>
+
+  <!-- SECURITY GATE -->
+  <div class="gate">
+    <div class="eyebrow">What the MDLC security gate hardened</div>
+    <ul>
+      <li><b>SSRF guard</b> closed an IPv6-literal bypass to the cloud metadata endpoint</li>
+      <li><b>Address pinning</b> added to defeat DNS-rebinding at connect time</li>
+      <li><b>Ownership isolation</b> enforced in the data layer on every query (no IDOR)</li>
+      <li><b>Cron endpoint</b> gated behind a shared secret, not publicly triggerable</li>
+      <li><b>Passwords</b> hashed with a modern KDF, salted</li>
+      <li><b>DB TLS</b> verification required, not disabled</li>
+    </ul>
+  </div>
+
+  <div class="foot">
+    <a class="builtwith" href="https://mdlc.ai" target="_blank" rel="noopener"><span style="color:var(--cyan)">◆</span> Built with <b>MDLC&trade;</b></a>
+  </div>
+</div>
+</body>
+</html>

@@ -4,9 +4,9 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>MDLC — Example Builds</title>
-<meta name="description" content="Eleven real applications, each built end-to-end by the MDLC methodology — from a one-page blueprint to a gate-passing build." />
+<meta name="description" content="Twelve real applications, each built end-to-end by the MDLC methodology, from a one-page blueprint to a gate-passing build." />
 <meta property="og:title" content="MDLC — Example Builds" />
-<meta property="og:description" content="Eleven real applications, each built end-to-end by the MDLC methodology. Live previews, architecture, and the full build report for each." />
+<meta property="og:description" content="Twelve real applications, each built end-to-end by the MDLC methodology. Live previews, architecture, and the full build report for each." />
 <meta property="og:type" content="website" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -110,6 +110,24 @@
   .links a:hover{color:var(--text-primary);border-color:var(--cyan);background:var(--cyan-glow)}
   .links a.lead{color:#bfe1ff;border-color:var(--blue-dim);background:var(--blue-glow)}
 
+  /* ── Featured (live) card ─────────────────────────────────────────────────── */
+  .card.featured{grid-column:1 / -1;border-color:var(--cyan-dim);
+    box-shadow:0 0 0 1px var(--cyan-glow),0 34px 90px -46px rgba(6,182,212,.55)}
+  @media(min-width:821px){
+    .card.featured{flex-direction:row}
+    .card.featured .shot{aspect-ratio:auto;width:46%;border-bottom:0;border-right:1px solid var(--border)}
+    .card.featured .body{flex:1;padding:28px 30px}
+  }
+  .card.featured .body h3{font-size:32px}
+  .badge.live{color:var(--accent-green);background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.35);
+    display:inline-flex;align-items:center;gap:7px}
+  .badge.live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent-green);animation:livepulse 2s infinite}
+  @keyframes livepulse{0%{box-shadow:0 0 0 0 rgba(16,185,129,.5)}70%{box-shadow:0 0 0 7px rgba(16,185,129,0)}100%{box-shadow:0 0 0 0 rgba(16,185,129,0)}}
+  .featured-note{color:var(--text-secondary);font-size:14px}
+  .featured-note a{color:var(--cyan);text-decoration:underline}
+  .links a.live{color:#7ff0c8;border-color:rgba(16,185,129,.42);background:rgba(16,185,129,.1)}
+  .links a.live:hover{border-color:var(--accent-green);color:#fff;background:rgba(16,185,129,.18)}
+
   /* ── How it's built ──────────────────────────────────────────────────────── */
   .how{padding:60px 0 18px}
   .how .lab{text-align:center;font-family:var(--font-mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan);margin-bottom:14px}
@@ -201,19 +219,30 @@
 
   <header class="hero">
     <div class="eyebrow"><span class="gl">✦</span> Reference Builds <span class="gl">→</span> Built with MDLC</div>
-    <h1>Eleven real apps,<br><em>built by the methodology.</em></h1>
+    <h1>Twelve real apps,<br><em>built by the methodology.</em></h1>
     <p class="sub">Each app below started as a one-page <code>RESEARCH.md</code> blueprint and came out the other side as a working, reviewed application — with the architecture, the spec, the decisions, and the full build report to prove it.</p>
     <div class="actions">
       <a class="btn btn-primary" href="https://mdlc.ai/catches.html">What MDLC catches →</a>
     </div>
     <div class="stats">
-      <span>11 apps, 0 hand-written</span>
+      <span>12 apps, 0 hand-written</span>
       <span>189 smoke flows passed</span>
       <span>every gate, with receipts</span>
     </div>
   </header>
 
   <section class="grid" id="gallery">
+
+    <article class="card featured">
+      <a class="shot" href="synapse/index.html"><img src="synapse/preview.png" alt="Synapse" loading="lazy"><span class="open"><span>Open live preview →</span></span></a>
+      <div class="body">
+        <h3>Synapse <span class="badge live">Live in production</span> <span class="badge">Monitoring</span></h3>
+        <p class="featured-note">This build has a counterpart running in production: <a href="https://synapse.mdlc.ai" target="_blank" rel="noopener">synapse.mdlc.ai</a>, a monitoring and diagnostics SaaS with paying plans.</p>
+        <p>Diagnose and monitor sites, APIs, DNS, and certificates from one place. On-demand tools (DNS, SSL, HTTP, propagation) plus always-on monitors that trace the root cause across DNS, TCP, TLS, and the app. Built from a RESEARCH.md blueprint as four vertical slices over a shared library, and hardened by the security gate.</p>
+        <div class="gates"><span class="gate">tsc clean</span><span class="gate">Ownership PASS</span><span class="gate">SSRF hardened</span><span class="gate">Security gate ✓</span></div>
+        <div class="links"><a class="live" href="https://synapse.mdlc.ai" target="_blank" rel="noopener">Visit live site ↗</a><a class="lead" href="synapse/index.html">Preview</a><a href="synapse/architecture.html">Architecture</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/synapse/REPORT.md">Build report</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/tree/main/synapse">Files ↗</a></div>
+      </div>
+    </article>
 
     <article class="card">
       <a class="shot" href="tradewind/index.html"><img src="tradewind/preview.png" alt="Tradewind" loading="lazy"><span class="open"><span>Open live preview →</span></span></a>

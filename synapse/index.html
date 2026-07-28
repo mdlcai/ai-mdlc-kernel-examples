@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Synapse — See the internet clearly</title>
+<style>
+  :root{
+    --void:#04070f; --deep:#080d19; --surface:#0d1221; --raised:#111a2e;
+    --border:#1c2740; --border-soft:#141d31;
+    --text:#e9eef8; --text-2:#93a1bd; --muted:#4d5876;
+    --cyan:#00d4ee; --cyan-dim:#0891b2; --violet:#8b7cff;
+    --up:#22d39a; --warn:#f5b73d; --down:#ff5a6a;
+    --mono:ui-monospace,"SFMono-Regular","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:ui-sans-serif,system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--void); color:var(--text); font-family:var(--sans);
+    line-height:1.55; -webkit-font-smoothing:antialiased;
+    background-image:
+      radial-gradient(1100px 600px at 78% -8%, rgba(0,212,238,.07), transparent 70%),
+      radial-gradient(700px 500px at 0% 6%, rgba(139,124,255,.05), transparent 70%),
+      radial-gradient(rgba(147,161,189,.05) 1px, transparent 1px);
+    background-size:auto,auto,32px 32px;
+    min-height:100vh;
+  }
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1140px;margin:0 auto;padding:0 24px}
+  .mono{font-family:var(--mono)}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--cyan)}
+
+  /* nav */
+  nav{position:sticky;top:0;z-index:20;backdrop-filter:blur(10px);
+    background:rgba(4,7,15,.72);border-bottom:1px solid var(--border-soft)}
+  .navrow{display:flex;align-items:center;justify-content:space-between;height:60px}
+  .brand{display:flex;align-items:center;gap:10px;cursor:pointer}
+  .brand .glyph{width:26px;height:26px;display:grid;place-items:center;color:var(--cyan);
+    filter:drop-shadow(0 0 8px rgba(0,212,238,.4))}
+  .brand .name{font-family:var(--mono);letter-spacing:.22em;font-size:15px;text-transform:uppercase}
+  .brand .name b{color:var(--cyan);font-weight:600}
+  .tabs{display:flex;gap:6px}
+  .tab{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--text-2);
+    padding:8px 14px;border-radius:8px;cursor:pointer;border:1px solid transparent;transition:.2s}
+  .tab:hover{color:var(--text)}
+  .tab.active{color:var(--cyan);border-color:rgba(0,212,238,.25);background:rgba(0,212,238,.06)}
+  .cta{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--void);background:var(--cyan);
+    padding:8px 16px;border-radius:8px;cursor:pointer;transition:.2s}
+  .cta:hover{box-shadow:0 0 24px rgba(0,212,238,.4)}
+
+  section.view{display:none;padding:64px 0}
+  section.view.active{display:block;animation:fade .4s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  /* hero */
+  .hero{text-align:center;padding:96px 0 56px}
+  .hero h1{font-size:clamp(40px,7vw,84px);font-weight:700;line-height:1.03;letter-spacing:-.02em}
+  .hero h1 .grad{background:linear-gradient(100deg,var(--cyan),var(--violet));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p{margin:22px auto 0;max-width:620px;color:var(--text-2);font-size:19px}
+  .hero .row{margin-top:34px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+  .btn-ghost{border:1px solid var(--border);color:var(--text);padding:12px 22px;border-radius:11px;
+    font-weight:500;cursor:pointer;transition:.2s;font-size:15px}
+  .btn-ghost:hover{border-color:rgba(0,212,238,.4)}
+  .btn-solid{background:var(--cyan);color:var(--void);padding:12px 22px;border-radius:11px;
+    font-weight:600;cursor:pointer;transition:.2s;font-size:15px}
+  .btn-solid:hover{box-shadow:0 0 30px rgba(0,212,238,.4);transform:translateY(-1px)}
+  .stats{margin-top:64px;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:640px;margin-inline:auto}
+  .stat{text-align:center}
+  .stat .v{font-family:var(--mono);font-size:30px;font-weight:600;color:var(--text)}
+  .stat .l{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+
+  .head{text-align:center;max-width:640px;margin:0 auto 40px}
+  .head h2{font-size:clamp(30px,4vw,42px);font-weight:700;letter-spacing:-.01em;margin-top:12px}
+  .head p{color:var(--text-2);margin-top:14px;font-size:17px}
+
+  /* cards */
+  .grid{display:grid;gap:16px}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .card{background:linear-gradient(180deg,var(--surface),var(--deep));
+    border:1px solid var(--border-soft);border-radius:14px;padding:20px;position:relative;overflow:hidden}
+  .card::before{content:"";position:absolute;inset:0 0 auto 0;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(0,212,238,.35),transparent);opacity:.6}
+  .card h3{font-size:16px;font-weight:600;letter-spacing:-.01em}
+  .card p{color:var(--text-2);font-size:14px;margin-top:8px}
+  .toolcard{cursor:pointer;transition:.25s}
+  .toolcard:hover{border-color:rgba(0,212,238,.3);box-shadow:0 0 0 1px rgba(0,212,238,.12),0 14px 40px rgba(0,0,0,.4);transform:translateY(-2px)}
+  .toolcard .ic{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;
+    background:rgba(0,212,238,.08);border:1px solid rgba(0,212,238,.2);color:var(--cyan);margin-bottom:14px}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .tag{font-family:var(--mono);font-size:11px;color:var(--text-2);background:rgba(147,161,189,.08);
+    border:1px solid var(--border-soft);border-radius:6px;padding:2px 8px}
+
+  /* tool runner */
+  .runner{background:var(--deep);border:1px solid var(--border);border-radius:14px;padding:22px;margin-top:24px}
+  .runbar{display:flex;gap:10px;flex-wrap:wrap}
+  .runbar input{flex:1;min-width:220px;background:var(--void);border:1px solid var(--border);border-radius:9px;
+    color:var(--text);padding:11px 14px;font-family:var(--mono);font-size:14px;outline:none}
+  .runbar input:focus{border-color:rgba(0,212,238,.5)}
+  .runbar button{background:var(--cyan);color:var(--void);border:0;border-radius:9px;padding:11px 20px;
+    font-family:var(--mono);font-weight:600;font-size:13px;cursor:pointer}
+  .result{margin-top:20px;display:none}
+  .result.show{display:block;animation:fade .35s ease}
+  .kv{display:grid;grid-template-columns:150px 1fr;gap:10px 18px;font-family:var(--mono);font-size:13px;
+    border-top:1px solid var(--border-soft);padding-top:16px;margin-top:6px}
+  .kv .k{color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-size:11px;align-self:center}
+  .kv .val{color:var(--text)}
+  .pill{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12px;
+    padding:4px 11px;border-radius:999px;border:1px solid}
+  .pill.ok{color:var(--up);border-color:rgba(34,211,154,.35);background:rgba(34,211,154,.08)}
+  .pill.warn{color:var(--warn);border-color:rgba(245,183,61,.35);background:rgba(245,183,61,.08)}
+  .pill.bad{color:var(--down);border-color:rgba(255,90,106,.35);background:rgba(255,90,106,.08)}
+  .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+
+  /* dashboard */
+  .panel{background:linear-gradient(180deg,var(--surface),var(--deep));border:1px solid var(--border-soft);
+    border-radius:14px;overflow:hidden}
+  .panel-h{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border-soft)}
+  .panel-h .t{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-2)}
+  table{width:100%;border-collapse:collapse}
+  th{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+    text-align:left;padding:11px 20px;border-bottom:1px solid var(--border-soft)}
+  td{padding:14px 20px;font-size:14px;border-bottom:1px solid var(--border-soft)}
+  tr:last-child td{border-bottom:0}
+  tr.mon{cursor:pointer;transition:.15s}
+  tr.mon:hover{background:rgba(0,212,238,.04)}
+  td .target{font-family:var(--mono);font-size:13px;color:var(--text)}
+  td .sub{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px}
+  .num{font-family:var(--mono);text-align:right;color:var(--text-2)}
+
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:24px 0}
+  .metric{background:var(--deep);border:1px solid var(--border-soft);border-radius:12px;padding:16px}
+  .metric .l{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .metric .v{font-family:var(--mono);font-size:26px;font-weight:600;margin-top:8px}
+  .metric .v.c{color:var(--cyan)}
+
+  .detail{display:none;margin-top:24px}
+  .detail.show{display:block;animation:fade .35s ease}
+  .backlink{font-family:var(--mono);font-size:12px;color:var(--cyan);cursor:pointer;display:inline-block;margin-bottom:16px}
+
+  /* footer */
+  footer{border-top:1px solid var(--border-soft);margin-top:80px;padding:44px 0;text-align:center}
+  .builtwith{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:12px;
+    letter-spacing:.1em;color:var(--text-2);border:1px solid var(--border);border-radius:999px;padding:8px 18px;transition:.2s}
+  .builtwith:hover{border-color:var(--cyan);color:var(--cyan)}
+  .builtwith b{color:var(--text)}
+  .footnote{color:var(--muted);font-family:var(--mono);font-size:11px;margin-top:18px;line-height:1.9}
+
+  .badge-built{position:fixed;bottom:16px;right:16px;z-index:30;font-family:var(--mono);font-size:11px;
+    letter-spacing:.08em;color:var(--text-2);background:rgba(8,13,25,.85);border:1px solid var(--border);
+    border-radius:999px;padding:7px 14px;backdrop-filter:blur(6px)}
+  .badge-built b{color:var(--cyan)}
+
+  @media(max-width:880px){
+    .g4{grid-template-columns:repeat(2,1fr)} .g3{grid-template-columns:1fr}
+    .metrics{grid-template-columns:repeat(2,1fr)} .tabs{display:none}
+    .kv{grid-template-columns:110px 1fr}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap navrow">
+    <div class="brand" onclick="go('home')">
+      <span class="glyph"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h4l2-6 4 12 2-6h4"/></svg></span>
+      <span class="name">MDLC <b>Synapse</b></span>
+    </div>
+    <div class="tabs">
+      <div class="tab active" data-v="home" onclick="go('home')">Overview</div>
+      <div class="tab" data-v="tools" onclick="go('tools')">Tools</div>
+      <div class="tab" data-v="monitors" onclick="go('monitors')">Monitors</div>
+    </div>
+    <div class="cta" onclick="go('tools')">Run a check</div>
+  </div>
+</nav>
+
+<!-- ===================== HOME ===================== -->
+<section id="home" class="view active">
+  <div class="wrap">
+    <div class="hero">
+      <div class="eyebrow">Signal &rarr; Root Cause</div>
+      <h1>See the internet<br><span class="grad">clearly</span></h1>
+      <p>One command center to diagnose and monitor your sites, APIs, DNS, and certificates. Find the root cause across DNS, TCP, TLS, and the app, not just that something is down.</p>
+      <div class="row">
+        <div class="btn-solid" onclick="go('tools')">Run a diagnostic</div>
+        <div class="btn-ghost" onclick="go('monitors')">See the dashboard</div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="v">330+</div><div class="l">Edge cities</div></div>
+        <div class="stat"><div class="v">&lt;200ms</div><div class="l">Avg check</div></div>
+        <div class="stat"><div class="v">99.99%</div><div class="l">Uptime</div></div>
+      </div>
+    </div>
+
+    <div class="head" style="margin-top:40px">
+      <div class="eyebrow">// Diagnostic capabilities</div>
+      <h2>Every layer, one signal</h2>
+      <p>Run any check on demand, then promote it to a monitor that watches around the clock.</p>
+    </div>
+    <div class="grid g4">
+      <div class="card"><div class="ic">◈</div><h3>DNS Intelligence</h3><p>Records, propagation, and resolver drift across regions.</p><div class="tags"><span class="tag">A / AAAA</span><span class="tag">MX</span><span class="tag">Propagation</span></div></div>
+      <div class="card"><div class="ic">◈</div><h3>TLS &amp; Certificates</h3><p>Chain validation, expiry, and trust on the live cert.</p><div class="tags"><span class="tag">Expiry</span><span class="tag">Chain</span><span class="tag">SANs</span></div></div>
+      <div class="card"><div class="ic">◈</div><h3>Web &amp; Delivery</h3><p>Status, redirects, and phase timing down to TTFB.</p><div class="tags"><span class="tag">Headers</span><span class="tag">Redirects</span><span class="tag">TTFB</span></div></div>
+      <div class="card"><div class="ic">◈</div><h3>Monitoring &amp; Alerts</h3><p>Any check becomes a 24/7 monitor with routed alerts.</p><div class="tags"><span class="tag">Slack</span><span class="tag">PagerDuty</span><span class="tag">Webhook</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== TOOLS ===================== -->
+<section id="tools" class="view">
+  <div class="wrap">
+    <div class="head">
+      <div class="eyebrow">// Free tools, no signup</div>
+      <h2>Run any check free</h2>
+      <p>Four diagnostics, live. Run one, then let Synapse monitor it around the clock.</p>
+    </div>
+    <div class="grid g4">
+      <div class="card toolcard" onclick="pickTool('ssl')"><div class="ic">◈</div><h3>SSL Checker</h3><p>Issuer, chain, and days to expiry.</p></div>
+      <div class="card toolcard" onclick="pickTool('dns')"><div class="ic">◈</div><h3>DNS Lookup</h3><p>A, AAAA, CNAME, MX, TXT, NS.</p></div>
+      <div class="card toolcard" onclick="pickTool('http')"><div class="ic">◈</div><h3>HTTP Check</h3><p>Status, redirects, phase timing.</p></div>
+      <div class="card toolcard" onclick="pickTool('prop')"><div class="ic">◈</div><h3>DNS Propagation</h3><p>Resolver agreement worldwide.</p></div>
+    </div>
+
+    <div class="runner">
+      <div class="eyebrow" id="run-label" style="margin-bottom:12px">SSL Certificate Checker</div>
+      <div class="runbar">
+        <input id="run-input" value="synapse.mdlc.ai" spellcheck="false">
+        <button onclick="runCheck()">Run check</button>
+      </div>
+      <div class="result" id="run-result"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== MONITORS ===================== -->
+<section id="monitors" class="view">
+  <div class="wrap">
+    <div class="head" style="text-align:left;margin:0 0 8px">
+      <div class="eyebrow">// Command center</div>
+      <h2 style="font-size:32px">Monitors</h2>
+    </div>
+    <div class="metrics">
+      <div class="metric"><div class="l">Fleet uptime</div><div class="v c">99.98%</div></div>
+      <div class="metric"><div class="l">Avg latency</div><div class="v">142ms</div></div>
+      <div class="metric"><div class="l">Active monitors</div><div class="v">6</div></div>
+      <div class="metric"><div class="l">Open incidents</div><div class="v" style="color:var(--warn)">1</div></div>
+    </div>
+
+    <div class="panel" id="mon-list">
+      <div class="panel-h"><span class="t">All monitors</span><span class="t" style="color:var(--muted)">60s checks</span></div>
+      <table>
+        <thead><tr><th>Target</th><th>Type</th><th>Status</th><th style="text-align:right">Latency</th><th style="text-align:right">Uptime 24h</th></tr></thead>
+        <tbody>
+          <tr class="mon" onclick="showDetail()"><td><div class="target">api.acme.com</div><div class="sub">https · Frankfurt + Ashburn</div></td><td class="mono" style="color:var(--text-2)">HTTP</td><td><span class="pill bad"><span class="dot"></span>DOWN</span></td><td class="num" style="color:var(--down)">—</td><td class="num">97.4%</td></tr>
+          <tr class="mon" onclick="showDetail()"><td><div class="target">app.acme.com</div><div class="sub">https</div></td><td class="mono" style="color:var(--text-2)">HTTP</td><td><span class="pill ok"><span class="dot"></span>UP</span></td><td class="num">128ms</td><td class="num">100%</td></tr>
+          <tr class="mon" onclick="showDetail()"><td><div class="target">acme.com</div><div class="sub">certificate</div></td><td class="mono" style="color:var(--text-2)">SSL</td><td><span class="pill warn"><span class="dot"></span>WARN</span></td><td class="num">14d left</td><td class="num">—</td></tr>
+          <tr class="mon" onclick="showDetail()"><td><div class="target">acme.com</div><div class="sub">A record</div></td><td class="mono" style="color:var(--text-2)">DNS</td><td><span class="pill ok"><span class="dot"></span>UP</span></td><td class="num">31ms</td><td class="num">100%</td></tr>
+          <tr class="mon" onclick="showDetail()"><td><div class="target">cdn.acme.com</div><div class="sub">https</div></td><td class="mono" style="color:var(--text-2)">HTTP</td><td><span class="pill ok"><span class="dot"></span>UP</span></td><td class="num">64ms</td><td class="num">99.9%</td></tr>
+          <tr class="mon" onclick="showDetail()"><td><div class="target">mail.acme.com</div><div class="sub">email auth</div></td><td class="mono" style="color:var(--text-2)">EMAIL</td><td><span class="pill ok"><span class="dot"></span>UP</span></td><td class="num">score 96</td><td class="num">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- detail -->
+    <div class="detail" id="mon-detail">
+      <span class="backlink" onclick="hideDetail()">&larr; All monitors</span>
+      <div class="panel">
+        <div class="panel-h">
+          <span class="t">api.acme.com <span style="color:var(--muted)">· HTTP</span></span>
+          <span class="pill bad"><span class="dot"></span>DOWN &middot; 4m 12s</span>
+        </div>
+        <div style="padding:22px">
+          <div class="eyebrow" style="margin-bottom:14px">Response time · last 24h</div>
+          <svg width="100%" height="120" viewBox="0 0 600 120" preserveAspectRatio="none" style="display:block">
+            <defs><linearGradient id="grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(0,212,238,.35)"/><stop offset="1" stop-color="rgba(0,212,238,0)"/></linearGradient></defs>
+            <polyline fill="none" stroke="var(--cyan)" stroke-width="2" points="0,70 60,64 120,72 180,58 240,66 300,60 360,74 420,55 480,62 520,40 540,110 600,110"/>
+            <polygon fill="url(#grad)" points="0,70 60,64 120,72 180,58 240,66 300,60 360,74 420,55 480,62 520,40 540,110 600,110 600,120 0,120"/>
+            <line x1="540" y1="0" x2="540" y2="120" stroke="var(--down)" stroke-width="1" stroke-dasharray="3 3" opacity=".6"/>
+          </svg>
+          <div class="kv" style="margin-top:20px">
+            <div class="k">Incident</div><div class="val" style="color:var(--down)">HTTP 500 · 2 failed checks</div>
+            <div class="k">Root cause</div><div class="val">App layer · upstream returned 500 (DNS, TCP, TLS all healthy)</div>
+            <div class="k">Regions</div><div class="val">Frankfurt, Ashburn</div>
+            <div class="k">Notified</div><div class="val">Slack, PagerDuty · 14:32:07 UTC</div>
+          </div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:16px">
+        <div class="panel-h"><span class="t">Recent checks</span></div>
+        <table>
+          <thead><tr><th>Time</th><th>Region</th><th>Result</th><th style="text-align:right">Latency</th></tr></thead>
+          <tbody>
+            <tr><td class="mono" style="color:var(--text-2)">14:32:07</td><td class="mono" style="color:var(--text-2)">fra</td><td><span class="pill bad"><span class="dot"></span>500</span></td><td class="num" style="color:var(--down)">—</td></tr>
+            <tr><td class="mono" style="color:var(--text-2)">14:31:07</td><td class="mono" style="color:var(--text-2)">iad</td><td><span class="pill bad"><span class="dot"></span>500</span></td><td class="num" style="color:var(--down)">—</td></tr>
+            <tr><td class="mono" style="color:var(--text-2)">14:30:07</td><td class="mono" style="color:var(--text-2)">fra</td><td><span class="pill ok"><span class="dot"></span>200</span></td><td class="num">131ms</td></tr>
+            <tr><td class="mono" style="color:var(--text-2)">14:29:07</td><td class="mono" style="color:var(--text-2)">iad</td><td><span class="pill ok"><span class="dot"></span>200</span></td><td class="num">126ms</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <a class="builtwith" href="https://mdlc.ai" target="_blank" rel="noopener"><span style="color:var(--cyan)">◆</span> Built with <b>MDLC&trade;</b></a>
+    <div class="footnote">
+      A reference build generated from RESEARCH.md through the MDLC kernel.<br>
+      Diagnostics + monitoring core · governed build · security-audit pass.
+    </div>
+  </div>
+</footer>
+
+<div class="badge-built">◆ Built with <b>MDLC</b></div>
+
+<script>
+  var TOOLS = {
+    ssl:{label:'SSL Certificate Checker', ph:'synapse.mdlc.ai', run:function(h){return kv([
+      ['Status', pill('ok','VALID')],['Host',h],['Issuer',"Let's Encrypt · R3"],
+      ['Valid from','2026-06-18'],['Expires','2026-09-16'],['Days left', span('var(--up)','81')],
+      ['SANs', h+', www.'+h],['Trust','Trusted · chain OK']]);}},
+    dns:{label:'DNS Lookup', ph:'synapse.mdlc.ai', run:function(h){return kv([
+      ['Status', pill('ok','NOERROR')],['A','104.21.44.12  (ttl 300)'],['AAAA','2606:4700:3033::ac43'],
+      ['MX','10 route1.mx.'+h],['NS','ada.ns.cloudflare.com'],['DNSSEC', span('var(--up)','authenticated')],
+      ['Resolvers','Google + Cloudflare agree']]);}},
+    http:{label:'HTTP Header Check', ph:'https://synapse.mdlc.ai', run:function(h){return kv([
+      ['Status', pill('ok','200 OK')],['Final URL', h],['Redirects','1 · http &rarr; https'],
+      ['DNS','18ms'],['Connect','24ms'],['TLS','41ms'],['TTFB','96ms'],['Total', span('var(--cyan)','142ms')],
+      ['Server','cloudflare']]);}},
+    prop:{label:'DNS Propagation', ph:'synapse.mdlc.ai', run:function(h){return kv([
+      ['Status', pill('ok','CONSISTENT')],['Consensus','104.21.44.12'],['Frankfurt','104.21.44.12  ✓'],
+      ['Ashburn','104.21.44.12  ✓'],['Singapore','104.21.44.12  ✓'],['São Paulo', span('var(--warn)','propagating…')],
+      ['Agreement','19 / 20 resolvers']]);}}
+  };
+  var current = 'ssl';
+
+  function go(v){
+    document.querySelectorAll('.view').forEach(function(s){s.classList.toggle('active', s.id===v);});
+    document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('active', t.dataset.v===v);});
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  function pickTool(t){
+    current=t; document.getElementById('run-label').textContent = TOOLS[t].label;
+    var inp=document.getElementById('run-input'); inp.value = TOOLS[t].ph;
+    document.getElementById('run-result').classList.remove('show');
+    inp.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+  function runCheck(){
+    var h=(document.getElementById('run-input').value||'synapse.mdlc.ai').replace(/^https?:\/\//,'').replace(/\/.*$/,'');
+    var box=document.getElementById('run-result');
+    box.innerHTML = TOOLS[current].run(h);
+    box.classList.add('show');
+  }
+  function kv(rows){
+    var h='<div class="kv">';
+    rows.forEach(function(r){h+='<div class="k">'+r[0]+'</div><div class="val">'+r[1]+'</div>';});
+    return h+'</div>';
+  }
+  function pill(c,t){var cls=c==='ok'?'ok':c==='warn'?'warn':'bad';return '<span class="pill '+cls+'"><span class="dot"></span>'+t+'</span>';}
+  function span(color,t){return '<span style="color:'+color+'">'+t+'</span>';}
+  function showDetail(){document.getElementById('mon-list').style.display='none';document.getElementById('mon-detail').classList.add('show');window.scrollTo({top:0,behavior:'smooth'});}
+  function hideDetail(){document.getElementById('mon-detail').classList.remove('show');document.getElementById('mon-list').style.display='';}
+
+  runCheck();
+</script>
+</body>
+</html>
