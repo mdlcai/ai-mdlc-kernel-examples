@@ -2,11 +2,11 @@
 
 **One correlated view of organizational risk, with the audit trail to prove it.**
 
-[&#9654; Live preview](https://mdlcai.github.io/ai-mdlc-kernel-examples/cyberops/index.html) · [System architecture](https://mdlcai.github.io/ai-mdlc-kernel-examples/cyberops/architecture.html) · [Build with MDLC &rarr;](https://mdlc.ai)
+[&#8599; Live site](https://cyberops.mdlc.ai) · [&#9654; Preview](https://mdlcai.github.io/ai-mdlc-kernel-examples/cyberops/index.html) · [System architecture](https://mdlcai.github.io/ai-mdlc-kernel-examples/cyberops/architecture.html) · [Build with MDLC &rarr;](https://mdlc.ai)
 
 ![CyberOps](preview.png)
 
-> One of eleven reference apps built end-to-end with the **[MDLC](https://mdlc.ai)** methodology, from a `RESEARCH.md` blueprint, through architecture and build, to a passing set of quality gates. Nothing here was hand-tuned after generation.
+> **Running in production at [cyberops.mdlc.ai](https://cyberops.mdlc.ai).** One of eleven reference apps built end-to-end with the **[MDLC](https://mdlc.ai)** methodology, from a `RESEARCH.md` blueprint, through architecture and build, to a passing set of quality gates. Nothing here was hand-tuned after generation.
 
 ## What it does
 
