@@ -1,0 +1,986 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CyberOps — Attack Surface Intelligence</title>
+<style>
+/* ── Design tokens (verbatim from globals.css / DESIGN-TEMPLATE, ADR-004) ── */
+:root {
+  --cyber-base: #050810;
+  --cyber-elevated: #0a0e1a;
+  --cyber-overlay: #0f1424;
+  --cyber-surface: #141a2e;
+  --rose: #f43f5e;
+  --rose-dim: #e11d48;
+  --cyan: #06b6d4;
+  --cyan-dim: #0891b2;
+  --sev-critical: #ef4444;
+  --sev-high: #f97316;
+  --sev-medium: #eab308;
+  --sev-low: #3b82f6;
+  --sev-info: #64748b;
+  --up: #00E68A;
+  --down: #FF4466;
+  --warn: #FFAA00;
+  --tx-1: #e8ecf4;
+  --tx-2: #8892a8;
+  --tx-3: #556677;
+  --tx-4: #3D4F5F;
+  --bd-subtle: rgba(255,255,255,.05);
+  --bd-default: rgba(255,255,255,.07);
+  --glass-bg: rgba(10,14,26,.55);
+  --glass-strong-bg: rgba(10,14,26,.80);
+  --font-display: "Bahnschrift", "Rajdhani", "Eurostile", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Inter", "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Cascadia Code", "JetBrains Mono", "Geist Mono", ui-monospace, Consolas, monospace;
+}
+
+* { box-sizing: border-box; border-color: var(--bd-default); }
+html, body {
+  margin: 0;
+  background: var(--cyber-base);
+  color: var(--tx-1);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  font-size: 15px;
+}
+body { min-height: 100vh; }
+body::before {
+  content: "";
+  position: fixed; inset: 0; z-index: -2;
+  background:
+    radial-gradient(60vw 40vh at 15% -10%, rgba(244,63,94,.10), transparent 60%),
+    radial-gradient(50vw 40vh at 100% 0%, rgba(6,182,212,.10), transparent 55%),
+    var(--cyber-base);
+}
+.grid-pattern {
+  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(6,182,212,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(6,182,212,.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+::selection { background: rgba(244,63,94,.3); color: #fff; }
+a { color: inherit; text-decoration: none; }
+:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+/* ── Primitives ── */
+.glass { background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--bd-default); border-radius: .75rem; }
+.glass-strong { background: var(--glass-strong-bg); backdrop-filter: blur(16px); border: 1px solid var(--bd-default); border-radius: .75rem; }
+.card { background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--bd-default); border-radius: .75rem; padding: 1.25rem; }
+.card.flush { padding: 0; overflow-x: auto; }
+.kicker { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .22em; text-transform: uppercase; color: var(--cyan); }
+.display { font-family: var(--font-display); letter-spacing: .02em; }
+.mono { font-family: var(--font-mono); }
+.muted { color: var(--tx-2); }
+.dim { color: var(--tx-3); }
+.t-rose { color: var(--rose); } .t-cyan { color: var(--cyan); } .t-up { color: var(--up); } .t-warn { color: var(--warn); } .t-crit { color: var(--sev-critical); }
+.glow-rose { box-shadow: 0 0 24px rgba(244,63,94,.25); }
+.glow-cyan { box-shadow: 0 0 24px rgba(6,182,212,.22); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+  border-radius: .5rem; padding: .5rem 1rem; font-size: .875rem; font-weight: 500;
+  min-height: 40px; border: 1px solid transparent; cursor: pointer;
+  font-family: var(--font-body); transition: background-color .15s ease;
+}
+.btn-rose { background: var(--rose); color: #0a0a0a; font-weight: 600; }
+.btn-rose:hover { background: var(--rose-dim); }
+.btn-cyan { background: var(--cyan); color: #041014; font-weight: 600; }
+.btn-cyan:hover { background: var(--cyan-dim); }
+.btn-ghost { background: transparent; color: var(--tx-1); border: 1px solid var(--bd-default); }
+.btn-ghost:hover { background: rgba(255,255,255,.05); }
+.btn-lg { padding: .75rem 1.5rem; font-size: 1rem; }
+.btn-sm { padding: .375rem .875rem; min-height: 32px; font-size: .8rem; }
+.btn-block { width: 100%; }
+
+.input {
+  width: 100%; border-radius: .5rem; padding: .5rem .75rem; font-size: .875rem;
+  background: var(--cyber-elevated); border: 1px solid var(--bd-default); color: var(--tx-1);
+  font-family: var(--font-body);
+}
+.input::placeholder { color: var(--tx-3); }
+.input:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(6,182,212,.15); }
+.label { display: block; margin-bottom: .375rem; font-size: .75rem; font-weight: 500; color: var(--tx-2); }
+.field { margin-bottom: 1rem; }
+.hint { margin-top: .25rem; font-size: .75rem; color: var(--tx-3); }
+select.input { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--tx-3) 50%), linear-gradient(135deg, var(--tx-3) 50%, transparent 50%); background-position: calc(100% - 16px) 55%, calc(100% - 11px) 55%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 2rem; }
+
+.badge {
+  display: inline-flex; align-items: center; gap: .375rem; border-radius: 9999px;
+  padding: .125rem .625rem; font-size: .75rem; font-weight: 500;
+  font-family: var(--font-mono); border: 1px solid transparent; white-space: nowrap;
+}
+.badge-critical { background: rgba(239,68,68,.14); color: var(--sev-critical); border-color: rgba(239,68,68,.3); }
+.badge-high     { background: rgba(249,115,22,.14); color: var(--sev-high); border-color: rgba(249,115,22,.3); }
+.badge-medium   { background: rgba(234,179,8,.14); color: var(--sev-medium); border-color: rgba(234,179,8,.3); }
+.badge-low      { background: rgba(59,130,246,.14); color: var(--sev-low); border-color: rgba(59,130,246,.3); }
+.badge-info     { background: rgba(100,116,139,.14); color: var(--sev-info); border-color: rgba(100,116,139,.3); }
+.badge-up       { background: rgba(0,230,138,.12); color: var(--up); }
+.badge-down     { background: rgba(255,68,102,.12); color: var(--down); }
+.badge-warn     { background: rgba(255,170,0,.12); color: var(--warn); }
+.badge-neutral  { background: rgba(255,255,255,.05); color: var(--tx-2); }
+.badge-xs { font-size: 10px; padding: 0 .5rem; }
+
+.data-table { width: 100%; font-size: .875rem; border-collapse: collapse; }
+.data-table th {
+  padding: .5rem 1rem; text-align: left; font-size: .75rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .05em; color: var(--tx-3);
+  border-bottom: 1px solid var(--bd-default); white-space: nowrap;
+}
+.data-table td { padding: .75rem 1rem; border-bottom: 1px solid var(--bd-subtle); color: var(--tx-1); }
+.data-table tr:hover td { background: rgba(255,255,255,.02); }
+.table-scroll { overflow-x: auto; }
+
+.page-header { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem; }
+.page-header .kicker { margin-bottom: .25rem; }
+.page-header h1 { margin: 0; font-size: 1.5rem; font-weight: 700; color: var(--tx-1); }
+.page-header .sub { margin: .25rem 0 0; font-size: .875rem; color: var(--tx-2); }
+
+.stat .stat-label { font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; color: var(--tx-3); }
+.stat .stat-value { margin-top: .5rem; font-size: 1.875rem; font-weight: 700; font-family: var(--font-display); }
+.stat .stat-hint { margin-top: .25rem; font-size: .75rem; color: var(--tx-3); }
+
+.empty { text-align: center; }
+.empty-inner { max-width: 28rem; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: .75rem; padding: 2rem 0; }
+.empty-icon { display: grid; place-items: center; height: 3rem; width: 3rem; border-radius: 9999px; border: 1px solid var(--bd-default); color: var(--cyan); }
+.empty h3 { margin: 0; font-size: 1.125rem; font-weight: 600; color: var(--tx-1); }
+.empty p { margin: 0; font-size: .875rem; color: var(--tx-2); }
+
+.banner-error { border-radius: .5rem; border: 1px solid rgba(239,68,68,.3); background: rgba(239,68,68,.1); padding: .5rem .75rem; font-size: .875rem; color: var(--sev-critical); margin-bottom: 1rem; }
+.banner-warn { border-radius: .5rem; border: 1px solid rgba(255,170,0,.4); background: rgba(255,170,0,.1); padding: .75rem; margin-bottom: 1rem; }
+
+.sev-bar { height: .5rem; flex: 1; overflow: hidden; border-radius: 9999px; background: rgba(255,255,255,.05); }
+.sev-bar > div { height: 100%; }
+
+/* ── Layout grids ── */
+.grid-2, .grid-3, .grid-4 { display: grid; gap: 1.25rem; }
+.grid-2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+.grid-3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+.grid-4 { grid-template-columns: repeat(4, minmax(0,1fr)); gap: 1rem; }
+@media (max-width: 900px) {
+  .grid-3, .grid-4 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (max-width: 640px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+}
+
+/* ── Landing ── */
+.land-nav { position: sticky; top: 0; z-index: 20; border-radius: 0; border-left: 0; border-right: 0; border-top: 0; }
+.land-nav-inner { max-width: 72rem; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; }
+.brand { display: flex; align-items: center; gap: .5rem; }
+.brand-mark { display: grid; place-items: center; height: 2rem; width: 2rem; border-radius: .5rem; background: var(--rose); color: #000; font-weight: 700; }
+.brand-name { font-family: var(--font-display); font-size: 1.125rem; font-weight: 700; letter-spacing: .05em; }
+.land-links { display: flex; align-items: center; gap: 2rem; font-size: .875rem; color: var(--tx-2); }
+.land-links a:hover { color: var(--tx-1); }
+@media (max-width: 768px) { .land-links { display: none; } }
+.section { max-width: 72rem; margin: 0 auto; padding: 5rem 1.5rem; }
+.section-head { max-width: 42rem; margin: 0 auto 3rem; text-align: center; }
+.section-head h2 { margin: .5rem 0 0; font-size: 1.875rem; font-weight: 700; }
+.section-head p { margin-top: .75rem; color: var(--tx-2); }
+.hero { text-align: center; padding-top: 6rem; padding-bottom: 6rem; }
+.hero h1 { max-width: 48rem; margin: 0 auto; font-size: clamp(2.5rem, 6vw, 3.75rem); font-weight: 800; line-height: 1.1; }
+.hero p { max-width: 42rem; margin: 1.5rem auto 0; font-size: 1.125rem; color: var(--tx-2); }
+.hero-ctas { margin-top: 2rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .75rem; }
+.hero-stats { max-width: 42rem; margin: 3.5rem auto 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+.hero-stats .glass { padding: 1rem; }
+.hero-stats .v { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; color: var(--cyan); }
+.hero-stats .l { margin-top: .25rem; font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; color: var(--tx-3); }
+.feature { padding: 1.5rem; transition: box-shadow .2s ease; }
+.feature:hover.g-rose { box-shadow: 0 0 24px rgba(244,63,94,.25); }
+.feature:hover.g-cyan { box-shadow: 0 0 24px rgba(6,182,212,.22); }
+.feature-icon { display: inline-grid; place-items: center; height: 2.25rem; width: 2.25rem; border-radius: .5rem; margin-bottom: .75rem; }
+.feature-icon.rose { background: rgba(244,63,94,.15); color: var(--rose); }
+.feature-icon.cyan { background: rgba(6,182,212,.15); color: var(--cyan); }
+.feature h3 { margin: 0; font-size: 1.125rem; font-weight: 600; }
+.feature p, .step p { margin: .5rem 0 0; font-size: .875rem; color: var(--tx-2); }
+.step { padding: 1.5rem; }
+.step .n { font-family: var(--font-display); font-size: 1.875rem; font-weight: 700; color: var(--rose); }
+.step h3 { margin: .75rem 0 0; font-size: 1rem; font-weight: 600; color: var(--tx-1); }
+.plan { position: relative; padding: 1.5rem; }
+.plan.hot { border-color: rgba(244,63,94,.4); box-shadow: 0 0 24px rgba(244,63,94,.25); }
+.plan-pop { position: absolute; top: -.75rem; left: 1.5rem; border-radius: 9999px; background: var(--rose); padding: .125rem .75rem; font-size: .75rem; font-weight: 600; color: #000; }
+.plan-name { font-family: var(--font-display); font-size: .875rem; text-transform: uppercase; letter-spacing: .05em; color: var(--cyan); }
+.plan-price { margin-top: .75rem; display: flex; align-items: flex-end; gap: .25rem; }
+.plan-price .p { font-family: var(--font-display); font-size: 2.25rem; font-weight: 700; }
+.plan-price .per { margin-bottom: .25rem; font-size: .875rem; color: var(--tx-3); }
+.plan ul { margin: 1.25rem 0 0; padding: 0; list-style: none; display: grid; gap: .5rem; font-size: .875rem; color: var(--tx-2); }
+.plan li { display: flex; align-items: center; gap: .5rem; }
+.plan .btn { margin-top: 1.5rem; width: 100%; }
+.land-footer { border-top: 1px solid var(--bd-default); }
+.land-footer-inner { max-width: 72rem; margin: 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 1rem; padding: 2.5rem 1.5rem; font-size: .875rem; color: var(--tx-3); }
+@media (min-width: 768px) { .land-footer-inner { flex-direction: row; } }
+.brand-mark.sm { height: 1.5rem; width: 1.5rem; border-radius: .25rem; font-size: .75rem; }
+
+/* ── Auth ── */
+.auth-wrap { display: grid; min-height: 100vh; place-items: center; padding: 1rem; }
+.auth-box { width: 100%; max-width: 28rem; }
+.auth-brand { display: flex; align-items: center; justify-content: center; gap: .5rem; margin-bottom: 1.5rem; }
+.auth-brand .brand-mark { height: 2.25rem; width: 2.25rem; }
+.auth-card { padding: 2rem; }
+.auth-card h1 { margin: 0 0 1.5rem; font-size: 1.5rem; font-weight: 700; color: var(--tx-1); }
+.auth-foot { margin-top: 1rem; display: flex; justify-content: space-between; font-size: .875rem; color: var(--tx-2); }
+.auth-demo { margin-top: 1.5rem; text-align: center; font-size: .75rem; color: var(--tx-3); }
+.link-cyan { color: var(--cyan); }
+.link-cyan:hover { text-decoration: underline; }
+.success-icon { margin: 0 auto 1rem; display: grid; place-items: center; height: 3rem; width: 3rem; border-radius: 9999px; background: rgba(0,230,138,.15); color: var(--up); }
+
+/* ── App shell ── */
+.app-grid { display: grid; min-height: 100vh; grid-template-columns: 224px 1fr; }
+.sidebar {
+  position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column;
+  background: var(--glass-strong-bg); backdrop-filter: blur(16px);
+  border-right: 1px solid var(--bd-default);
+}
+.sidebar .brand { padding: 1.25rem; }
+.side-nav { flex: 1; padding: 0 .75rem; display: grid; gap: .25rem; align-content: start; }
+.side-link {
+  display: flex; align-items: center; gap: .75rem; border-radius: .5rem;
+  padding: .5rem .75rem; font-size: .875rem; color: var(--tx-2); transition: background-color .15s, color .15s;
+}
+.side-link .ico { width: 1rem; text-align: center; font-size: .75rem; }
+.side-link:hover { background: rgba(255,255,255,.05); color: var(--tx-1); }
+.side-link.active { background: rgba(244,63,94,.1); color: var(--rose); box-shadow: 0 0 24px rgba(244,63,94,.25); }
+.side-org { border-top: 1px solid var(--bd-default); padding: .75rem 1rem; font-size: .75rem; color: var(--tx-3); }
+.side-org .org { color: var(--tx-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.side-org .role { margin-top: .125rem; text-transform: uppercase; letter-spacing: .05em; }
+.app-col { display: flex; min-height: 100vh; flex-direction: column; min-width: 0; }
+.topbar {
+  position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between;
+  background: var(--glass-strong-bg); backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--bd-default); border-radius: 0; padding: .75rem 1.5rem;
+}
+.live { display: flex; align-items: center; gap: .5rem; font-size: .75rem; color: var(--tx-3); }
+.live-dot { display: inline-block; height: .5rem; width: .5rem; border-radius: 9999px; background: var(--up); animation: pulse-dot 2s ease-in-out infinite; }
+@keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+.topbar-user { display: flex; align-items: center; gap: 1rem; }
+.topbar-brand { display: none; font-weight: 700; font-family: var(--font-display); }
+main { flex: 1; padding: 1.5rem; min-width: 0; }
+@media (max-width: 768px) {
+  .app-grid { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .topbar-brand { display: block; }
+  .live { display: none; }
+}
+
+.section-title { margin: 0 0 1rem; font-size: 1.125rem; font-weight: 600; font-family: var(--font-display); }
+.card-head { margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; }
+.card-head h2 { margin: 0; }
+.row-link { display: flex; align-items: center; justify-content: space-between; border-radius: .5rem; padding: .5rem; }
+.row-link:hover { background: rgba(255,255,255,.05); }
+.mini-list { margin: 0; padding: 0; list-style: none; display: grid; gap: .5rem; }
+.dl { margin: 0; display: grid; gap: .75rem; font-size: .875rem; }
+.dl > div { display: flex; justify-content: space-between; gap: 1rem; }
+.dl dt { color: var(--tx-2); } .dl dd { margin: 0; }
+.form-inline { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1rem; }
+.form-inline .field { margin-bottom: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: .75rem; }
+.chips label { display: inline-flex; align-items: center; gap: .375rem; font-family: var(--font-mono); font-size: .75rem; color: var(--tx-2); cursor: pointer; }
+.endpoint { border-radius: .5rem; border: 1px solid var(--bd-subtle); padding: .5rem .75rem; margin-top: .5rem; }
+.pager { margin-top: 1rem; display: flex; align-items: center; justify-content: space-between; font-size: .875rem; color: var(--tx-3); }
+.framework-card { display: block; padding: 1.5rem; transition: box-shadow .2s ease; }
+.framework-card:hover { box-shadow: 0 0 24px rgba(6,182,212,.22); }
+.result-panel { border-radius: .5rem; border: 1px solid var(--bd-default); background: var(--cyber-elevated); padding: 1rem; margin-top: 1rem; }
+.feed-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .625rem 0; border-bottom: 1px solid var(--bd-subtle); }
+.feed-row:last-child { border-bottom: 0; }
+.mt-6 { margin-top: 1.5rem; } .mb-6 { margin-bottom: 1.5rem; } .mb-4 { margin-bottom: 1rem; } .mt-4 { margin-top: 1rem; }
+.text-sm { font-size: .875rem; } .text-xs { font-size: .75rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+}
+</style>
+</head>
+<body>
+<div class="grid-pattern" aria-hidden="true"></div>
+
+<!-- ═══════════════════════════ LANDING ═══════════════════════════ -->
+<div id="view-landing">
+  <nav class="glass-strong land-nav">
+    <div class="land-nav-inner">
+      <a class="brand" href="#/"><span class="brand-mark">C</span><span class="brand-name display">CYBEROPS</span></a>
+      <div class="land-links">
+        <a href="#features">Platform</a>
+        <a href="#how-it-works">How it works</a>
+        <a href="#pricing">Pricing</a>
+      </div>
+      <div style="display:flex;align-items:center;gap:.75rem">
+        <a href="#/login" class="btn btn-ghost btn-sm">Sign in</a>
+        <a href="#/dashboard" class="btn btn-rose btn-sm">Open Dashboard</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="section hero" id="hero">
+    <div class="kicker" style="margin-bottom:1rem">Continuous → Vulnerability → Intelligence</div>
+    <h1 class="display">Know Your <span class="t-rose">Attack Surface</span></h1>
+    <p>Enterprise-grade scanning, AI-assisted penetration testing, and compliance monitoring. Discover and neutralize threats before attackers even know they exist.</p>
+    <div class="hero-ctas">
+      <a href="#/register" class="btn btn-rose btn-lg glow-rose">Know Your Attack Surface</a>
+      <a href="#how-it-works" class="btn btn-ghost btn-lg">See How It Works</a>
+    </div>
+    <div class="hero-stats">
+      <div class="glass"><div class="v display">65,535</div><div class="l">Ports scanned</div></div>
+      <div class="glass"><div class="v display">500+</div><div class="l">CVE checks</div></div>
+      <div class="glass"><div class="v display">24/7</div><div class="l">Monitoring</div></div>
+    </div>
+  </section>
+
+  <section class="section" id="features">
+    <div class="section-head">
+      <div class="kicker">The platform</div>
+      <h2 class="display">Full-Spectrum Security Intelligence</h2>
+      <p>Six disciplines, one correlated view of organizational risk.</p>
+    </div>
+    <div class="grid-3">
+      <div class="glass feature g-cyan"><div class="feature-icon cyan">◆</div><h3 class="display">Continuous Discovery</h3><p>Diff analysis across scans surfaces new ports, services, and exposures the moment they appear on your attack surface.</p></div>
+      <div class="glass feature g-rose"><div class="feature-icon rose">◆</div><h3 class="display">AI-Assisted Pentesting</h3><p>A multi-agent engine reasons through attack paths and validates findings — with human approval gates before any state-changing action.</p></div>
+      <div class="glass feature g-cyan"><div class="feature-icon cyan">◆</div><h3 class="display">Vulnerability Assessment</h3><p>A template-driven signature engine plus safe recon (DNS, HTTP, TLS) correlates findings to assets, CVSS, and CWE.</p></div>
+      <div class="glass feature g-rose"><div class="feature-icon rose">◆</div><h3 class="display">OSINT &amp; Threat Intel</h3><p>Correlate indicators — domain, IP, hash, email — against your assets and findings, enriched with STIX threat feeds.</p></div>
+      <div class="glass feature g-cyan"><div class="feature-icon cyan">◆</div><h3 class="display">Compliance Mapping</h3><p>Automatically map findings to SOC 2 Trust Services Criteria and PCI DSS v4.0. Generate audit-ready evidence.</p></div>
+      <div class="glass feature g-rose"><div class="feature-icon rose">◆</div><h3 class="display">Continuous Retesting</h3><p>Track remediation, schedule retests, and revalidate findings — with a tamper-evident audit trail for every action.</p></div>
+    </div>
+  </section>
+
+  <section class="section" id="how-it-works">
+    <div class="section-head">
+      <div class="kicker">Workflow</div>
+      <h2 class="display">From Target to Intelligence</h2>
+    </div>
+    <div class="grid-4">
+      <div class="glass step"><div class="n display">01</div><h3>Add &amp; Authorize</h3><p>Register a domain, IP range, or app and prove ownership. Deny-by-default scope keeps every scan in-bounds.</p></div>
+      <div class="glass step"><div class="n display">02</div><h3>Scan &amp; Correlate</h3><p>Safe recon and signature checks run in real time, streaming findings correlated to assets and threat intel.</p></div>
+      <div class="glass step"><div class="n display">03</div><h3>Validate &amp; Prioritize</h3><p>AI reasons about exploitability and attack paths; risk-scored findings rise to the top of the queue.</p></div>
+      <div class="glass step"><div class="n display">04</div><h3>Remediate &amp; Prove</h3><p>Guide fixes, retest continuously, and export compliance evidence auditors accept.</p></div>
+    </div>
+  </section>
+
+  <section class="section" id="pricing">
+    <div class="section-head">
+      <div class="kicker">Pricing</div>
+      <h2 class="display">Choose Your Security Tier</h2>
+    </div>
+    <div class="grid-3">
+      <div class="glass plan">
+        <div class="plan-name display">Recon</div>
+        <div class="plan-price"><span class="p display">$0</span><span class="per">/ forever</span></div>
+        <ul><li><span class="t-up">✓</span>Asset discovery</li><li><span class="t-up">✓</span>Safe recon scanning</li><li><span class="t-up">✓</span>1 workspace</li><li><span class="t-up">✓</span>Community feed</li></ul>
+        <a href="#/register" class="btn btn-ghost">Start free</a>
+      </div>
+      <div class="glass plan hot">
+        <span class="plan-pop">Most popular</span>
+        <div class="plan-name display">Operator</div>
+        <div class="plan-price"><span class="p display">$99</span><span class="per">/ per month</span></div>
+        <ul><li><span class="t-up">✓</span>Everything in Recon</li><li><span class="t-up">✓</span>AI-assisted pentesting</li><li><span class="t-up">✓</span>Compliance mapping</li><li><span class="t-up">✓</span>Continuous retesting</li><li><span class="t-up">✓</span>Email &amp; webhook alerts</li></ul>
+        <a href="#/register" class="btn btn-rose">Start trial</a>
+      </div>
+      <div class="glass plan">
+        <div class="plan-name display">Enterprise</div>
+        <div class="plan-price"><span class="p display">Custom</span><span class="per">/ contact us</span></div>
+        <ul><li><span class="t-up">✓</span>Everything in Operator</li><li><span class="t-up">✓</span>SSO &amp; SCIM</li><li><span class="t-up">✓</span>Dedicated egress</li><li><span class="t-up">✓</span>50k+ concurrent scale</li><li><span class="t-up">✓</span>SOC 2 evidence automation</li></ul>
+        <a href="#/register" class="btn btn-ghost">Contact sales</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="land-footer">
+    <div class="land-footer-inner">
+      <div class="brand"><span class="brand-mark sm">C</span><span class="display" style="font-weight:700;color:var(--tx-2)">CYBEROPS</span></div>
+      <p style="margin:0">Authorized security testing only. Built with the AI MDLC™ Kernel.</p>
+    </div>
+  </footer>
+</div>
+
+<!-- ═══════════════════════════ AUTH ═══════════════════════════ -->
+<div id="view-auth" class="auth-wrap" hidden>
+  <div class="auth-box">
+    <a class="auth-brand" href="#/"><span class="brand-mark">C</span><span class="brand-name display" style="font-size:1.25rem">CYBEROPS</span></a>
+    <div class="glass-strong auth-card">
+
+      <div id="page-login" data-page>
+        <div class="kicker" style="margin-bottom:.5rem">Secure access</div>
+        <h1 class="display">Sign in to CyberOps</h1>
+        <form onsubmit="event.preventDefault(); go('/dashboard');">
+          <div class="field"><label class="label" for="li-email">Email</label><input id="li-email" class="input" type="email" autocomplete="email" value="admin@cyberops.local" required /></div>
+          <div class="field"><label class="label" for="li-pass">Password</label><input id="li-pass" class="input" type="password" autocomplete="current-password" value="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" required /></div>
+          <button type="submit" class="btn btn-rose btn-block">Sign in</button>
+        </form>
+        <div class="auth-foot"><a href="#/reset">Forgot password?</a><a class="link-cyan" href="#/register">Create account</a></div>
+      </div>
+
+      <div id="page-register" data-page hidden>
+        <div id="reg-form-state">
+          <div class="kicker" style="margin-bottom:.5rem">Get started</div>
+          <h1 class="display">Create your workspace</h1>
+          <form onsubmit="event.preventDefault(); document.getElementById('reg-form-state').hidden = true; document.getElementById('reg-done-state').hidden = false;">
+            <div class="field"><label class="label" for="rg-name">Your name</label><input id="rg-name" class="input" type="text" required /></div>
+            <div class="field"><label class="label" for="rg-org">Organization</label><input id="rg-org" class="input" type="text" required /></div>
+            <div class="field"><label class="label" for="rg-email">Work email</label><input id="rg-email" class="input" type="email" required /></div>
+            <div class="field"><label class="label" for="rg-pass">Password</label><input id="rg-pass" class="input" type="password" autocomplete="new-password" required /><p class="hint">At least 8 characters. Breached passwords are rejected.</p></div>
+            <button type="submit" class="btn btn-rose btn-block">Create account</button>
+          </form>
+          <p class="auth-foot" style="justify-content:center">Already have an account?&nbsp;<a class="link-cyan" href="#/login">Sign in</a></p>
+        </div>
+        <div id="reg-done-state" hidden style="text-align:center">
+          <div class="success-icon">✓</div>
+          <h1 class="display" style="margin-bottom:.5rem">Account ready</h1>
+          <p class="muted text-sm" style="margin:0 0 1.5rem">If that email was available, your organization was created. Sign in to continue.</p>
+          <a href="#/login" class="btn btn-rose btn-block">Go to sign in</a>
+        </div>
+      </div>
+
+      <div id="page-reset" data-page hidden>
+        <div id="reset-form-state">
+          <div class="kicker" style="margin-bottom:.5rem">Recovery</div>
+          <h1 class="display">Reset your password</h1>
+          <form onsubmit="event.preventDefault(); document.getElementById('reset-sent-email').textContent = document.getElementById('rs-email').value; document.getElementById('reset-form-state').hidden = true; document.getElementById('reset-sent-state').hidden = false;">
+            <div class="field"><label class="label" for="rs-email">Email</label><input id="rs-email" class="input" type="email" required /></div>
+            <button type="submit" class="btn btn-rose btn-block">Send reset link</button>
+          </form>
+          <p class="mt-4 text-sm" style="text-align:center"><a class="link-cyan" href="#/login">Back to sign in</a></p>
+        </div>
+        <div id="reset-sent-state" hidden>
+          <h1 class="display" style="font-size:1.25rem;margin-bottom:.5rem">Check your email</h1>
+          <p class="muted text-sm" style="margin:0 0 1rem">If an account exists for <span id="reset-sent-email" class="mono"></span>, we sent a reset link.</p>
+          <p class="mt-4 text-sm" style="text-align:center"><a class="link-cyan" href="#/login">Back to sign in</a></p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ APP SHELL ═══════════════════════════ -->
+<div id="view-app" class="app-grid" hidden>
+  <aside class="sidebar">
+    <a class="brand" href="#/"><span class="brand-mark">C</span><span class="brand-name display">CYBEROPS</span></a>
+    <nav class="side-nav" aria-label="Primary">
+      <a class="side-link" href="#/dashboard" data-nav="/dashboard"><span class="ico" aria-hidden="true">▤</span>Dashboard</a>
+      <a class="side-link" href="#/assets" data-nav="/assets"><span class="ico" aria-hidden="true">◎</span>Assets</a>
+      <a class="side-link" href="#/scans" data-nav="/scans"><span class="ico" aria-hidden="true">⊚</span>Scans</a>
+      <a class="side-link" href="#/findings" data-nav="/findings"><span class="ico" aria-hidden="true">⚑</span>Findings</a>
+      <a class="side-link" href="#/pentests" data-nav="/pentests"><span class="ico" aria-hidden="true">⚔</span>AI Pentest</a>
+      <a class="side-link" href="#/osint" data-nav="/osint"><span class="ico" aria-hidden="true">◈</span>OSINT</a>
+      <a class="side-link" href="#/compliance" data-nav="/compliance"><span class="ico" aria-hidden="true">✓</span>Compliance</a>
+      <a class="side-link" href="#/reports" data-nav="/reports"><span class="ico" aria-hidden="true">▦</span>Reports</a>
+      <a class="side-link" href="#/audit" data-nav="/audit"><span class="ico" aria-hidden="true">≡</span>Audit Log</a>
+      <a class="side-link" href="#/settings" data-nav="/settings"><span class="ico" aria-hidden="true">⚙</span>Settings</a>
+    </nav>
+    <div class="side-org">
+      <div class="org">CyberOps Demo Org</div>
+      <div class="role">owner</div>
+    </div>
+  </aside>
+
+  <div class="app-col">
+    <header class="topbar">
+      <div class="topbar-brand display">CYBEROPS</div>
+      <div class="live"><span class="live-dot" aria-hidden="true"></span>Live monitoring active</div>
+      <div class="topbar-user">
+        <span class="text-sm muted">Demo Admin</span>
+        <a href="#/login" class="btn btn-ghost btn-sm">Sign out</a>
+      </div>
+    </header>
+    <main>
+
+      <!-- ── Dashboard ── -->
+      <div id="page-dashboard" data-page>
+        <div class="page-header">
+          <div><div class="kicker">Operations</div><h1 class="display">Security Dashboard</h1><p class="sub">Unified view of your authorized attack surface.</p></div>
+        </div>
+        <div class="grid-4">
+          <div class="card stat"><div class="stat-label">Risk Score</div><div class="stat-value t-rose">62</div><div class="stat-hint">0–100 weighted exposure</div></div>
+          <div class="card stat"><div class="stat-label">Open Findings</div><div class="stat-value t-cyan">27</div></div>
+          <div class="card stat"><div class="stat-label">Assets</div><div class="stat-value">5</div></div>
+          <div class="card stat"><div class="stat-label">Compliance</div><div class="stat-value t-warn">B</div><div class="stat-hint">Best framework grade</div></div>
+        </div>
+        <div class="grid-2 mt-6">
+          <div class="card">
+            <h2 class="section-title display">Findings by Severity</h2>
+            <div style="display:grid;gap:.75rem">
+              <div style="display:flex;align-items:center;gap:.75rem"><div style="width:5.5rem"><span class="badge badge-critical"><span aria-hidden="true">●</span>Critical</span></div><div class="sev-bar"><div style="width:7%;background:var(--sev-critical)"></div></div><div class="mono text-sm muted" style="width:2rem;text-align:right">2</div></div>
+              <div style="display:flex;align-items:center;gap:.75rem"><div style="width:5.5rem"><span class="badge badge-high"><span aria-hidden="true">●</span>High</span></div><div class="sev-bar"><div style="width:19%;background:var(--sev-high)"></div></div><div class="mono text-sm muted" style="width:2rem;text-align:right">5</div></div>
+              <div style="display:flex;align-items:center;gap:.75rem"><div style="width:5.5rem"><span class="badge badge-medium"><span aria-hidden="true">●</span>Medium</span></div><div class="sev-bar"><div style="width:33%;background:var(--sev-medium)"></div></div><div class="mono text-sm muted" style="width:2rem;text-align:right">9</div></div>
+              <div style="display:flex;align-items:center;gap:.75rem"><div style="width:5.5rem"><span class="badge badge-low"><span aria-hidden="true">●</span>Low</span></div><div class="sev-bar"><div style="width:30%;background:var(--sev-low)"></div></div><div class="mono text-sm muted" style="width:2rem;text-align:right">8</div></div>
+              <div style="display:flex;align-items:center;gap:.75rem"><div style="width:5.5rem"><span class="badge badge-info"><span aria-hidden="true">●</span>Info</span></div><div class="sev-bar"><div style="width:11%;background:var(--sev-info)"></div></div><div class="mono text-sm muted" style="width:2rem;text-align:right">3</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h2 class="section-title display" style="margin:0">Recent Findings</h2><a class="text-sm link-cyan" href="#/findings">View all</a></div>
+            <ul class="mini-list">
+              <li><a class="row-link" href="#/findings"><span class="text-sm" style="padding-right:.75rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">SQL injection in legacy search endpoint</span><span class="badge badge-critical"><span aria-hidden="true">●</span>Critical</span></a></li>
+              <li><a class="row-link" href="#/findings"><span class="text-sm" style="padding-right:.75rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Subdomain takeover candidate: staging.cyberops.local</span><span class="badge badge-high"><span aria-hidden="true">●</span>High</span></a></li>
+              <li><a class="row-link" href="#/findings"><span class="text-sm" style="padding-right:.75rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">TLS 1.0 enabled on mail.cyberops.local</span><span class="badge badge-high"><span aria-hidden="true">●</span>High</span></a></li>
+              <li><a class="row-link" href="#/findings"><span class="text-sm" style="padding-right:.75rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Missing Content-Security-Policy header</span><span class="badge badge-medium"><span aria-hidden="true">●</span>Medium</span></a></li>
+              <li><a class="row-link" href="#/findings"><span class="text-sm" style="padding-right:.75rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Server version disclosure in HTTP headers</span><span class="badge badge-low"><span aria-hidden="true">●</span>Low</span></a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="card mt-6">
+          <div class="card-head"><h2 class="section-title display" style="margin:0">Recent Scans</h2><a class="text-sm link-cyan" href="#/scans">View all</a></div>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead><tr><th>Target</th><th>Profile</th><th>Status</th><th>When</th></tr></thead>
+              <tbody>
+                <tr><td class="mono">203.0.113.0/24</td><td>recon</td><td>running</td><td class="dim">8/30/2026, 10:42 AM</td></tr>
+                <tr><td class="mono">cyberops.local</td><td>full</td><td>succeeded</td><td class="dim">8/29/2026, 9:15 PM</td></tr>
+                <tr><td class="mono">app.cyberops.local</td><td>vuln</td><td>succeeded</td><td class="dim">8/28/2026, 4:03 PM</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Assets ── -->
+      <div id="page-assets" data-page hidden>
+        <div class="page-header">
+          <div><div class="kicker">Attack surface</div><h1 class="display">Assets</h1><p class="sub">Domains, IPs, apps, and repositories under authorized assessment.</p></div>
+          <div><button class="btn btn-rose" id="asset-toggle" onclick="toggleAssetForm()">New asset</button></div>
+        </div>
+        <div class="card mb-6" id="asset-form" hidden>
+          <h2 class="section-title display">Add an asset</h2>
+          <form onsubmit="event.preventDefault(); addAsset();" class="grid-3" style="gap:1rem">
+            <div class="field"><label class="label" for="as-kind">Type</label>
+              <select id="as-kind" class="input"><option>domain</option><option>ip</option><option>cidr</option><option>url</option><option>repo</option><option>cloud</option></select></div>
+            <div class="field"><label class="label" for="as-value">Target value</label><input id="as-value" class="input" placeholder="example.com" required /></div>
+            <div class="field"><label class="label" for="as-crit">Criticality</label>
+              <select id="as-crit" class="input"><option>low</option><option selected>medium</option><option>high</option><option>critical</option></select></div>
+            <div style="grid-column:1/-1"><button type="submit" class="btn btn-rose">Add asset</button></div>
+          </form>
+        </div>
+        <div class="card">
+          <div class="table-scroll">
+            <table class="data-table" id="asset-table">
+              <thead><tr><th>Target</th><th>Type</th><th>Criticality</th><th>Added</th><th></th></tr></thead>
+              <tbody>
+                <tr><td class="mono"><span class="link-cyan">cyberops.local</span></td><td>domain</td><td><span class="badge badge-critical">critical</span></td><td class="dim">8/17/2026</td><td style="text-align:right"><button class="text-xs dim" style="background:none;border:0;cursor:pointer" onclick="this.closest('tr').remove()">Delete</button></td></tr>
+                <tr><td class="mono"><span class="link-cyan">app.cyberops.local</span></td><td>url</td><td><span class="badge badge-high">high</span></td><td class="dim">8/17/2026</td><td style="text-align:right"><button class="text-xs dim" style="background:none;border:0;cursor:pointer" onclick="this.closest('tr').remove()">Delete</button></td></tr>
+                <tr><td class="mono"><span class="link-cyan">198.51.100.24</span></td><td>ip</td><td><span class="badge badge-high">high</span></td><td class="dim">8/18/2026</td><td style="text-align:right"><button class="text-xs dim" style="background:none;border:0;cursor:pointer" onclick="this.closest('tr').remove()">Delete</button></td></tr>
+                <tr><td class="mono"><span class="link-cyan">203.0.113.0/24</span></td><td>cidr</td><td><span class="badge badge-medium">medium</span></td><td class="dim">8/18/2026</td><td style="text-align:right"><button class="text-xs dim" style="background:none;border:0;cursor:pointer" onclick="this.closest('tr').remove()">Delete</button></td></tr>
+                <tr><td class="mono"><span class="link-cyan">github.com/cyberops/platform</span></td><td>repo</td><td><span class="badge badge-medium">medium</span></td><td class="dim">8/21/2026</td><td style="text-align:right"><button class="text-xs dim" style="background:none;border:0;cursor:pointer" onclick="this.closest('tr').remove()">Delete</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Scans ── -->
+      <div id="page-scans" data-page hidden>
+        <div class="page-header">
+          <div><div class="kicker">Assessment</div><h1 class="display">Scans</h1><p class="sub">Discovery and vulnerability assessment runs across your assets.</p></div>
+          <div><a class="btn btn-rose" href="#/scans/new">New scan</a></div>
+        </div>
+        <div class="card flush">
+          <table class="data-table">
+            <thead><tr><th>Target</th><th>Profile</th><th>Status</th><th>Findings</th><th>Started</th></tr></thead>
+            <tbody>
+              <tr><td class="mono link-cyan">203.0.113.0/24</td><td>recon</td><td><span class="badge badge-info">running</span></td><td class="mono">3</td><td class="dim">8/30/2026, 10:42 AM</td></tr>
+              <tr><td class="mono link-cyan">cyberops.local</td><td>vuln</td><td><span class="badge badge-neutral">queued</span></td><td class="mono">—</td><td class="dim">8/30/2026, 10:40 AM</td></tr>
+              <tr><td class="mono link-cyan">cyberops.local</td><td>full</td><td><span class="badge badge-up">succeeded</span></td><td class="mono">34</td><td class="dim">8/29/2026, 9:15 PM</td></tr>
+              <tr><td class="mono link-cyan">app.cyberops.local</td><td>vuln</td><td><span class="badge badge-up">succeeded</span></td><td class="mono">12</td><td class="dim">8/28/2026, 4:03 PM</td></tr>
+              <tr><td class="mono link-cyan">198.51.100.24</td><td>recon</td><td><span class="badge badge-down">failed</span></td><td class="mono">0</td><td class="dim">8/27/2026, 11:20 AM</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Scans / New ── -->
+      <div id="page-scans-new" data-page hidden>
+        <div style="max-width:42rem">
+          <div class="page-header">
+            <div><div class="kicker">Assessment</div><h1 class="display">Launch a scan</h1><p class="sub">Select a verified asset and a scan profile.</p></div>
+          </div>
+          <div class="card">
+            <form onsubmit="event.preventDefault(); go('/scans');">
+              <div class="field"><label class="label" for="sc-asset">Asset</label>
+                <select id="sc-asset" class="input">
+                  <option>cyberops.local (domain)</option>
+                  <option>app.cyberops.local (url)</option>
+                  <option>198.51.100.24 (ip)</option>
+                  <option>203.0.113.0/24 (cidr)</option>
+                  <option>github.com/cyberops/platform (repo)</option>
+                </select></div>
+              <div class="field"><label class="label" for="sc-profile">Profile</label>
+                <select id="sc-profile" class="input"><option>recon</option><option>vuln</option><option>full</option></select>
+                <p class="hint">recon = passive discovery · vuln = signature checks · full = both</p></div>
+              <button type="submit" class="btn btn-rose">Start scan</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Findings ── -->
+      <div id="page-findings" data-page hidden>
+        <div class="page-header">
+          <div><div class="kicker">Prioritized risk</div><h1 class="display">Findings</h1><p class="sub">Every exposure correlated to an asset, severity, and source.</p></div>
+        </div>
+        <div class="card mb-4">
+          <div class="form-inline">
+            <div class="field"><label class="label" for="f-sev">Severity</label>
+              <select id="f-sev" class="input" onchange="filterFindings()" style="min-width:160px">
+                <option value="">All severities</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option><option value="info">Info</option>
+              </select></div>
+            <div class="field"><label class="label" for="f-status">Status</label>
+              <select id="f-status" class="input" onchange="filterFindings()" style="min-width:160px">
+                <option value="">All statuses</option><option value="open">open</option><option value="triaged">triaged</option><option value="remediating">remediating</option><option value="resolved">resolved</option><option value="accepted">accepted</option><option value="false_positive">false positive</option>
+              </select></div>
+            <button class="btn btn-ghost" id="f-clear" hidden onclick="document.getElementById('f-sev').value=''; document.getElementById('f-status').value=''; filterFindings();">Clear</button>
+          </div>
+        </div>
+        <div class="card flush" id="findings-table-card">
+          <table class="data-table">
+            <thead><tr><th>Severity</th><th>Finding</th><th>CVSS</th><th>Status</th><th>Source</th><th>Last seen</th></tr></thead>
+            <tbody id="findings-body">
+              <tr data-sev="critical" data-status="open"><td><span class="badge badge-critical"><span aria-hidden="true">●</span>Critical</span></td><td><span class="link-cyan">SQL injection in legacy search endpoint</span> <span class="mono text-xs dim">CWE-89</span></td><td class="mono muted">9.8</td><td><span class="badge badge-warn">open</span></td><td class="mono text-xs dim">scanner:vuln</td><td class="dim">8/30/2026</td></tr>
+              <tr data-sev="critical" data-status="triaged"><td><span class="badge badge-critical"><span aria-hidden="true">●</span>Critical</span></td><td><span class="link-cyan">Exposed admin panel without authentication</span> <span class="mono text-xs dim">CWE-306</span></td><td class="mono muted">9.1</td><td><span class="badge badge-info">triaged</span></td><td class="mono text-xs dim">ai-pentest</td><td class="dim">8/29/2026</td></tr>
+              <tr data-sev="high" data-status="open"><td><span class="badge badge-high"><span aria-hidden="true">●</span>High</span></td><td><span class="link-cyan">Subdomain takeover candidate: staging.cyberops.local</span> <span class="mono text-xs dim">CWE-284</span></td><td class="mono muted">8.2</td><td><span class="badge badge-warn">open</span></td><td class="mono text-xs dim">ai-pentest</td><td class="dim">8/30/2026</td></tr>
+              <tr data-sev="high" data-status="remediating"><td><span class="badge badge-high"><span aria-hidden="true">●</span>High</span></td><td><span class="link-cyan">TLS 1.0 enabled on mail.cyberops.local</span> <span class="mono text-xs dim">CWE-326</span></td><td class="mono muted">7.4</td><td><span class="badge badge-info">remediating</span></td><td class="mono text-xs dim">scanner:recon</td><td class="dim">8/29/2026</td></tr>
+              <tr data-sev="medium" data-status="open"><td><span class="badge badge-medium"><span aria-hidden="true">●</span>Medium</span></td><td><span class="link-cyan">Missing Content-Security-Policy header</span> <span class="mono text-xs dim">CWE-693</span></td><td class="mono muted">6.1</td><td><span class="badge badge-warn">open</span></td><td class="mono text-xs dim">scanner:vuln</td><td class="dim">8/28/2026</td></tr>
+              <tr data-sev="medium" data-status="triaged"><td><span class="badge badge-medium"><span aria-hidden="true">●</span>Medium</span></td><td><span class="link-cyan">Directory listing enabled on /backups</span> <span class="mono text-xs dim">CWE-548</span></td><td class="mono muted">5.3</td><td><span class="badge badge-info">triaged</span></td><td class="mono text-xs dim">scanner:vuln</td><td class="dim">8/28/2026</td></tr>
+              <tr data-sev="low" data-status="resolved"><td><span class="badge badge-low"><span aria-hidden="true">●</span>Low</span></td><td><span class="link-cyan">Server version disclosure in HTTP headers</span> <span class="mono text-xs dim">CWE-200</span></td><td class="mono muted">3.7</td><td><span class="badge badge-up">resolved</span></td><td class="mono text-xs dim">scanner:recon</td><td class="dim">8/27/2026</td></tr>
+              <tr data-sev="info" data-status="open"><td><span class="badge badge-info"><span aria-hidden="true">●</span>Info</span></td><td><span class="link-cyan">SPF present but DMARC policy is none</span></td><td class="mono muted">—</td><td><span class="badge badge-warn">open</span></td><td class="mono text-xs dim">scanner:recon</td><td class="dim">8/29/2026</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card empty" id="findings-empty" hidden>
+          <div class="empty-inner" style="padding:2.5rem 0">
+            <h3 class="display">No findings match these filters</h3>
+            <p>Try widening the filters above.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── AI Pentest ── -->
+      <div id="page-pentests" data-page hidden>
+        <div class="page-header">
+          <div><div class="kicker">Autonomous testing</div><h1 class="display">AI Pentest</h1><p class="sub">A multi-agent engine reasons through attack paths — with approval gates before any state-changing step.</p></div>
+          <div><a class="btn btn-rose" href="#/pentests/new">New pentest</a></div>
+        </div>
+        <div class="card flush">
+          <table class="data-table">
+            <thead><tr><th>Run</th><th>Status</th><th>Phase</th><th>Planner</th><th>Started</th></tr></thead>
+            <tbody>
+              <tr><td class="mono link-cyan">PT-0042 · cyberops.local</td><td><span class="badge badge-warn">awaiting approval</span></td><td>validation</td><td class="mono text-xs">planner-v2</td><td class="dim">8/30/2026, 9:58 AM</td></tr>
+              <tr><td class="mono link-cyan">PT-0041 · app.cyberops.local</td><td><span class="badge badge-info">running</span></td><td>analysis</td><td class="mono text-xs">planner-v2</td><td class="dim">8/30/2026, 8:12 AM</td></tr>
+              <tr><td class="mono link-cyan">PT-0040 · cyberops.local</td><td><span class="badge badge-up">succeeded</span></td><td>report</td><td class="mono text-xs">planner-v2</td><td class="dim">8/28/2026, 2:41 PM</td></tr>
+              <tr><td class="mono link-cyan">PT-0039 · 198.51.100.24</td><td><span class="badge badge-down">failed</span></td><td>recon</td><td class="mono text-xs">planner-v1</td><td class="dim">8/26/2026, 5:07 PM</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── AI Pentest / New ── -->
+      <div id="page-pentests-new" data-page hidden>
+        <div style="max-width:36rem;margin:0 auto">
+          <div class="page-header">
+            <div><div class="kicker">Autonomous testing</div><h1 class="display">New AI pentest</h1></div>
+          </div>
+          <div class="card">
+            <p class="text-sm muted" style="margin-top:0">The AI engine runs <span class="t-cyan">recon → analysis → validation → report</span>. High-risk validation steps require your explicit approval before proceeding. No live exploitation is ever performed.</p>
+            <form onsubmit="event.preventDefault(); go('/pentests');">
+              <div class="field"><label class="label" for="pt-asset">Target asset</label>
+                <select id="pt-asset" class="input" required>
+                  <option value="">Select an asset…</option>
+                  <option>cyberops.local (domain)</option>
+                  <option>app.cyberops.local (url)</option>
+                  <option>198.51.100.24 (ip)</option>
+                  <option>203.0.113.0/24 (cidr)</option>
+                </select></div>
+              <button type="submit" class="btn btn-rose">Launch pentest</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── OSINT ── -->
+      <div id="page-osint" data-page hidden>
+        <div class="page-header">
+          <div><div class="kicker">Threat Intelligence</div><h1 class="display">OSINT Investigation</h1><p class="sub">Correlate indicators against your assets, findings, and threat feeds.</p></div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h2 class="section-title display">Investigate Indicator</h2>
+            <form onsubmit="event.preventDefault(); document.getElementById('osint-result').hidden = false;">
+              <div class="field"><label class="label" for="os-type">Indicator type</label>
+                <select id="os-type" class="input"><option>DOMAIN</option><option>IP</option><option>URL</option><option>HASH</option><option>EMAIL</option></select></div>
+              <div class="field"><label class="label" for="os-value">Value</label><input id="os-value" class="input" placeholder="e.g. example.com" required /></div>
+              <button type="submit" class="btn btn-cyan">Investigate</button>
+            </form>
+            <div class="result-panel" id="osint-result" hidden>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem">
+                <span class="mono">evil-cdn.example</span>
+                <span class="badge badge-high">Risk: high</span>
+              </div>
+              <p class="text-sm muted" style="margin:.75rem 0">Domain appears in two threat feeds and resolves to infrastructure previously flagged for phishing campaigns.</p>
+              <div class="text-sm muted">• <span class="t-cyan">finding</span> — referenced in "Suspicious outbound host in CSP report"</div>
+              <div class="text-sm muted">• <span class="t-cyan">feed</span> — listed in URLhaus (malware distribution)</div>
+            </div>
+          </div>
+          <div class="card">
+            <h2 class="section-title display">Threat Feeds</h2>
+            <div class="feed-row"><div><div class="text-sm">AlienVault OTX</div><div class="text-xs dim">STIX · last ingested 8/29/2026</div></div><button class="btn btn-ghost btn-sm">Ingest</button></div>
+            <div class="feed-row"><div><div class="text-sm">Abuse.ch URLhaus</div><div class="text-xs dim">STIX · last ingested 8/28/2026</div></div><button class="btn btn-ghost btn-sm">Ingest</button></div>
+            <div class="feed-row"><div><div class="text-sm">CISA Known Exploited Vulnerabilities</div><div class="text-xs dim">JSON · last ingested never</div></div><button class="btn btn-ghost btn-sm">Ingest</button></div>
+          </div>
+        </div>
+        <div class="card mt-6">
+          <h2 class="section-title display">Recent Investigations</h2>
+          <div class="feed-row"><div><div class="text-sm mono">evil-cdn.example</div><div class="text-xs dim">domain · 8/30/2026</div></div><div style="display:flex;align-items:center;gap:1rem"><span class="badge badge-high">Risk: high</span><span class="text-sm link-cyan">Open investigation →</span></div></div>
+          <div class="feed-row"><div><div class="text-sm mono">185.220.101.4</div><div class="text-xs dim">ip · 8/29/2026</div></div><div style="display:flex;align-items:center;gap:1rem"><span class="badge badge-medium">Risk: medium</span><span class="text-sm link-cyan">Open investigation →</span></div></div>
+          <div class="feed-row"><div><div class="text-sm mono">d41d8cd98f00b204e9800998ecf8427e</div><div class="text-xs dim">hash · 8/27/2026</div></div><div style="display:flex;align-items:center;gap:1rem"><span class="badge badge-low">Risk: low</span><span class="text-sm link-cyan">Open investigation →</span></div></div>
+        </div>
+      </div>
+
+      <!-- ── Compliance ── -->
+      <div id="page-compliance" data-page hidden>
+        <div class="page-header">
+          <div><div class="kicker">Governance</div><h1 class="display">Compliance Posture</h1><p class="sub">Map findings to control frameworks and prove your security posture.</p></div>
+        </div>
+        <div class="grid-3">
+          <a class="glass framework-card" href="#/compliance">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem">
+              <div><div class="kicker">Framework</div><h3 class="display" style="margin:.25rem 0 0;font-size:1.125rem">SOC 2 (Trust Services Criteria)</h3></div>
+              <span class="display t-warn" style="font-size:1.875rem;font-weight:700">B</span>
+            </div>
+            <p class="text-sm muted" style="margin-bottom:0">View control mappings, posture, and generate audit-ready evidence.</p>
+          </a>
+          <a class="glass framework-card" href="#/compliance">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem">
+              <div><div class="kicker">Framework</div><h3 class="display" style="margin:.25rem 0 0;font-size:1.125rem">PCI DSS v4.0</h3></div>
+              <span class="display t-warn" style="font-size:1.875rem;font-weight:700">C</span>
+            </div>
+            <p class="text-sm muted" style="margin-bottom:0">View control mappings, posture, and generate audit-ready evidence.</p>
+          </a>
+          <a class="glass framework-card" href="#/compliance">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem">
+              <div><div class="kicker">Framework</div><h3 class="display" style="margin:.25rem 0 0;font-size:1.125rem">OWASP Top 10:2025</h3></div>
+              <span class="display t-up" style="font-size:1.875rem;font-weight:700">A</span>
+            </div>
+            <p class="text-sm muted" style="margin-bottom:0">View control mappings, posture, and generate audit-ready evidence.</p>
+          </a>
+        </div>
+      </div>
+
+      <!-- ── Reports ── -->
+      <div id="page-reports" data-page hidden>
+        <div class="page-header">
+          <div><div class="kicker">Evidence</div><h1 class="display">Reports</h1><p class="sub">Export findings, compliance posture, and pentest results as PDF, JSON, or CSV.</p></div>
+        </div>
+        <div class="card mb-6">
+          <h2 class="section-title display">New Report</h2>
+          <form class="form-inline" onsubmit="event.preventDefault(); addReport();">
+            <div class="field" style="min-width:160px"><label class="label" for="rp-type">Type</label>
+              <select id="rp-type" class="input"><option>Findings</option><option>Compliance</option><option>Pentest</option></select></div>
+            <div class="field" style="min-width:120px"><label class="label" for="rp-format">Format</label>
+              <select id="rp-format" class="input"><option>PDF</option><option>JSON</option><option>CSV</option></select></div>
+            <button type="submit" class="btn btn-rose">Generate</button>
+          </form>
+        </div>
+        <div class="card">
+          <h2 class="section-title display">Report History</h2>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead><tr><th>Type</th><th>Format</th><th>Status</th><th>Created</th><th></th></tr></thead>
+              <tbody id="reports-body">
+                <tr><td>findings</td><td><span class="badge badge-info">PDF</span></td><td><span class="badge badge-up">ready</span></td><td class="dim">8/29/2026, 9:30 PM</td><td style="text-align:right"><button class="btn btn-cyan btn-sm">Download</button></td></tr>
+                <tr><td>compliance</td><td><span class="badge badge-info">CSV</span></td><td><span class="badge badge-neutral">queued</span></td><td class="dim">8/30/2026, 10:44 AM</td><td></td></tr>
+                <tr><td>pentest</td><td><span class="badge badge-info">PDF</span></td><td><span class="badge badge-down">failed</span></td><td class="dim">8/26/2026, 6:12 PM</td><td></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Audit Log ── -->
+      <div id="page-audit" data-page hidden>
+        <div class="page-header">
+          <div><div class="kicker">Governance</div><h1 class="display">Audit Log</h1><p class="sub">Append-only, hash-chained record of every security action (SOC 2 non-repudiation).</p></div>
+        </div>
+        <div class="card">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead><tr><th>When</th><th>Actor</th><th>Action</th><th>Target</th><th>Outcome</th></tr></thead>
+              <tbody>
+                <tr><td class="dim">8/30/2026, 10:44 AM</td><td><span class="badge badge-info">user</span></td><td class="mono t-cyan">report.generate</td><td class="muted">compliance/csv</td><td><span class="badge badge-up">success</span></td></tr>
+                <tr><td class="dim">8/30/2026, 10:42 AM</td><td><span class="badge badge-info">user</span></td><td class="mono t-cyan">scan.launch</td><td class="muted">203.0.113.0/24</td><td><span class="badge badge-up">success</span></td></tr>
+                <tr><td class="dim">8/30/2026, 9:58 AM</td><td><span class="badge badge-info">system</span></td><td class="mono t-cyan">pentest.phase.transition</td><td class="muted">PT-0042 → validation</td><td><span class="badge badge-up">success</span></td></tr>
+                <tr><td class="dim">8/30/2026, 8:12 AM</td><td><span class="badge badge-info">user</span></td><td class="mono t-cyan">pentest.launch</td><td class="muted">app.cyberops.local</td><td><span class="badge badge-up">success</span></td></tr>
+                <tr><td class="dim">8/30/2026, 8:05 AM</td><td><span class="badge badge-info">user</span></td><td class="mono t-cyan">auth.login</td><td class="muted">admin@cyberops.local</td><td><span class="badge badge-up">success</span></td></tr>
+                <tr><td class="dim">8/29/2026, 11:51 PM</td><td><span class="badge badge-info">user</span></td><td class="mono t-cyan">auth.login</td><td class="muted">admin@cyberops.local</td><td><span class="badge badge-down">failure</span></td></tr>
+                <tr><td class="dim">8/29/2026, 9:15 PM</td><td><span class="badge badge-info">user</span></td><td class="mono t-cyan">finding.status.change</td><td class="muted">TLS 1.0 enabled → remediating</td><td><span class="badge badge-up">success</span></td></tr>
+                <tr><td class="dim">8/29/2026, 9:02 PM</td><td><span class="badge badge-info">user</span></td><td class="mono t-cyan">webhook.endpoint.create</td><td class="muted">https://hooks.example.com/cyberops</td><td><span class="badge badge-up">success</span></td></tr>
+                <tr><td class="dim">8/28/2026, 4:03 PM</td><td><span class="badge badge-info">user</span></td><td class="mono t-cyan">scan.launch</td><td class="muted">app.cyberops.local</td><td><span class="badge badge-up">success</span></td></tr>
+                <tr><td class="dim">8/28/2026, 2:41 PM</td><td><span class="badge badge-info">user</span></td><td class="mono t-cyan">asset.create</td><td class="muted">github.com/cyberops/platform</td><td><span class="badge badge-up">success</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pager">
+            <span>Page 1 · 132 total</span>
+            <span style="display:flex;gap:.5rem"><button class="btn btn-ghost btn-sm" disabled>Prev</button><button class="btn btn-ghost btn-sm">Next</button></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Settings ── -->
+      <div id="page-settings" data-page hidden>
+        <div class="page-header">
+          <div><div class="kicker">Configuration</div><h1 class="display">Settings</h1><p class="sub">Manage your account and integrations.</p></div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h2 class="section-title display">Account</h2>
+            <dl class="dl">
+              <div><dt>Name</dt><dd>Demo Admin</dd></div>
+              <div><dt>Email</dt><dd class="mono">admin@cyberops.local</dd></div>
+              <div><dt>Organization</dt><dd>CyberOps Demo Org</dd></div>
+              <div><dt>Role</dt><dd><span class="badge badge-info">owner</span></dd></div>
+            </dl>
+          </div>
+          <div class="card">
+            <h2 class="section-title display">Webhook Endpoints</h2>
+            <div class="banner-warn" style="font-size:.8rem">
+              <div class="t-warn" style="font-weight:500">Signing secret — copy this now, shown once</div>
+              <code class="mono text-xs">whsec_9f4b2c1e8a7d3f6b5e0c4a2d8f1b7e3c</code>
+            </div>
+            <form onsubmit="event.preventDefault();">
+              <div class="field"><label class="label" for="wh-url">Endpoint URL</label><input id="wh-url" class="input" placeholder="https://example.com/webhooks/cyberops" required /></div>
+              <div class="field"><span class="label">Events</span>
+                <div class="chips">
+                  <label><input type="checkbox" checked /> finding.created</label>
+                  <label><input type="checkbox" /> scan.completed</label>
+                  <label><input type="checkbox" /> pentest.completed</label>
+                  <label><input type="checkbox" /> compliance.changed</label>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-cyan">Add endpoint</button>
+            </form>
+            <div class="endpoint">
+              <div class="mono text-sm">https://hooks.example.com/cyberops</div>
+              <div style="display:flex;gap:.375rem;margin-top:.375rem">
+                <span class="badge badge-neutral badge-xs">finding.created</span>
+                <span class="badge badge-neutral badge-xs">scan.completed</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var ROUTES = {
+    '/':             { view: 'view-landing', page: null },
+    '/login':        { view: 'view-auth', page: 'page-login' },
+    '/register':     { view: 'view-auth', page: 'page-register' },
+    '/reset':        { view: 'view-auth', page: 'page-reset' },
+    '/dashboard':    { view: 'view-app', page: 'page-dashboard' },
+    '/assets':       { view: 'view-app', page: 'page-assets' },
+    '/scans':        { view: 'view-app', page: 'page-scans' },
+    '/scans/new':    { view: 'view-app', page: 'page-scans-new', nav: '/scans' },
+    '/findings':     { view: 'view-app', page: 'page-findings' },
+    '/pentests':     { view: 'view-app', page: 'page-pentests' },
+    '/pentests/new': { view: 'view-app', page: 'page-pentests-new', nav: '/pentests' },
+    '/osint':        { view: 'view-app', page: 'page-osint' },
+    '/compliance':   { view: 'view-app', page: 'page-compliance' },
+    '/reports':      { view: 'view-app', page: 'page-reports' },
+    '/audit':        { view: 'view-app', page: 'page-audit' },
+    '/settings':     { view: 'view-app', page: 'page-settings' }
+  };
+
+  function render() {
+    var path = (location.hash || '#/').slice(1);
+    var route = ROUTES[path] || ROUTES['/'];
+
+    ['view-landing', 'view-auth', 'view-app'].forEach(function (id) {
+      document.getElementById(id).hidden = id !== route.view;
+    });
+    document.querySelectorAll('[data-page]').forEach(function (el) {
+      el.hidden = el.id !== route.page;
+    });
+    var navPath = route.nav || path;
+    document.querySelectorAll('[data-nav]').forEach(function (a) {
+      var active = a.getAttribute('data-nav') === navPath;
+      a.classList.toggle('active', active);
+      if (active) { a.setAttribute('aria-current', 'page'); } else { a.removeAttribute('aria-current'); }
+    });
+    window.scrollTo(0, 0);
+  }
+
+  window.go = function (path) { location.hash = '#' + path; };
+
+  window.toggleAssetForm = function () {
+    var form = document.getElementById('asset-form');
+    form.hidden = !form.hidden;
+    document.getElementById('asset-toggle').textContent = form.hidden ? 'New asset' : 'Cancel';
+  };
+
+  window.addAsset = function () {
+    var kind = document.getElementById('as-kind').value;
+    var value = document.getElementById('as-value').value.trim();
+    var crit = document.getElementById('as-crit').value;
+    if (!value) { return; }
+    var critClass = { critical: 'badge-critical', high: 'badge-high', medium: 'badge-medium', low: 'badge-low' }[crit];
+    var tr = document.createElement('tr');
+    var cells = [
+      { html: '<span class="link-cyan"></span>', cls: 'mono', text: value },
+      { text: kind },
+      { html: '<span class="badge ' + critClass + '"></span>', text: crit },
+      { text: '8/30/2026', cls: 'dim' },
+      { html: '<button class="text-xs dim" style="background:none;border:0;cursor:pointer">Delete</button>', align: true }
+    ];
+    cells.forEach(function (c) {
+      var td = document.createElement('td');
+      if (c.cls) { td.className = c.cls; }
+      if (c.align) { td.style.textAlign = 'right'; }
+      if (c.html) {
+        td.innerHTML = c.html;
+        if (c.text) { td.firstChild.textContent = c.text; }
+      } else {
+        td.textContent = c.text;
+      }
+      tr.appendChild(td);
+    });
+    tr.querySelector('button') && tr.querySelector('button').addEventListener('click', function () { tr.remove(); });
+    document.querySelector('#asset-table tbody').prepend(tr);
+    document.getElementById('as-value').value = '';
+    window.toggleAssetForm();
+  };
+
+  window.filterFindings = function () {
+    var sev = document.getElementById('f-sev').value;
+    var status = document.getElementById('f-status').value;
+    var visible = 0;
+    document.querySelectorAll('#findings-body tr').forEach(function (tr) {
+      var show = (!sev || tr.getAttribute('data-sev') === sev) && (!status || tr.getAttribute('data-status') === status);
+      tr.hidden = !show;
+      if (show) { visible++; }
+    });
+    document.getElementById('f-clear').hidden = !(sev || status);
+    document.getElementById('findings-table-card').hidden = visible === 0;
+    document.getElementById('findings-empty').hidden = visible !== 0;
+  };
+
+  window.addReport = function () {
+    var type = document.getElementById('rp-type').value.toLowerCase();
+    var format = document.getElementById('rp-format').value;
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td></td><td><span class="badge badge-info"></span></td><td><span class="badge badge-neutral">queued</span></td><td class="dim">8/30/2026</td><td></td>';
+    tr.cells[0].textContent = type;
+    tr.cells[1].firstChild.textContent = format;
+    document.getElementById('reports-body').prepend(tr);
+  };
+
+  window.addEventListener('hashchange', render);
+  render();
+})();
+</script>
+<a href="../index.html" aria-label="Back to the MDLC examples gallery" style="position:fixed;top:14px;left:14px;z-index:2147483647;display:inline-flex;align-items:center;gap:7px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#edf0f7;background:rgba(8,13,25,.82);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid #2a3a5c;border-radius:8px;padding:8px 13px;text-decoration:none;box-shadow:0 8px 24px -8px rgba(0,0,0,.7);">&larr; Gallery</a>
+</body>
+</html>

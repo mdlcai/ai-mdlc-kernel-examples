@@ -4,9 +4,9 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>MDLC — Example Builds</title>
-<meta name="description" content="Eleven real applications, each built end-to-end by the MDLC methodology, from a one-page blueprint to a gate-passing build." />
+<meta name="description" content="Twelve real applications, each built end-to-end by the MDLC methodology, from a one-page blueprint to a gate-passing build." />
 <meta property="og:title" content="MDLC — Example Builds" />
-<meta property="og:description" content="Eleven real applications, each built end-to-end by the MDLC methodology. Live previews, architecture, and the full build report for each." />
+<meta property="og:description" content="Twelve real applications, each built end-to-end by the MDLC methodology. Live previews, architecture, and the full build report for each." />
 <meta property="og:type" content="website" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -219,14 +219,14 @@
 
   <header class="hero">
     <div class="eyebrow"><span class="gl">✦</span> Reference Builds <span class="gl">→</span> Built with MDLC</div>
-    <h1>Eleven real apps,<br><em>built by the methodology.</em></h1>
+    <h1>Twelve real apps,<br><em>built by the methodology.</em></h1>
     <p class="sub">Each app below started as a one-page <code>RESEARCH.md</code> blueprint and came out the other side as a working, reviewed application — with the architecture, the spec, the decisions, and the full build report to prove it.</p>
     <div class="actions">
       <a class="btn btn-primary" href="https://mdlc.ai/catches.html">What MDLC catches →</a>
     </div>
     <div class="stats">
-      <span>11 apps, 0 hand-written</span>
-      <span>179 smoke flows passed</span>
+      <span>12 apps, 0 hand-written</span>
+      <span>196 smoke flows passed</span>
       <span>every gate, with receipts</span>
     </div>
   </header>
@@ -241,6 +241,16 @@
         <p>Diagnose and monitor sites, APIs, DNS, and certificates from one place. On-demand tools (DNS, SSL, HTTP, propagation) plus always-on monitors that trace the root cause across DNS, TCP, TLS, and the app. Built from a RESEARCH.md blueprint as four vertical slices over a shared library, and hardened by the security gate.</p>
         <div class="gates"><span class="gate">tsc clean</span><span class="gate">Ownership PASS</span><span class="gate">SSRF hardened</span><span class="gate">Security gate ✓</span></div>
         <div class="links"><a class="live" href="https://synapse.mdlc.ai" target="_blank" rel="noopener">Visit live site ↗</a><a class="lead" href="synapse/index.html">Preview</a><a href="synapse/architecture.html">Architecture</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/synapse/REPORT.md">Build report</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/tree/main/synapse">Files ↗</a></div>
+      </div>
+    </article>
+
+    <article class="card">
+      <a class="shot" href="cyberops/index.html"><img src="cyberops/preview.png" alt="CyberOps" loading="lazy"><span class="open"><span>Open preview &rarr;</span></span></a>
+      <div class="body">
+        <h3>CyberOps <span class="badge">Security</span></h3>
+        <p>A multi-tenant security operations platform: asset discovery with ownership verification, real DNS/HTTP/TLS reconnaissance plus a signature engine, AI-assisted pentest planning behind a human approval gate, OSINT correlation, and SOC 2 / PCI / OWASP posture mapping. NestJS 11, Next.js 15, PostgreSQL 18, Redis and BullMQ. The independent Reviewer Gate failed the build on an authorization check that was written and tested but never called, and held it through four rounds of IDOR fixes.</p>
+        <div class="gates"><span class="gate">29 tests</span><span class="gate">17/17 smoke</span><span class="gate">15/15 invariants</span><span class="gate">Reviewer PASS</span></div>
+        <div class="links"><a class="lead" href="cyberops/index.html">Live preview</a><a href="cyberops/architecture.html">Architecture</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/cyberops/REPORT.md">Build report</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/cyberops/SECURITY-AUDIT.md">Security audit</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/tree/main/cyberops">Files &#8599;</a></div>
       </div>
     </article>
 

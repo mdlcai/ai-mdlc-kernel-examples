@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CyberOps — System Architecture</title>
+<style>
+:root {
+  --cyber-base: #050810;
+  --cyber-elevated: #0a0e1a;
+  --cyber-overlay: #0f1424;
+  --cyber-surface: #141a2e;
+  --rose: #f43f5e;
+  --rose-dim: #e11d48;
+  --cyan: #06b6d4;
+  --cyan-dim: #0891b2;
+  --sev-critical: #ef4444;
+  --sev-high: #f97316;
+  --sev-medium: #eab308;
+  --sev-low: #3b82f6;
+  --sev-info: #64748b;
+  --up: #00E68A;
+  --down: #FF4466;
+  --warn: #FFAA00;
+  --tx-1: #e8ecf4;
+  --tx-2: #8892a8;
+  --tx-3: #556677;
+  --bd-subtle: rgba(255,255,255,.05);
+  --bd-default: rgba(255,255,255,.07);
+  --glass-bg: rgba(10,14,26,.55);
+  --glass-strong-bg: rgba(10,14,26,.80);
+  --font-display: "Bahnschrift", "Rajdhani", "Eurostile", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Inter", "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Cascadia Code", "JetBrains Mono", "Geist Mono", ui-monospace, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; background: var(--cyber-base); color: var(--tx-1);
+  font-family: var(--font-body); -webkit-font-smoothing: antialiased; font-size: 15px; line-height: 1.6;
+}
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -2;
+  background:
+    radial-gradient(60vw 40vh at 15% -10%, rgba(244,63,94,.10), transparent 60%),
+    radial-gradient(50vw 40vh at 100% 0%, rgba(6,182,212,.10), transparent 55%),
+    var(--cyber-base);
+}
+body::after {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(6,182,212,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(6,182,212,.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+::selection { background: rgba(244,63,94,.3); color: #fff; }
+a { color: var(--cyan); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.mono { font-family: var(--font-mono); }
+.display { font-family: var(--font-display); letter-spacing: .02em; }
+.kicker { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .22em; text-transform: uppercase; color: var(--cyan); }
+
+/* Layout */
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 1.5rem; }
+header.top {
+  position: sticky; top: 0; z-index: 20;
+  background: var(--glass-strong-bg); backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--bd-default);
+}
+.top-inner { max-width: 1080px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: .875rem 1.5rem; gap: 1rem; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: .5rem; }
+.brand-mark { display: grid; place-items: center; height: 2rem; width: 2rem; border-radius: .5rem; background: var(--rose); color: #000; font-weight: 700; }
+.brand-name { font-family: var(--font-display); font-size: 1.125rem; font-weight: 700; letter-spacing: .05em; }
+.top-nav { display: flex; gap: 1.25rem; font-size: .8rem; flex-wrap: wrap; }
+.top-nav a { color: var(--tx-2); }
+.top-nav a:hover { color: var(--tx-1); text-decoration: none; }
+@media (max-width: 760px) { .top-nav { display: none; } }
+
+.hero { padding: 4rem 0 2rem; }
+.hero h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 800; margin: .75rem 0 0; line-height: 1.1; }
+.hero p.lede { max-width: 46rem; color: var(--tx-2); font-size: 1.05rem; margin: 1rem 0 0; }
+.meta-row { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.5rem; }
+.chip { display: inline-flex; align-items: center; gap: .375rem; border-radius: 9999px; padding: .2rem .7rem; font-size: .72rem; font-family: var(--font-mono); border: 1px solid var(--bd-default); background: rgba(255,255,255,.03); color: var(--tx-2); }
+.chip b { color: var(--tx-1); font-weight: 600; }
+
+section { padding: 2.25rem 0; border-top: 1px solid var(--bd-subtle); }
+section > .wrap { padding: 0; }
+h2.sec { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; margin: .25rem 0 .25rem; display: flex; align-items: baseline; gap: .6rem; }
+h2.sec .num { color: var(--rose); font-size: 1rem; }
+h3 { font-family: var(--font-display); font-size: 1.15rem; font-weight: 600; margin: 1.75rem 0 .5rem; color: var(--tx-1); }
+p { margin: .6rem 0; }
+p.muted { color: var(--tx-2); }
+.lead-sub { color: var(--tx-2); margin: 0 0 1rem; }
+
+.glass { background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--bd-default); border-radius: .75rem; }
+.card { background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--bd-default); border-radius: .75rem; padding: 1.25rem; }
+
+.grid { display: grid; gap: 1rem; }
+.g2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+.g3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+@media (max-width: 820px) { .g2, .g3 { grid-template-columns: 1fr; } }
+
+/* Callout */
+.callout { border-radius: .75rem; padding: 1rem 1.25rem; margin: 1.25rem 0; border: 1px solid; }
+.callout .hd { font-family: var(--font-display); font-weight: 700; font-size: .95rem; display: flex; align-items: center; gap: .5rem; }
+.callout.safety { border-color: rgba(244,63,94,.4); background: rgba(244,63,94,.08); }
+.callout.safety .hd { color: var(--rose); }
+.callout.note { border-color: rgba(6,182,212,.35); background: rgba(6,182,212,.07); }
+.callout.note .hd { color: var(--cyan); }
+.callout p { margin: .5rem 0 0; color: var(--tx-2); font-size: .9rem; }
+
+/* Tables */
+.tbl-scroll { overflow-x: auto; border-radius: .75rem; border: 1px solid var(--bd-default); }
+table.data { width: 100%; border-collapse: collapse; font-size: .85rem; min-width: 620px; }
+table.data th { text-align: left; padding: .6rem .85rem; font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; color: var(--tx-3); border-bottom: 1px solid var(--bd-default); background: rgba(255,255,255,.02); white-space: nowrap; }
+table.data td { padding: .6rem .85rem; border-bottom: 1px solid var(--bd-subtle); color: var(--tx-1); vertical-align: top; }
+table.data tr:last-child td { border-bottom: 0; }
+table.data tr:hover td { background: rgba(255,255,255,.02); }
+table.data td.mono, table.data th.mono { font-family: var(--font-mono); font-size: .8rem; }
+.pill { font-family: var(--font-mono); font-size: .7rem; padding: .1rem .45rem; border-radius: .3rem; background: rgba(6,182,212,.12); color: var(--cyan); white-space: nowrap; }
+.inv-id { font-family: var(--font-mono); font-size: .72rem; color: var(--rose); font-weight: 600; white-space: nowrap; }
+
+/* Diagram */
+.diagram { border: 1px solid var(--bd-default); border-radius: .75rem; background: rgba(5,8,16,.5); padding: 1.25rem; margin: 1rem 0; overflow-x: auto; }
+.diagram svg { display: block; min-width: 640px; width: 100%; height: auto; }
+.legend { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: .75rem; font-size: .75rem; color: var(--tx-2); }
+.legend span { display: inline-flex; align-items: center; gap: .4rem; }
+.legend i { width: .8rem; height: .8rem; border-radius: .2rem; display: inline-block; }
+
+/* Flow chips (text pipeline) */
+.flow { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: .75rem 0; }
+.flow .node { font-family: var(--font-mono); font-size: .75rem; padding: .35rem .6rem; border-radius: .4rem; border: 1px solid var(--bd-default); background: var(--cyber-elevated); color: var(--tx-1); }
+.flow .node.k-rose { border-color: rgba(244,63,94,.45); color: #ffd3db; }
+.flow .node.k-cyan { border-color: rgba(6,182,212,.4); color: #b8ecf7; }
+.flow .arw { color: var(--tx-3); }
+
+ul.tight { margin: .5rem 0; padding-left: 1.2rem; }
+ul.tight li { margin: .3rem 0; color: var(--tx-2); }
+ul.tight li b, ul.tight li code { color: var(--tx-1); }
+code { font-family: var(--font-mono); font-size: .82em; background: rgba(255,255,255,.05); padding: .08rem .35rem; border-radius: .3rem; color: #cfe8ef; }
+
+.module-card h4 { margin: 0 0 .35rem; font-family: var(--font-display); font-size: .95rem; color: var(--tx-1); display: flex; align-items: center; gap: .4rem; }
+.module-card h4 .dot { width: .5rem; height: .5rem; border-radius: 9999px; background: var(--cyan); }
+.module-card p { margin: 0; font-size: .82rem; color: var(--tx-2); }
+.module-card .ents { margin-top: .5rem; font-family: var(--font-mono); font-size: .68rem; color: var(--tx-3); }
+
+.layer-strip { display: grid; gap: .5rem; }
+.layer { display: flex; align-items: center; gap: .75rem; border: 1px solid var(--bd-default); border-radius: .5rem; padding: .6rem .85rem; background: var(--glass-bg); }
+.layer .lb { font-family: var(--font-mono); font-size: .68rem; color: var(--tx-3); width: 5.5rem; flex-shrink: 0; text-transform: uppercase; letter-spacing: .05em; }
+.layer .lc { font-size: .85rem; color: var(--tx-1); }
+.layer.l-web { border-left: 3px solid var(--cyan); }
+.layer.l-api { border-left: 3px solid var(--rose); }
+.layer.l-data { border-left: 3px solid var(--up); }
+.layer.l-async { border-left: 3px solid var(--warn); }
+
+footer.foot { border-top: 1px solid var(--bd-default); padding: 2rem 0 3rem; color: var(--tx-3); font-size: .8rem; }
+.toc { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1.5rem 0 0; }
+.toc a { font-size: .78rem; font-family: var(--font-mono); padding: .3rem .65rem; border-radius: .4rem; border: 1px solid var(--bd-default); color: var(--tx-2); background: rgba(255,255,255,.02); }
+.toc a:hover { color: var(--tx-1); border-color: var(--cyan); text-decoration: none; }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand"><span class="brand-mark">C</span><span class="brand-name display">CYBEROPS</span></div>
+    <nav class="top-nav">
+      <a href="#overview">Overview</a>
+      <a href="#layers">Layers</a>
+      <a href="#modules">Modules</a>
+      <a href="#data">Data</a>
+      <a href="#scanner">Scanner</a>
+      <a href="#pentest">AI Pentest</a>
+      <a href="#realtime">Realtime</a>
+      <a href="#frontend">Frontend</a>
+      <a href="#invariants">Invariants</a>
+      <a href="#threat">Threat Model</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="kicker">System Architecture · source of truth</div>
+    <h1 class="display">CyberOps Platform Architecture</h1>
+    <p class="lede">A unified, multi-tenant, AI-assisted security-operations platform. It turns asset discovery, vulnerability scanning, AI-assisted penetration testing, OSINT/threat analysis, and compliance mapping into a single correlated view of organizational risk — with continuous retesting, across an organization's <b>authorized</b> attack surface.</p>
+    <div class="meta-row">
+      <span class="chip">Build depth <b>comprehensive</b></span>
+      <span class="chip">Scale tier <b>large · 50k+ concurrent</b></span>
+      <span class="chip">Monorepo <b>npm workspaces</b></span>
+      <span class="chip">API <b>NestJS 11 · REST /v1</b></span>
+      <span class="chip">Web <b>Next.js · App Router</b></span>
+      <span class="chip">DB <b>PostgreSQL 18 · RLS</b></span>
+    </div>
+    <div class="toc">
+      <a href="#overview">§1 Overview</a>
+      <a href="#layers">§2 Layers &amp; Data Flow</a>
+      <a href="#modules">§3 Backend Modules</a>
+      <a href="#data">§4 Data Layer</a>
+      <a href="#scanner">§5 Scanner Engine</a>
+      <a href="#pentest">§6 AI Pentest</a>
+      <a href="#realtime">§7 Realtime &amp; Async</a>
+      <a href="#frontend">§8 Frontend</a>
+      <a href="#invariants">§9 Invariants</a>
+      <a href="#deps">§10 Dependencies</a>
+      <a href="#threat">§11–12 Threat Model</a>
+    </div>
+  </div>
+</div>
+
+<!-- §1 Overview -->
+<section id="overview">
+  <div class="wrap">
+    <h2 class="sec"><span class="num">§1</span> System Overview</h2>
+    <p class="lead-sub">Core problem → solution: fragmented security tooling → one workflow that discovers, assesses, validates, correlates, prioritizes, and retests.</p>
+
+    <h3>Five key workflows (SPEC §5)</h3>
+    <div class="grid g3">
+      <div class="card module-card"><h4><span class="dot" style="background:var(--rose)"></span>W1 · AI Pentest</h4><p>AI-powered automated penetration test — multi-agent planner produces attack paths + evidence.</p></div>
+      <div class="card module-card"><h4><span class="dot"></span>W2 · Discovery &amp; VA</h4><p>Asset discovery &amp; vulnerability assessment across the authorized surface.</p></div>
+      <div class="card module-card"><h4><span class="dot"></span>W3 · OSINT</h4><p>Threat &amp; OSINT investigation — correlate indicators against assets and findings.</p></div>
+      <div class="card module-card"><h4><span class="dot" style="background:var(--up)"></span>W4 · Compliance</h4><p>Compliance &amp; security-posture assessment mapped to control frameworks.</p></div>
+      <div class="card module-card"><h4><span class="dot" style="background:var(--warn)"></span>W5 · Retest</h4><p>Finding remediation &amp; continuous retesting with a tamper-evident trail.</p></div>
+    </div>
+
+    <div class="callout safety">
+      <div class="hd">⚠ Safety boundary (binding, RESEARCH §5)</div>
+      <p>The platform runs <b>authorized offensive tooling only</b>. It ships real safe recon (DNS / HTTP-fingerprint / TLS) and a template-driven finding engine, and models exploit-validation as state — <code>unvalidated → validating → validated | failed</code> — gated behind verified authorization scope + human approval. It does <b>not</b> ship a live-exploitation module that fires payloads at arbitrary targets. Enforced by the authorization-scope, SSRF, rate/concurrency, and agent-sandbox invariants (§9).</p>
+    </div>
+  </div>
+</section>
+
+<!-- §2 Layers & Data Flow -->
+<section id="layers">
+  <div class="wrap">
+    <h2 class="sec"><span class="num">§2</span> Architecture Layers &amp; Data Flow</h2>
+
+    <h3>Topology (monorepo)</h3>
+    <div class="diagram">
+      <svg viewBox="0 0 720 250" role="img" aria-label="Monorepo topology">
+        <defs>
+          <style>
+            .box{fill:rgba(10,14,26,.85);stroke:rgba(255,255,255,.12);rx:8}
+            .lbl{fill:#e8ecf4;font-family:var(--font-mono);font-size:12px}
+            .sub{fill:#8892a8;font-family:var(--font-mono);font-size:10px}
+            .root{fill:#06b6d4;font-family:var(--font-mono);font-size:12px}
+          </style>
+        </defs>
+        <rect x="10" y="10" width="700" height="230" rx="10" fill="none" stroke="rgba(6,182,212,.25)"/>
+        <text x="28" y="34" class="root">cyberops-2/  ·  npm workspaces monorepo</text>
+        <rect x="28" y="50" width="320" height="46" rx="8" class="box" stroke="rgba(244,63,94,.4)"/>
+        <text x="42" y="72" class="lbl">apps/api</text><text x="42" y="88" class="sub">NestJS 11 — REST /v1, WS gateway, BullMQ workers</text>
+        <rect x="360" y="50" width="330" height="46" rx="8" class="box" stroke="rgba(6,182,212,.4)"/>
+        <text x="374" y="72" class="lbl">apps/web</text><text x="374" y="88" class="sub">Next.js App Router — marketing + app shell</text>
+        <rect x="28" y="104" width="320" height="46" rx="8" class="box"/>
+        <text x="42" y="126" class="lbl">packages/shared</text><text x="42" y="142" class="sub">Zod schemas + DTO/enum types (contract source)</text>
+        <rect x="360" y="104" width="330" height="46" rx="8" class="box"/>
+        <text x="374" y="126" class="lbl">scripts/</text><text x="374" y="142" class="sub">invariant-lint.mjs · smoke-test.sh · seed</text>
+        <rect x="28" y="158" width="662" height="42" rx="8" class="box" stroke="rgba(0,230,138,.35)"/>
+        <text x="42" y="184" class="sub">docker-compose.yml → <tspan fill="#e8ecf4">api · web · postgres · redis · worker</tspan>   ·   .env.example</text>
+        <text x="28" y="224" class="sub">Precedence: RESEARCH &gt; ARCHITECTURE &gt; SPEC</text>
+      </svg>
+    </div>
+
+    <h3>Request path (synchronous)</h3>
+    <div class="flow">
+      <span class="node k-cyan">Browser</span><span class="arw">→</span>
+      <span class="node k-cyan">Next.js SSR + TanStack Query</span><span class="arw">→</span>
+      <span class="node">API /v1</span><span class="arw">→</span>
+      <span class="node k-rose">JwtAuthGuard</span><span class="arw">→</span>
+      <span class="node k-rose">TenantGuard</span><span class="arw">→</span>
+      <span class="node k-rose">RolesGuard</span><span class="arw">→</span>
+      <span class="node k-rose">ZodValidationPipe</span><span class="arw">→</span>
+      <span class="node">Controller</span><span class="arw">→</span>
+      <span class="node">Service</span><span class="arw">→</span>
+      <span class="node k-cyan">TenantScopedRepository</span><span class="arw">→</span>
+      <span class="node">Postgres (RLS)</span>
+    </div>
+    <p class="muted">Every mutation emits an <code>audit_events</code> row and — when it must reach a second system — an <code>outbox_events</code> row in the <b>same transaction</b>.</p>
+
+    <h3>Three runtime paths</h3>
+    <div class="diagram">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Synchronous, async and realtime paths">
+        <defs>
+          <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#556677"/></marker>
+          <style>
+            .n{fill:rgba(10,14,26,.9);rx:7}
+            .t{fill:#e8ecf4;font-family:var(--font-mono);font-size:11px}
+            .ts{fill:#8892a8;font-family:var(--font-mono);font-size:9px}
+            .cap{fill:#556677;font-family:var(--font-mono);font-size:10px;letter-spacing:.1em}
+            .ln{stroke:#556677;stroke-width:1.4;fill:none;marker-end:url(#ah)}
+          </style>
+        </defs>
+        <!-- sync -->
+        <text x="12" y="24" class="cap">SYNC</text>
+        <rect x="60" y="10" width="90" height="30" class="n" stroke="rgba(6,182,212,.5)"/><text x="76" y="29" class="t">Browser</text>
+        <line class="ln" x1="150" y1="25" x2="200" y2="25"/>
+        <rect x="202" y="10" width="120" height="30" class="n" stroke="rgba(244,63,94,.5)"/><text x="214" y="29" class="t">API + Guards</text>
+        <line class="ln" x1="322" y1="25" x2="372" y2="25"/>
+        <rect x="374" y="10" width="120" height="30" class="n" stroke="rgba(6,182,212,.5)"/><text x="386" y="29" class="t">Service+Repo</text>
+        <line class="ln" x1="494" y1="25" x2="544" y2="25"/>
+        <rect x="546" y="10" width="120" height="30" class="n" stroke="rgba(0,230,138,.4)"/><text x="558" y="29" class="t">Postgres RLS</text>
+        <!-- async -->
+        <text x="12" y="128" class="cap">ASYNC</text>
+        <rect x="60" y="114" width="120" height="30" class="n" stroke="rgba(244,63,94,.5)"/><text x="72" y="133" class="t">Service</text>
+        <line class="ln" x1="180" y1="129" x2="222" y2="129"/>
+        <rect x="224" y="114" width="130" height="30" class="n" stroke="rgba(255,170,0,.5)"/><text x="234" y="133" class="t">BullMQ · Redis</text>
+        <line class="ln" x1="354" y1="129" x2="396" y2="129"/>
+        <rect x="398" y="114" width="120" height="30" class="n" stroke="rgba(255,170,0,.5)"/><text x="410" y="133" class="t">Worker</text>
+        <line class="ln" x1="518" y1="129" x2="560" y2="129"/>
+        <rect x="562" y="114" width="140" height="30" class="n" stroke="rgba(6,182,212,.5)"/><text x="572" y="133" class="t">ScannerAdapters</text>
+        <text x="224" y="166" class="ts">queues: scan · outbox · email · webhook · pentest</text>
+        <line class="ln" x1="620" y1="144" x2="620" y2="176"/>
+        <rect x="530" y="178" width="172" height="28" class="n" stroke="rgba(255,255,255,.14)"/><text x="542" y="196" class="t">Finding stream → persist + WS</text>
+        <!-- outbox relay -->
+        <rect x="60" y="178" width="150" height="28" class="n" stroke="rgba(255,170,0,.4)"/><text x="72" y="196" class="t">Outbox relay</text>
+        <line class="ln" x1="210" y1="192" x2="252" y2="192"/>
+        <rect x="254" y="178" width="250" height="28" class="n" stroke="rgba(255,255,255,.12)"/><text x="266" y="196" class="ts">search index · email (Resend) · webhooks (HMAC)</text>
+        <!-- realtime -->
+        <text x="12" y="254" class="cap">REALTIME</text>
+        <rect x="90" y="240" width="120" height="30" class="n" stroke="rgba(255,170,0,.5)"/><text x="102" y="259" class="t">Worker</text>
+        <line class="ln" x1="210" y1="255" x2="252" y2="255"/>
+        <rect x="254" y="240" width="200" height="30" class="n" stroke="rgba(6,182,212,.5)"/><text x="266" y="259" class="t">Socket.io + Redis adapter</text>
+        <line class="ln" x1="454" y1="255" x2="496" y2="255"/>
+        <rect x="498" y="240" width="150" height="30" class="n" stroke="rgba(255,255,255,.14)"/><text x="510" y="259" class="t">room scan:&lt;id&gt;</text>
+        <line class="ln" x1="648" y1="255" x2="690" y2="255"/>
+        <text x="694" y="259" class="ts" transform="rotate(-90 694 255)" style="display:none"></text>
+      </svg>
+      <div class="legend">
+        <span><i style="background:var(--cyan)"></i>Web / client</span>
+        <span><i style="background:var(--rose)"></i>API / guards</span>
+        <span><i style="background:var(--warn)"></i>Queue / worker</span>
+        <span><i style="background:var(--up)"></i>Database</span>
+      </div>
+    </div>
+
+    <h3>Data flow across workflows</h3>
+    <div class="flow">
+      <span class="node">Asset <span style="color:var(--tx-3)">(W2)</span></span><span class="arw">→</span>
+      <span class="node">Scan</span><span class="arw">→</span>
+      <span class="node">Finding <span style="color:var(--tx-3)">CVSS/CWE</span></span><span class="arw">→</span>
+      <span class="node k-cyan">+ Threat intel <span style="color:var(--tx-3)">(W3)</span></span><span class="arw">→</span>
+      <span class="node k-cyan">Compliance <span style="color:var(--tx-3)">(W4)</span></span><span class="arw">→</span>
+      <span class="node">Dashboard</span><span class="arw">→</span>
+      <span class="node k-rose">Remediate + Retest <span style="color:var(--tx-3)">(W5)</span></span>
+    </div>
+    <p class="muted">AI pentest (W1) consumes assets/findings and produces attack paths + evidence.</p>
+  </div>
+</section>
+
+<!-- §3 Modules -->
+<section id="modules">
+  <div class="wrap">
+    <h2 class="sec"><span class="num">§3</span> Backend Modules <span style="font-size:.8rem;color:var(--tx-3);font-family:var(--font-mono)">(NestJS · domain-per-module)</span></h2>
+    <p class="lead-sub">One folder per domain under <code>apps/api/src/modules/*</code>.</p>
+    <div class="grid g3">
+      <div class="card module-card"><h4><span class="dot"></span>auth</h4><p>Register / login / logout, JWT httpOnly-cookie session, password reset, MFA-ready.</p><div class="ents">User · Session · PasswordResetToken</div></div>
+      <div class="card module-card"><h4><span class="dot"></span>tenancy</h4><p>Orgs, memberships, RBAC roles, tenant-scope chokepoint, RLS context.</p><div class="ents">Organization · Membership · Role</div></div>
+      <div class="card module-card"><h4><span class="dot"></span>assets</h4><p>Targets, assets, hosts, services, technologies, <b>authorization scope</b>.</p><div class="ents">Asset · Host · Service · AuthorizationScope</div></div>
+      <div class="card module-card"><h4><span class="dot"></span>scans</h4><p>Scan runs, adapter orchestration, BullMQ, WS progress.</p><div class="ents">ScanRun · ScanResult</div></div>
+      <div class="card module-card"><h4><span class="dot"></span>findings</h4><p>Findings, CVSS/CWE, severity, correlation, validation state, retest.</p><div class="ents">Finding · FindingValidation · Retest</div></div>
+      <div class="card module-card"><h4><span class="dot" style="background:var(--rose)"></span>pentest</h4><p>AI pentest engine (multi-agent planner), attack paths, evidence, approval gate.</p><div class="ents">PentestRun · AttackPath · Evidence · ApprovalRequest</div></div>
+      <div class="card module-card"><h4><span class="dot"></span>osint</h4><p>Indicators, STIX/TAXII threat feeds, correlation.</p><div class="ents">Indicator · ThreatFeed · Investigation</div></div>
+      <div class="card module-card"><h4><span class="dot"></span>compliance</h4><p>Frameworks, controls, mappings, posture, evidence.</p><div class="ents">Framework · Control · ControlMapping · PostureSnapshot</div></div>
+      <div class="card module-card"><h4><span class="dot"></span>reports</h4><p>PDF / JSON / CSV export of findings / compliance / pentest.</p><div class="ents">Report</div></div>
+      <div class="card module-card"><h4><span class="dot" style="background:var(--warn)"></span>alerts</h4><p>Email outbox + outbound webhooks (guaranteed delivery).</p><div class="ents">PendingEmail · PendingWebhook · WebhookEndpoint</div></div>
+      <div class="card module-card"><h4><span class="dot" style="background:var(--up)"></span>audit</h4><p>Append-only, hash-chained audit log.</p><div class="ents">AuditEvent</div></div>
+      <div class="card module-card"><h4><span class="dot" style="background:var(--warn)"></span>outbox</h4><p>Transactional-outbox relay to second systems.</p><div class="ents">OutboxEvent</div></div>
+    </div>
+
+    <h3>Cross-cutting <code>common/</code></h3>
+    <ul class="tight">
+      <li><b>tenancy/TenantScopedRepository</b> — the only place scoped queries are issued (INV-1 chokepoint).</li>
+      <li><b>security/</b> — throttler config, SSRF <code>TargetResolver</code>, CSRF/Origin guard, password verifier w/ HIBP k-anonymity.</li>
+      <li><b>audit/AuditInterceptor</b> · <b>sentry/</b> · <b>pipes/ZodValidationPipe</b> · <b>errors/</b> — typed error envelope (SPEC §7).</li>
+    </ul>
+  </div>
+</section>
+
+<!-- §4 Data -->
+<section id="data">
+  <div class="wrap">
+    <h2 class="sec"><span class="num">§4</span> Data Layer</h2>
+    <div class="grid g2">
+      <div class="card">
+        <h3 style="margin-top:0">PostgreSQL 18 · TypeORM</h3>
+        <ul class="tight">
+          <li>PKs = <code>uuidv7()</code> — timestamp-ordered, index-friendly at insert scale.</li>
+          <li>Finding payloads / evidence = <code>jsonb</code>; enums as Postgres <code>enum</code>.</li>
+          <li>Reversible <code>DataSource</code> migrations (up/down); seed for roles, severities, frameworks, demo org.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Tenant isolation (defense in depth)</h3>
+        <ul class="tight">
+          <li>Every tenant-owned table carries <code>tenant_id</code>.</li>
+          <li>Postgres <b>RLS</b> scopes by a session <code>app.tenant_id</code> GUC set per request/job.</li>
+          <li><code>TenantScopedRepository</code> is the single chokepoint that sets the GUC and filters.</li>
+          <li>Object-level <code>assertResourceAccess</code> on every user-owned resource <b>and its sub-resources</b>.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="grid g2" style="margin-top:1rem">
+      <div class="card">
+        <h3 style="margin-top:0">Idempotency &amp; audit chain</h3>
+        <ul class="tight">
+          <li><code>inbound_webhook_events</code> UNIQUE <code>(provider, event_id)</code>.</li>
+          <li><code>pending_emails</code> UNIQUE <code>(to_address, template_key, business_ref_id)</code>.</li>
+          <li>Audit: <code>hash = sha256(prev_hash || canonical_json(payload))</code> — append-only, no update/delete path.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Pooling &amp; scale</h3>
+        <ul class="tight">
+          <li>pg pool tuned; PgBouncer (transaction mode) documented for prod.</li>
+          <li>Hot tables <code>findings</code>, <code>scan_results</code> indexed on <code>(tenant_id, severity, created_at)</code>.</li>
+          <li>Read-replica split documented as a cloud-scale step.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- §5 Scanner -->
+<section id="scanner">
+  <div class="wrap">
+    <h2 class="sec"><span class="num">§5</span> Scanner &amp; Adapter Engine</h2>
+    <p class="lead-sub"><code>ScanOrchestrator</code> (BullMQ worker) selects adapters by profile → streams <code>RawFinding</code>s → normalizes to <code>Finding</code> (CVSS/CWE/severity) → persists → emits WS progress.</p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 720 190" role="img" aria-label="Scanner engine flow with SSRF guard">
+        <defs>
+          <marker id="ah2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#556677"/></marker>
+          <style>
+            .n2{fill:rgba(10,14,26,.9);rx:7}
+            .t2{fill:#e8ecf4;font-family:var(--font-mono);font-size:11px}
+            .ts2{fill:#8892a8;font-family:var(--font-mono);font-size:9px}
+            .ln2{stroke:#556677;stroke-width:1.4;fill:none;marker-end:url(#ah2)}
+          </style>
+        </defs>
+        <rect x="14" y="20" width="130" height="34" class="n2" stroke="rgba(255,170,0,.5)"/><text x="26" y="41" class="t2">ScanOrchestrator</text>
+        <line class="ln2" x1="144" y1="37" x2="186" y2="37"/>
+        <rect x="188" y="14" width="150" height="46" class="n2" stroke="rgba(244,63,94,.6)"/>
+        <text x="200" y="34" class="t2" fill="#ffd3db">TargetResolver</text><text x="200" y="50" class="ts2">resolveAndValidate() — INV-2</text>
+        <line class="ln2" x1="338" y1="37" x2="380" y2="37"/>
+        <rect x="382" y="20" width="150" height="34" class="n2" stroke="rgba(6,182,212,.5)"/><text x="394" y="41" class="t2">adapter.run(target)</text>
+        <line class="ln2" x1="532" y1="37" x2="574" y2="37"/>
+        <rect x="576" y="20" width="130" height="34" class="n2" stroke="rgba(255,255,255,.14)"/><text x="588" y="41" class="t2">RawFinding →</text>
+        <text x="188" y="80" class="ts2">SSRF guard runs BEFORE every adapter network action: rejects private/link-local/reserved,</text>
+        <text x="188" y="94" class="ts2">requires active verified AuthorizationScope, pins resolved IP (anti-DNS-rebinding).</text>
+        <line class="ln2" x1="641" y1="54" x2="641" y2="112"/>
+        <rect x="470" y="114" width="236" height="34" class="n2" stroke="rgba(0,230,138,.4)"/><text x="482" y="135" class="t2">normalize → persist → WS progress</text>
+      </svg>
+    </div>
+
+    <div class="grid g2">
+      <div class="card">
+        <h3 style="margin-top:0">Built-in safe adapters <span class="pill">always available</span></h3>
+        <ul class="tight">
+          <li><b>DnsReconAdapter</b> — records + bounded subdomain wordlist (authorized zones only).</li>
+          <li><b>HttpFingerprintAdapter</b> — headers, tech/version, missing security headers, cookie flags, safe <code>.git</code>/<code>.env</code> probes.</li>
+          <li><b>TlsInspectAdapter</b> — cert chain, expiry, weak protocol/cipher.</li>
+          <li><b>TemplateEngineAdapter</b> — Nuclei-style YAML signatures (offline corpus) → CVE/CWE-tagged findings.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">External adapters <span class="pill">degrade gracefully</span></h3>
+        <ul class="tight">
+          <li><b>NucleiAdapter</b> — spawns <code>nuclei -jsonl</code>, parses JSONL to findings.</li>
+          <li><b>TrivyAdapter</b> — spawns <code>trivy … --format json</code> for repo/IaC/SBOM findings.</li>
+        </ul>
+        <p class="muted" style="font-size:.82rem">Used only when the binary is present; the platform stays fully functional on the built-in safe set alone.</p>
+      </div>
+    </div>
+
+    <div class="callout note">
+      <div class="hd">◆ ScannerAdapter interface</div>
+      <p><code>{ id, kind, capabilities, isAvailable(): Promise&lt;boolean&gt;, run(target, opts, ctx): AsyncIterable&lt;RawFinding&gt; }</code> — pluggable, testable, safe-by-construction.</p>
+    </div>
+  </div>
+</section>
+
+<!-- §6 AI Pentest -->
+<section id="pentest">
+  <div class="wrap">
+    <h2 class="sec"><span class="num">§6</span> AI Pentest Orchestration <span style="font-size:.8rem;color:var(--tx-3);font-family:var(--font-mono)">(multi-agent)</span></h2>
+    <p class="lead-sub"><code>PentestPlanner</code> decomposes a run into phases following the VulnBot/AutoPentest/xOffense multi-agent pattern. Each phase is an agent role with an allowlisted tool set that calls only the safe scanner adapters.</p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 720 150" role="img" aria-label="Pentest phase pipeline">
+        <defs>
+          <marker id="ah3" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#556677"/></marker>
+          <style>.pn{fill:rgba(10,14,26,.9);rx:8}.pt{fill:#e8ecf4;font-family:var(--font-display);font-size:13px;letter-spacing:.03em}.ps{fill:#8892a8;font-family:var(--font-mono);font-size:9px}.pl{stroke:#556677;stroke-width:1.5;fill:none;marker-end:url(#ah3)}</style>
+        </defs>
+        <rect x="14" y="30" width="150" height="46" class="pn" stroke="rgba(6,182,212,.5)"/><text x="30" y="52" class="pt">recon</text><text x="30" y="68" class="ps">safe discovery</text>
+        <line class="pl" x1="164" y1="53" x2="196" y2="53"/>
+        <rect x="198" y="30" width="150" height="46" class="pn" stroke="rgba(6,182,212,.5)"/><text x="214" y="52" class="pt">analysis</text><text x="214" y="68" class="ps">reason attack paths</text>
+        <line class="pl" x1="348" y1="53" x2="380" y2="53"/>
+        <rect x="382" y="30" width="150" height="46" class="pn" stroke="rgba(244,63,94,.6)"/><text x="398" y="52" class="pt" fill="#ffd3db">validation</text><text x="398" y="68" class="ps">approval-gated</text>
+        <line class="pl" x1="532" y1="53" x2="564" y2="53"/>
+        <rect x="566" y="30" width="140" height="46" class="pn" stroke="rgba(0,230,138,.4)"/><text x="582" y="52" class="pt">report</text><text x="582" y="68" class="ps">attack paths + evidence</text>
+        <rect x="382" y="92" width="150" height="34" class="pn" stroke="rgba(255,170,0,.55)"/><text x="396" y="113" class="ps" fill="#FFAA00">⚑ ApprovalRequest (human-in-the-loop)</text>
+        <line class="pl" x1="457" y1="92" x2="457" y2="78"/>
+        <text x="14" y="112" class="ps">State-changing validation → ApprovalRequest + active-scope re-check.</text>
+        <text x="14" y="126" class="ps">No live exploitation is ever performed.</text>
+      </svg>
+    </div>
+
+    <div class="grid g2">
+      <div class="card">
+        <h3 style="margin-top:0">LLM provider &amp; prompt-injection</h3>
+        <ul class="tight">
+          <li><code>LlmProvider</code> interface — provider-abstracted; <b>Claude Messages API</b> default.</li>
+          <li>All target-derived text (banners, HTTP bodies, OSINT) is <b>untrusted</b> — passed as data, never as instructions (mitigation R7).</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Offline / degraded mode</h3>
+        <ul class="tight">
+          <li>With no LLM key, the planner falls back to a <b>deterministic rule-based phase engine</b>.</li>
+          <li>A pentest run stays demonstrably functional without external AI — findings + attack paths from the safe adapters.</li>
+          <li>Output: <code>AttackPath</code> (MITRE ATT&amp;CK + CWE), <code>Evidence</code> (encrypted at rest), risk-scored <code>Finding</code>s.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- §7 Realtime -->
+<section id="realtime">
+  <div class="wrap">
+    <h2 class="sec"><span class="num">§7</span> Realtime, Async, Notifications &amp; Observability</h2>
+    <div class="grid g2">
+      <div class="card">
+        <h3 style="margin-top:0">WebSocket</h3>
+        <p class="muted">Socket.io gateway + <code>@socket.io/redis-adapter</code> for multi-instance fan-out. Auth: JWT on <code>connection</code>, Origin allowlist, per-connection message-rate budget, channel authorization (a client may only join rooms for its own tenant's scans).</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Queues</h3>
+        <p class="muted">BullMQ v5 on Redis (<code>maxmemory-policy=noeviction</code>, dedicated logical DB). Queues: <span class="pill">scan</span> <span class="pill">outbox</span> <span class="pill">email</span> <span class="pill">webhook</span> <span class="pill">pentest</span>. Idempotent jobs; DLQ after capped backoff.</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Outbox relay</h3>
+        <p class="muted">Drains <code>outbox_events</code> → search index (Postgres FTS in-cluster; Algolia/OpenSearch documented swap), email, outbound webhooks (HMAC signed at insert, <code>Idempotency-Key</code> per send, ≤5 attempts).</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Email &amp; telemetry</h3>
+        <p class="muted">Resend v6 via the <code>email</code> queue with rate limiting — never inline in a request handler. Sentry v10 (<code>instrument.ts</code> first), structured JSON logs (pino), Prometheus-style <code>/metrics</code> + <code>/api/health</code>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- §8 Frontend -->
+<section id="frontend">
+  <div class="wrap">
+    <h2 class="sec"><span class="num">§8</span> Frontend <span style="font-size:.8rem;color:var(--tx-3);font-family:var(--font-mono)">(Next.js · App Router)</span></h2>
+    <div class="layer-strip">
+      <div class="layer l-web"><span class="lb">(marketing)</span><span class="lc">Landing — nav, hero, features, how-it-works, pricing, footer. Ported verbatim from <code>DESIGN-TEMPLATE.html</code>.</span></div>
+      <div class="layer l-web"><span class="lb">(app)</span><span class="lc">Authenticated shell — aside sidebar + topbar + glass content. Dashboard, assets, scans, findings, pentest, OSINT, compliance, reports, audit, settings.</span></div>
+      <div class="layer l-web"><span class="lb">(auth)</span><span class="lc">Login / register / reset.</span></div>
+    </div>
+    <div class="grid g2" style="margin-top:1rem">
+      <div class="card">
+        <h3 style="margin-top:0">Data</h3>
+        <ul class="tight">
+          <li>TanStack Query v5 (<code>HydrationBoundary</code> + per-request <code>QueryClient</code>).</li>
+          <li>Typed API client generated from <code>packages/shared</code> Zod schemas.</li>
+          <li>WS client for live scan progress.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Design system</h3>
+        <ul class="tight">
+          <li>Design tokens copied <b>verbatim</b> from the template <code>:root</code> into <code>apps/web/app/globals.css</code>.</li>
+          <li>Dark-first with a light variant + runtime theme toggle + <code>prefers-color-scheme</code>.</li>
+          <li>Every key workflow completable through the UI, including terminal steps (review / approve / export).</li>
+        </ul>
+      </div>
+    </div>
+    <p class="muted" style="margin-top:1rem">↳ A static mockup of every one of these screens ships alongside this document as <a href="index.html">index.html</a>.</p>
+  </div>
+</section>
+
+<!-- §9 Invariants -->
+<section id="invariants">
+  <div class="wrap">
+    <h2 class="sec"><span class="num">§9</span> Architectural Invariants</h2>
+    <p class="lead-sub">Machine-checkable form in <code>invariants.json</code>; enforced by <code>npm run lint:invariants</code> (exit-code). Amending one requires updating §9 + <code>invariants.json</code> + an ADR in the same commit.</p>
+    <div class="tbl-scroll">
+      <table class="data">
+        <thead><tr><th>ID</th><th>Rule</th><th>Check type</th></tr></thead>
+        <tbody>
+          <tr><td class="inv-id">INV-1</td><td>All scoped DB access goes through <code>TenantScopedRepository</code>; no ad-hoc <code>getRepository(</code> outside the tenancy chokepoint.</td><td class="mono">forbidden-pattern</td></tr>
+          <tr><td class="inv-id">INV-2</td><td>SSRF: the orchestrator calls <code>resolveAndValidate</code> before dispatching any <code>adapter.run(</code>.</td><td class="mono">boundary-order</td></tr>
+          <tr><td class="inv-id">INV-3</td><td>Authorization scope re-validated before any network action of a scan/pentest job (deny-by-default).</td><td class="mono">manual</td></tr>
+          <tr><td class="inv-id">INV-4</td><td>Inbound webhook receiver verifies signature before any DB read/write.</td><td class="mono">boundary-order</td></tr>
+          <tr><td class="inv-id">INV-5</td><td>Audit log is append-only — no update/delete/remove on audit events.</td><td class="mono">forbidden-pattern</td></tr>
+          <tr><td class="inv-id">INV-6</td><td>Rate-limit config (Redis-backed throttler) is present and wired.</td><td class="mono">required-file</td></tr>
+          <tr><td class="inv-id">INV-7</td><td>No hardcoded secrets (AWS keys, <code>sk_live_</code>, private keys) in source.</td><td class="mono">forbidden-pattern</td></tr>
+          <tr><td class="inv-id">INV-8</td><td>Inbound webhook idempotency: UNIQUE <code>(provider, event_id)</code>.</td><td class="mono">required-unique</td></tr>
+          <tr><td class="inv-id">INV-9</td><td>Email idempotency: UNIQUE <code>(to_address, template_key, business_ref_id)</code>.</td><td class="mono">required-unique</td></tr>
+          <tr><td class="inv-id">INV-10</td><td>Design token layer exists (<code>apps/web/app/globals.css</code>) with template tokens.</td><td class="mono">required-file</td></tr>
+          <tr><td class="inv-id">INV-11</td><td>Health endpoint present.</td><td class="mono">required-file</td></tr>
+          <tr><td class="inv-id">INV-12</td><td>UI coverage: every screen routes, every non-internal endpoint referenced by UI, every workflow has an e2e test.</td><td class="mono">ui-coverage</td></tr>
+          <tr><td class="inv-id">INV-13</td><td>Object-level authorization (<code>assertResourceAccess</code>) on user-owned resources and sub-resources.</td><td class="mono">manual</td></tr>
+          <tr><td class="inv-id">INV-15</td><td><code>assertResourceAccess</code> invoked in every owner-bearing service (machine-checked call-site).</td><td class="mono">required-pattern</td></tr>
+          <tr><td class="inv-id">INV-14</td><td>Header buffers sized for accumulated cookies (<code>--max-http-header-size</code> / proxy config).</td><td class="mono">manual</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- §10 Dependencies -->
+<section id="deps">
+  <div class="wrap">
+    <h2 class="sec"><span class="num">§10</span> Dependencies <span style="font-size:.8rem;color:var(--tx-3);font-family:var(--font-mono)">(pinned)</span></h2>
+    <div class="grid g3">
+      <div class="card">
+        <h3 style="margin-top:0">API</h3>
+        <p class="muted mono" style="font-size:.78rem">@nestjs/*^11 · @nestjs/throttler^6 · websockets + platform-socket.io · @socket.io/redis-adapter · typeorm^0.3 · pg · bullmq^5 · ioredis · zod · bcrypt · @nestjs/jwt · resend^6 · @sentry/nestjs^10 · pino</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Web</h3>
+        <p class="muted mono" style="font-size:.78rem">next^15 · react^18 · @tanstack/react-query^5 · tailwindcss^3 · shadcn/ui (vendored) · socket.io-client · zod</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Shared / dev</h3>
+        <p class="muted mono" style="font-size:.78rem">zod (single contract source) · jest + supertest (API) · vitest / @playwright/test (web e2e) · typescript · eslint</p>
+      </div>
+    </div>
+    <div class="callout note">
+      <div class="hd">◆ Build-environment version note (ADR-006)</div>
+      <p>RESEARCH verified the bleeding edge (Next 16 / Tailwind v4 / TypeORM 1.1). Where a bleeding-edge major introduced install/build instability in the sandbox, the build pins the nearest battle-tested major (Next 15, Tailwind v3, TypeORM 0.3) and logs the substitution as an ADR — the deliverable (stack, design system, workflows) is preserved; only the pin moves. A build-environment substitution, not a stack change.</p>
+    </div>
+  </div>
+</section>
+
+<!-- §11-12 Decisions + Threat -->
+<section id="threat">
+  <div class="wrap">
+    <h2 class="sec"><span class="num">§11</span> Key Technical Decisions</h2>
+    <div class="tbl-scroll">
+      <table class="data">
+        <thead><tr><th>Decision</th><th>Over</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td>Monorepo (npm workspaces)</td><td class="mono">polyrepo</td><td>One contract source; atomic cross-cutting changes; dependency-light.</td></tr>
+          <tr><td>REST /v1 + NestJS</td><td class="mono">GraphQL / tRPC</td><td>Maps cleanly to the resource model and to PDF/JSON/CSV exports.</td></tr>
+          <tr><td>RLS + app-layer scope (both)</td><td class="mono">app-layer only</td><td>Defense in depth; RLS is the backstop if a query escapes the chokepoint.</td></tr>
+          <tr><td>Transactional outbox</td><td class="mono">direct dual-write</td><td>Only correct way to keep DB + search/email/webhooks consistent.</td></tr>
+          <tr><td>Scanner-adapter interface</td><td class="mono">hard-coded scanners</td><td>Pluggable, testable, degrades offline, safe-by-construction.</td></tr>
+          <tr><td>Deterministic fallback planner</td><td class="mono">LLM-only</td><td>Guarantees a functional pentest workflow with no external AI in the sandbox.</td></tr>
+          <tr><td>No live exploitation</td><td class="mono">payload firing</td><td>Legal/ethical requirement; validation modeled as gated state.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="sec" style="margin-top:2rem"><span class="num">§12</span> Threat Model</h2>
+    <p class="lead-sub">Five trust boundaries, each with its own controls; top risks R1–R8 each map to an invariant and a mitigation.</p>
+    <div class="grid g2">
+      <div class="card module-card"><h4><span class="dot" style="background:var(--cyan)"></span>1 · Browser ↔ API</h4><p>JWT cookie · CSRF/Origin guard · Zod validation.</p></div>
+      <div class="card module-card"><h4><span class="dot" style="background:var(--up)"></span>2 · API ↔ Postgres</h4><p>RLS · parameterized queries · least-privilege role.</p></div>
+      <div class="card module-card"><h4><span class="dot" style="background:var(--rose)"></span>3 · Worker ↔ target network</h4><p>SSRF guard · authorization scope · isolated egress.</p></div>
+      <div class="card module-card"><h4><span class="dot" style="background:var(--warn)"></span>4 · API ↔ LLM / target text</h4><p>Untrusted-data handling · prompt-injection mitigation.</p></div>
+      <div class="card module-card" style="grid-column:1/-1"><h4><span class="dot" style="background:var(--sev-high)"></span>5 · API ↔ third-party webhooks</h4><p>HMAC verify-before-DB. Top risks R1–R8 — authorization scope, SSRF, secret handling, cross-tenant leakage, audit tampering, scan-proxy abuse, prompt injection, artifact handling — each map to an invariant (§9) and a mitigation (§5).</p></div>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="brand" style="margin-bottom:.75rem"><span class="brand-mark" style="height:1.5rem;width:1.5rem;font-size:.75rem;border-radius:.25rem">C</span><span class="display" style="font-weight:700;color:var(--tx-2)">CYBEROPS</span></div>
+    Architecture reference · derived from <span class="mono">ARCHITECTURE.md</span> (source of truth). Behavior specified in <span class="mono">SPEC.md</span>. Authorized security testing only. Built with the AI MDLC™ Kernel.
+  </div>
+</footer>
+
+<a href="../index.html" aria-label="Back to the MDLC examples gallery" style="position:fixed;top:14px;left:14px;z-index:2147483647;display:inline-flex;align-items:center;gap:7px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#edf0f7;background:rgba(8,13,25,.82);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid #2a3a5c;border-radius:8px;padding:8px 13px;text-decoration:none;box-shadow:0 8px 24px -8px rgba(0,0,0,.7);">&larr; Gallery</a>
+</body>
+</html>
