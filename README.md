@@ -2,7 +2,7 @@
 
 # MDLC — Example Builds
 
-### Eleven real applications, each built end-to-end by the MDLC methodology.
+### Ten real applications, each built end-to-end by the MDLC methodology.
 
 **[🌐 Browse the live gallery →](https://mdlcai.github.io/ai-mdlc-kernel-examples/)**
 
@@ -14,7 +14,7 @@
 
 ## What you're looking at
 
-**MDLC** (the Markdown Development Life Cycle) turns a single `RESEARCH.md` blueprint into a working, reviewed application — driving it through architecture, build, and a battery of automated quality gates. These eleven examples are the proof. Each one was generated, not hand-written, and each ships the **complete paper trail**: the blueprint that started it, the architecture that fell out of it, the spec and decisions it was built to, and the build report showing every gate it passed.
+**MDLC** (the Markdown Development Life Cycle) turns a single `RESEARCH.md` blueprint into a working, reviewed application — driving it through architecture, build, and a battery of automated quality gates. These ten examples are the proof. Each one was generated, not hand-written, and each ships the **complete paper trail**: the blueprint that started it, the architecture that fell out of it, the spec and decisions it was built to, and the build report showing every gate it passed.
 
 Open any folder and read it top to bottom — `RESEARCH.md` → `ARCHITECTURE.md` → `SPEC.md` → `DECISIONS.md` → `REPORT.md` — and you can follow the process end to end.
 
@@ -26,7 +26,6 @@ Open any folder and read it top to bottom — `RESEARCH.md` → `ARCHITECTURE.md
 | [<img src="tradewind/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/tradewind/index.html) | **[Tradewind](tradewind/)** | Services marketplace with milestone escrow — fund, release on approval, payouts, disputes, and verified Stripe webhooks, every movement an immutable double-entry ledger entry that always balances. | 29 tests · 17/17 smoke · 12 invariants (double-entry Σ=0) · 0 crit/high |
 | [<img src="sentinel/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/sentinel/index.html) | **[Sentinel](sentinel/)** | Unified AppSec scanning — runs OSS scanners (SAST, SCA, DAST, secrets, IaC) in sandboxed containers, then dedupes and prioritizes into one dashboard. | 21 tests · 23/23 smoke · 11/11 invariants · 0 crit/high |
 | [<img src="mcpsentinel/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/mcpsentinel/index.html) | **[MCP Sentinel](mcpsentinel/)** | Audits the security posture of MCP servers — tool poisoning, scope, leaked secrets, rug pulls, missing auth. | 37 tests · 17/17 smoke · 10/10 invariants |
-| [<img src="pulse/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/pulse/index.html) | **[Pulse](pulse/)** | Real-time infrastructure monitoring with a flap-resistant alert engine and sub-minute detection. | 21/21 smoke · 11/11 invariants |
 | [<img src="recon/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/recon/index.html) | **[Recon](recon/)** | Continuous attack-surface monitoring — alerts the moment your internet exposure changes. | 29 tests · 8/8 smoke · 15/15 invariants |
 | [<img src="smartcoder/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/smartcoder/index.html) | **[SmartCoder](smartcoder/)** | Medical-coding workflow & QA training on synthetic encounters — no real PHI. | 14 tests · 16/16 smoke · Reviewer PASS |
 | [<img src="servicehub/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/servicehub/index.html) | **[ServiceHub](servicehub/)** | Multi-tenant IT service management — requests, incidents, approvals, SLA tracking. | 27/27 smoke (incl. same-tenant IDOR) · 15/15 invariants · 0 crit/high |
