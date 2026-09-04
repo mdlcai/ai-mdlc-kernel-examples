@@ -12,7 +12,7 @@
     />
     <style>
       /* Tokens: light is the base, dark is redefined behind prefers-color-scheme (guarded so an explicit
-         light choice wins) and again behind the stamp. No colour is declared only inside a themed block. */
+         light choice wins) and again behind the stamp. No color is declared only inside a themed block. */
       :root {
         --ground: #eceff0;
         --panel: #ffffff;
@@ -770,12 +770,12 @@
         <section id="s1">
           <h2><span class="n">01</span>Problem and scope</h2>
           <p>
-            IT organisations run tickets, projects, changes, assets, approvals and documentation in disconnected tools.
+            IT organizations run tickets, projects, changes, assets, approvals and documentation in disconnected tools.
             Nothing links the laptop request to the approval, to the asset, to the closing ticket, so ownership, SLAs
             and audit evidence get reconstructed by hand.
           </p>
           <p>
-            Orbit puts every IT work object in one Postgres schema under one organisation. Each object links to its
+            Orbit puts every IT work object in one Postgres schema under one organization. Each object links to its
             neighbours, emits an immutable audit event on every mutation, and is pushed live to open browsers.
           </p>
 
@@ -940,7 +940,7 @@
         <section id="s4">
           <h2><span class="n">04</span>Tenant isolation</h2>
           <p>
-            One schema holds every organisation's data, with <code>org_id</code> on every tenant table. That is the
+            One schema holds every organization's data, with <code>org_id</code> on every tenant table. That is the
             cheapest tenancy model to migrate and the easiest to get catastrophically wrong, so the isolation is
             enforced three times over, at three different levels, and each layer assumes the others may fail.
           </p>
@@ -968,7 +968,7 @@
                       <code>withOrgScope</code> opens a transaction, runs <code>SET LOCAL app.org_id</code> and
                       <code>SET LOCAL app.user_id</code>, and hands the transaction handle to the service. Services
                       never see the root connection. <code>INV-1</code> forbids raw <code>db.*</code> outside the db
-                      layer and the two modules that legitimately read across organisations: login by email, and the
+                      layer and the two modules that legitimately read across organizations: login by email, and the
                       health probe.
                     </p>
                   </div>
@@ -1011,16 +1011,16 @@ CREATE POLICY tickets_org ON tickets
             <code>orgs</code>, <code>users</code>, <code>sessions</code>, <code>password_reset_tokens</code>,
             <code>org_counters</code> and <code>scheduler_state</code> are system tables, and
             <code>pending_emails</code> has a nullable <code>org_id</code> because a password reset for an account whose
-            organisation is not yet known belongs to no organisation.
+            organization is not yet known belongs to no organization.
           </p>
 
           <h3>Object-level authorization is a chokepoint, not a sprinkle</h3>
           <p>
-            Organisation scope stops cross-tenant reads. It does nothing about a requester reading a colleague's ticket
-            in the same organisation. Each module has one
+            Organization scope stops cross-tenant reads. It does nothing about a requester reading a colleague's ticket
+            in the same organization. Each module has one
             <code>load&lt;Entity&gt;</code> middleware that fetches the row inside the scope and applies the ownership
             rule before the handler runs &mdash; a requester sees tickets they raised, approvals addressed to them,
-            assets assigned to them, published articles; an agent and above see everything in the organisation. Every
+            assets assigned to them, published articles; an agent and above see everything in the organization. Every
             <code>/:id</code> route <em>and every sub-resource route</em> under it &mdash; <code>/comments</code>,
             <code>/timeline</code> &mdash; carries the same guard, because sub-resources are where this is usually
             forgotten. <code>INV-14</code> fails the build if a new one omits it.
@@ -1072,7 +1072,7 @@ CREATE POLICY tickets_org ON tickets
                 <tr>
                   <td>Assets</td>
                   <td class="kind">assets, asset_types</td>
-                  <td>Tag unique per organisation; assignment history lives in the audit trail, not a column</td>
+                  <td>Tag unique per organization; assignment history lives in the audit trail, not a column</td>
                 </tr>
                 <tr>
                   <td>Projects</td>
@@ -1150,8 +1150,8 @@ CREATE POLICY tickets_org ON tickets
                 </tr>
                 <tr>
                   <td>Two tickets claiming one number</td>
-                  <td>A counter row updated inside the creating transaction, serialised by its own row lock</td>
-                  <td class="kind">Serialised; backed by a per-org uniqueness constraint</td>
+                  <td>A counter row updated inside the creating transaction, serialized by its own row lock</td>
+                  <td class="kind">Serialized; backed by a per-org uniqueness constraint</td>
                 </tr>
                 <tr>
                   <td>Two scheduler ticks overlapping</td>
@@ -1189,11 +1189,11 @@ CREATE POLICY tickets_org ON tickets
           <ul class="plain">
             <li>
               <code>GET /api/v1/events/stream</code> is authenticated like any other route, and the hub keys clients as
-              <code>Map&lt;orgId, Set&lt;client&gt;&gt;</code> so fan-out cannot cross an organisation.
+              <code>Map&lt;orgId, Set&lt;client&gt;&gt;</code> so fan-out cannot cross an organization.
             </li>
             <li>Five concurrent streams per user. The sixth is refused with 429 before a single header is written.</li>
             <li>
-              A per-organisation ring buffer of the last 500 events serves <code>Last-Event-ID</code>, so a reconnecting
+              A per-organization ring buffer of the last 500 events serves <code>Last-Event-ID</code>, so a reconnecting
               browser resumes rather than reloads.
             </li>
             <li>
@@ -1239,7 +1239,7 @@ CREATE POLICY tickets_org ON tickets
                 <div class="node">
                   <b>Automation</b>
                   <span
-                    >Scheduled rules sweep the organisation's open tickets. Event-driven rules fire from the services.
+                    >Scheduled rules sweep the organization's open tickets. Event-driven rules fire from the services.
                     Chains stop at three levels.</span
                   >
                 </div>
@@ -1291,7 +1291,7 @@ CREATE POLICY tickets_org ON tickets
               the JS budget is 400&nbsp;KB.
             </li>
             <li>
-              <strong>Design tokens are the only source of colour.</strong> They live once, in one stylesheet,
+              <strong>Design tokens are the only source of color.</strong> They live once, in one stylesheet,
               re-exported to Tailwind. <code>INV-7</code> forbids a hex literal in any component file, which is what
               keeps both themes honest.
             </li>
@@ -1369,7 +1369,7 @@ CREATE POLICY tickets_org ON tickets
                   <td>Sub-resource IDOR, private notes reaching a requester, PII in logs</td>
                   <td>
                     The same guard on every sub-resource; field gating in <code>serialize()</code>; log redaction; no
-                    stack traces in the error envelope; cross-organisation reads answer 404
+                    stack traces in the error envelope; cross-organization reads answer 404
                   </td>
                 </tr>
                 <tr>
@@ -1457,7 +1457,7 @@ CREATE POLICY tickets_org ON tickets
                 </tr>
                 <tr>
                   <td class="id">INV-7</td>
-                  <td>Design tokens are the only source of colour &mdash; no hex literals in components</td>
+                  <td>Design tokens are the only source of color &mdash; no hex literals in components</td>
                   <td class="kind">pattern</td>
                 </tr>
                 <tr>
@@ -1490,7 +1490,7 @@ CREATE POLICY tickets_org ON tickets
                 </tr>
                 <tr>
                   <td class="id">INV-13</td>
-                  <td>Per-organisation uniqueness on ticket and change numbers, asset tags and article slugs</td>
+                  <td>Per-organization uniqueness on ticket and change numbers, asset tags and article slugs</td>
                   <td class="kind">constraint &times;4</td>
                 </tr>
                 <tr>
@@ -1510,7 +1510,7 @@ CREATE POLICY tickets_org ON tickets
                 </tr>
                 <tr>
                   <td class="id">INV-17</td>
-                  <td>The event hub enforces authentication, organisation scoping and the per-user stream cap</td>
+                  <td>The event hub enforces authentication, organization scoping and the per-user stream cap</td>
                   <td class="kind"><span class="flag flag--manual">manual</span></td>
                 </tr>
                 <tr>
