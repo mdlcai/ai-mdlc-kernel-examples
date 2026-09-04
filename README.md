@@ -2,7 +2,7 @@
 
 # MDLC — Example Builds
 
-### Ten real applications, each built end-to-end by the MDLC methodology.
+### Twelve real applications, each built end-to-end by the MDLC methodology.
 
 **[🌐 Browse the live gallery →](https://mdlcai.github.io/ai-mdlc-kernel-examples/)**
 
@@ -23,6 +23,7 @@ Open any folder and read it top to bottom — `RESEARCH.md` → `ARCHITECTURE.md
 | | App | What it is | Gates passed |
 |---|-----|-----------|--------------|
 | [<img src="cyberops/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/cyberops/index.html) | **[CyberOps](cyberops/)** | **Live at [cyberops.mdlc.ai](https://cyberops.mdlc.ai).** Multi-tenant security operations: asset discovery with ownership verification, real DNS/HTTP/TLS recon, AI-assisted pentest planning behind a human approval gate, OSINT, and SOC 2 / PCI / OWASP posture mapping. | 29 tests · 17/17 smoke · 15/15 invariants · Reviewer PASS after 4 IDOR rounds |
+| [<img src="orbit/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/orbit/index.html) | **[Orbit](orbit/)** | IT service management: tickets with SLA timers and escalation, change approvals, assets, projects, a knowledge base, and rule-driven automation. Next.js + Express on PostgreSQL, multi-tenant, Argon2id sessions. The largest build here: 28 screens measured at three viewports in both themes. | 106 unit tests · 9 e2e workflows · 22 invariants · 168 audit cells |
 | [<img src="tradewind/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/tradewind/index.html) | **[Tradewind](tradewind/)** | Services marketplace with milestone escrow — fund, release on approval, payouts, disputes, and verified Stripe webhooks, every movement an immutable double-entry ledger entry that always balances. | 29 tests · 17/17 smoke · 12 invariants (double-entry Σ=0) · 0 crit/high |
 | [<img src="sentinel/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/sentinel/index.html) | **[Sentinel](sentinel/)** | Unified AppSec scanning — runs OSS scanners (SAST, SCA, DAST, secrets, IaC) in sandboxed containers, then dedupes and prioritizes into one dashboard. | 21 tests · 23/23 smoke · 11/11 invariants · 0 crit/high |
 | [<img src="mcpsentinel/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/mcpsentinel/index.html) | **[MCP Sentinel](mcpsentinel/)** | Audits the security posture of MCP servers — tool poisoning, scope, leaked secrets, rug pulls, missing auth. | 37 tests · 17/17 smoke · 10/10 invariants |
