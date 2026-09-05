@@ -4,9 +4,9 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>MDLC — Example Builds</title>
-<meta name="description" content="Twelve real applications, each built end-to-end by the MDLC methodology, from a one-page blueprint to a gate-passing build." />
+<meta name="description" content="Eleven real applications, each built end-to-end by the MDLC methodology, from a one-page blueprint to a gate-passing build." />
 <meta property="og:title" content="MDLC — Example Builds" />
-<meta property="og:description" content="Twelve real applications, each built end-to-end by the MDLC methodology. Live previews, architecture, and the full build report for each." />
+<meta property="og:description" content="Eleven real applications, each built end-to-end by the MDLC methodology. Live previews, architecture, and the full build report for each." />
 <meta property="og:type" content="website" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -232,13 +232,13 @@
 
   <header class="hero">
     <div class="eyebrow"><span class="gl">✦</span> Reference Builds <span class="gl">→</span> Built with MDLC</div>
-    <h1>Twelve real apps,<br><em>built by the methodology.</em></h1>
+    <h1>Eleven real apps,<br><em>built by the methodology.</em></h1>
     <p class="sub">Each app below started as a one-page <code>RESEARCH.md</code> blueprint and came out the other side as a working, reviewed application. The architecture, the spec, the decisions, and the full build report are all there to prove it.</p>
     <div class="actions">
       <a class="pricing-cta pricing-cta-secondary" href="https://mdlc.ai/catches.html" style="display:inline-flex;align-items:center;gap:0.5rem;margin-top:0;padding:1rem 2.25rem;font-size:0.8rem;">See everything it catches →</a>
     </div>
     <div class="stats">
-      <span>12 apps, 0 hand-written</span>
+      <span>11 apps, 0 hand-written</span>
       <span>175 smoke flows passed</span>
       <span>every gate, with receipts</span>
     </div>
@@ -265,17 +265,6 @@
         <p>A multi-tenant security operations platform: asset discovery with ownership verification, real DNS/HTTP/TLS reconnaissance plus a signature engine, AI-assisted pentest planning behind a human approval gate, OSINT correlation, and SOC 2 / PCI / OWASP posture mapping. NestJS 11, Next.js 15, PostgreSQL 18, Redis and BullMQ. The independent Reviewer Gate failed the build on an authorization check that was written and tested but never called, and held it through four rounds of IDOR fixes.</p>
         <div class="gates"><span class="gate">29 tests</span><span class="gate">17/17 smoke</span><span class="gate">15/15 invariants</span><span class="gate">Reviewer PASS</span></div>
         <div class="links"><a class="live" href="https://cyberops.mdlc.ai" target="_blank" rel="noopener">Visit live site &#8599;</a><a class="lead" href="cyberops/index.html">Preview</a><a href="cyberops/architecture.html">Architecture</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/cyberops/REPORT.md">Build report</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/cyberops/SECURITY-AUDIT.md">Security audit</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/tree/main/cyberops">Files &#8599;</a></div>
-      </div>
-    </article>
-
-    <article class="card featured">
-      <a class="shot" href="orbit/index.html"><img src="orbit/preview.png" alt="Orbit" loading="lazy"><span class="open"><span>Open preview &rarr;</span></span></a>
-      <div class="body">
-        <h3>Orbit <span class="badge">IT service management</span></h3>
-        <p class="featured-note">The largest build in this gallery: 28 screens, each rendered and measured at three viewports in both themes. The screen atlas is every one of them.</p>
-        <p>An IT operations platform covering tickets with SLA timers and escalation, change requests with approval chains, assets, projects, a knowledge base, and rule-driven automation. Multi-tenant on Next.js and Express with PostgreSQL, server-side sessions and Argon2id. The independent Reviewer Gate ran three rounds and found what the tests could not: scheduled automation rules that stamped a &ldquo;last run&rdquo; timestamp without ever evaluating a condition or applying an action, an automation dispatcher wired to one trigger of seven, and a dashboard endpoint handing org-wide figures to a role the interface hid them from. Its audit-trail pagination ordered by one key while its cursor filtered on another &mdash; which was also the cause of the suite&rsquo;s intermittent failures.</p>
-        <div class="gates"><span class="gate">106 unit tests</span><span class="gate">9 e2e workflows</span><span class="gate">22 invariants</span><span class="gate">168 audit cells</span></div>
-        <div class="links"><a class="lead" href="orbit/index.html">Screen atlas</a><a href="orbit/architecture.html">Architecture</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/orbit/REPORT.md">Build report</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/orbit/SECURITY-AUDIT.md">Security audit</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/tree/main/orbit">Files &#8599;</a></div>
       </div>
     </article>
 
