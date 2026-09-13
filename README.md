@@ -1,6 +1,6 @@
 <div align="center">
 
-# MDLC — Example Builds
+# MDLC - Example Builds
 
 ### Eleven real applications, each built end-to-end by the MDLC methodology.
 
