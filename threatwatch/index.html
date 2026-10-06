@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ThreatWatch Build Dossier</title>
+<meta name="description" content="ThreatWatch, a multi-tenant security operations platform built end to end by MDLC. Every gate sent it back at least once. This is the record of what they caught and how each one turned green.">
+<meta property="og:title" content="ThreatWatch: every gate failed it first">
+<meta property="og:description" content="A multi-tenant SOC platform built by MDLC on Claude Opus 5.5. Reviewer, security, design and web baseline each failed it before passing. The full record, with receipts.">
+<meta property="og:image" content="https://mdlcai.github.io/ai-mdlc-kernel-examples/threatwatch/preview.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Audiowide&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ThreatWatch's own tokens (web/src globals): crimson for failure, telemetry teal for pass. */
+:root{
+  --bg:#fbf7f8;--surface:#ffffff;--raised:#f7f0f2;--hover:#f3e9ec;--border:#e6d8dc;--border-strong:#cdb9bf;
+  --text:#1a0f13;--muted:#6b5a60;--faint:#806d73;
+  --fail:#d61f45;--fail-bg:rgba(214,31,69,.08);--pass:#0e7c86;--pass-bg:rgba(14,124,134,.09);--warn:#b45309;
+  --grid:rgba(214,31,69,.055);--shadow:0 24px 60px -36px rgba(26,15,19,.35);
+  --display:'Audiowide',system-ui,sans-serif;--sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Consolas,monospace;
+  --r:10px;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e090b;--surface:#160d11;--raised:#1a1015;--hover:#21141a;--border:#2e1d24;--border-strong:#45303a;
+  --text:#f4ecee;--muted:#a8959b;--faint:#8c787e;
+  --fail:#ff4d6a;--fail-bg:rgba(255,77,106,.1);--pass:#3dd6e0;--pass-bg:rgba(61,214,224,.09);--warn:#f59e0b;
+  --grid:rgba(255,77,106,.05);--shadow:0 30px 70px -40px rgba(0,0,0,.9);color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e090b;--surface:#160d11;--raised:#1a1015;--hover:#21141a;--border:#2e1d24;--border-strong:#45303a;
+  --text:#f4ecee;--muted:#a8959b;--faint:#8c787e;
+  --fail:#ff4d6a;--fail-bg:rgba(255,77,106,.1);--pass:#3dd6e0;--pass-bg:rgba(61,214,224,.09);--warn:#f59e0b;
+  --grid:rgba(255,77,106,.05);--shadow:0 30px 70px -40px rgba(0,0,0,.9);color-scheme:dark}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--pass);outline-offset:3px;border-radius:4px}
+.wrap{width:min(1180px,100% - 32px);margin-inline:auto}
+.mono{font-family:var(--mono)}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:0 0 14px}
+h2{font-family:var(--display);font-weight:400;font-size:clamp(26px,3.6vw,36px);line-height:1.12;margin:0 0 12px;letter-spacing:.01em}
+.lead{color:var(--muted);max-width:720px;margin:0}
+section{padding:72px 0 0}
+
+/* chips: the app's severity chip, reused for verdicts */
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.06em;
+  text-transform:uppercase;padding:2px 8px;border-radius:5px;border:1px solid currentColor;white-space:nowrap;line-height:1.6}
+.chip.fail{color:var(--fail);background:var(--fail-bg)}
+.chip.pass{color:var(--pass);background:var(--pass-bg)}
+.chip.warn{color:var(--warn)}
+
+/* ── Top bar ─────────────────────────────────────────── */
+.top{border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(8px);
+  position:sticky;top:0;z-index:20}
+.top .wrap{display:flex;align-items:center;gap:18px;height:60px}
+.mark{display:inline-flex;align-items:center;gap:10px;font-family:var(--display);font-size:17px;text-decoration:none;white-space:nowrap}
+.ring{width:18px;height:18px;border-radius:50%;border:2px solid var(--fail);display:grid;place-items:center;flex:none}
+.ring::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--fail)}
+.top nav{margin-left:auto;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.top nav a{font-family:var(--mono);font-size:12.5px;text-decoration:none;color:var(--muted);padding:7px 11px;border-radius:6px;white-space:nowrap}
+.top nav a:hover{color:var(--text);background:var(--hover)}
+.back{font-family:var(--mono);font-size:12.5px;text-decoration:none;color:var(--muted);padding:7px 11px;border:1px solid var(--border);border-radius:999px;white-space:nowrap}
+.back:hover{color:var(--text);border-color:var(--border-strong)}
+@media(max-width:720px){.top nav a:not(.keep){display:none}}
+
+/* ── Hero ────────────────────────────────────────────── */
+.hero{border-bottom:1px solid var(--border);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:44px 44px}
+.hero .wrap{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:48px;align-items:center;padding:76px 0 72px}
+@media(max-width:900px){.hero .wrap{grid-template-columns:1fr;padding:48px 0 52px;gap:36px}}
+.hero h1{font-family:var(--display);font-weight:400;font-size:clamp(38px,5.6vw,66px);line-height:1.04;margin:0;letter-spacing:.005em}
+.hero h1 .r{color:var(--fail);display:block}
+.hero h1 .g{color:var(--pass);display:block}
+.hero .lede{color:var(--muted);font-size:17px;max-width:560px;margin:22px 0 0}
+.cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}
+.btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:15px;text-decoration:none;padding:12px 18px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface)}
+.btn:hover{background:var(--hover)}
+.btn.primary{background:var(--fail);border-color:var(--fail);color:#fff}
+:root[data-theme="dark"] .btn.primary{color:#0e090b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn.primary{color:#0e090b}}
+.btn.primary:hover{filter:brightness(1.08)}
+.facts{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:28px;font-family:var(--mono);font-size:12px;color:var(--faint)}
+.facts b{color:var(--text);font-weight:500}
+
+.frame{background:var(--surface);border:1px solid var(--border-strong);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
+.frame .chrome{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+.frame .chrome i{width:9px;height:9px;border-radius:50%;background:var(--border-strong);display:inline-block}
+.frame .chrome span{margin-left:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.frame .chrome .live{margin-left:auto;color:var(--pass);display:inline-flex;align-items:center;gap:6px}
+.frame .chrome .live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--pass)}
+.frame a{display:block}
+.frame img{display:block;width:100%;height:auto;aspect-ratio:1280/820;object-fit:cover;object-position:top}
+
+/* ── Gate ledger (the signature) ─────────────────────── */
+.ledger{margin-top:30px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.lhead{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 18px;border-bottom:1px solid var(--border);
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.lhead .key{display:flex;gap:14px}
+.lhead .key span{display:inline-flex;align-items:center;gap:6px}
+.lhead .key span::before{content:"";width:10px;height:10px;border-radius:2px;background:var(--c)}
+.lrow{display:grid;grid-template-columns:200px minmax(0,1fr) 150px;gap:18px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border)}
+.lrow:last-child{border-bottom:0}
+.lname{font-weight:600;font-size:15px;line-height:1.3}
+.lname small{display:block;font-family:var(--mono);font-weight:400;font-size:11px;color:var(--faint);margin-top:3px}
+.cells{display:flex;gap:6px;flex-wrap:wrap}
+.cell{all:unset;box-sizing:border-box;cursor:pointer;width:46px;height:46px;border-radius:6px;display:grid;place-items:center;
+  font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.02em;border:1px solid;position:relative;
+  transition:transform .15s ease,box-shadow .15s ease}
+.cell.f{color:var(--fail);background:var(--fail-bg);border-color:color-mix(in srgb,var(--fail) 55%,transparent)}
+.cell.p{color:var(--bg);background:var(--pass);border-color:var(--pass)}
+.cell:hover{transform:translateY(-2px)}
+.cell[aria-pressed="true"]{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--text)}
+.cell:focus-visible{outline:2px solid var(--text);outline-offset:3px}
+.tally{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right}
+.tally b{color:var(--pass);font-weight:600}
+@media(max-width:760px){
+  .lrow{grid-template-columns:1fr;gap:10px}
+  .tally{text-align:left}
+  .cell{width:40px;height:40px}
+}
+.js .cell{opacity:0;transform:scale(.6)}
+.js .cell.in{opacity:1;transform:none;transition:opacity .25s ease,transform .35s cubic-bezier(.2,1.4,.4,1)}
+@media (prefers-reduced-motion:reduce){.js .cell{opacity:1;transform:none}.cell{transition:none}}
+
+.detail{margin-top:14px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--c,var(--border-strong));border-radius:var(--r);
+  padding:18px 20px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 20px;min-height:132px}
+.detail .dh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--faint)}
+.detail p{margin:8px 0 0;font-size:15px}
+.detail .fix{color:var(--muted);font-size:14px;margin-top:8px}
+.detail .fix b{color:var(--pass);font-weight:600}
+.detail a.src{align-self:start;font-family:var(--mono);font-size:12px;text-decoration:none;color:var(--muted);border:1px solid var(--border);padding:6px 10px;border-radius:6px;white-space:nowrap}
+.detail a.src:hover{color:var(--text);border-color:var(--border-strong)}
+@media(max-width:640px){.detail{grid-template-columns:1fr}.detail a.src{justify-self:start}}
+
+/* ── Catches: the app's Recent alerts list ───────────── */
+.feed{margin-top:28px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r)}
+.feed li{list-style:none;display:grid;grid-template-columns:78px minmax(0,1fr) auto;gap:6px 16px;padding:16px 18px;border-bottom:1px solid var(--border);align-items:start}
+.feed li:last-child{border-bottom:0}
+.feed ul{margin:0;padding:0}
+.feed .what{font-weight:500;line-height:1.45}
+.feed .why{display:block;color:var(--muted);font-weight:400;font-size:14px;margin-top:4px}
+.feed .who{font-family:var(--mono);font-size:11.5px;color:var(--faint);text-align:right;white-space:nowrap;line-height:1.9}
+.feed .who .chip{margin-left:6px}
+@media(max-width:700px){.feed li{grid-template-columns:1fr}.feed .who{text-align:left}}
+
+/* ── Held, not waived ────────────────────────────────── */
+.held{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:40px;align-items:center;margin-top:8px}
+@media(max-width:900px){.held{grid-template-columns:1fr}}
+.chart{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px 20px 14px}
+.chart svg{display:block;width:100%;height:auto}
+.chart .cap{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-top:8px}
+.held p{color:var(--muted);margin:0 0 14px}
+.held p strong{color:var(--text);font-weight:600}
+
+/* ── Governance ──────────────────────────────────────── */
+.gov{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:40px;align-items:start}
+@media(max-width:900px){.gov{grid-template-columns:1fr}}
+.gov p{color:var(--muted);margin:0 0 14px}
+.gov p strong{color:var(--text);font-weight:600}
+.split{display:flex;gap:2px;height:12px;border-radius:3px;overflow:hidden;margin:20px 0 8px}
+.split span{background:var(--pass)}
+.split span.h{background:var(--fail)}
+.splitkey{display:flex;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--faint)}
+pre.jsonl{margin:0;background:var(--raised);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;overflow-x:auto;
+  font:12.5px/1.75 var(--mono);color:var(--muted)}
+pre.jsonl .k{color:var(--faint)}
+pre.jsonl .v{color:var(--text)}
+pre.jsonl .o{color:var(--fail);font-weight:600}
+pre.jsonl .ok{color:var(--pass);font-weight:600}
+
+/* ── Receipt + screens ───────────────────────────────── */
+.duo{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:40px;align-items:start;margin-top:28px}
+@media(max-width:900px){.duo{grid-template-columns:1fr}}
+.receipt{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:22px 22px 18px;font-family:var(--mono);font-size:13px;
+  position:relative;box-shadow:var(--shadow)}
+.receipt::after{content:"";position:absolute;left:0;right:0;bottom:-8px;height:8px;
+  background:linear-gradient(-45deg,transparent 5px,var(--surface) 0) 0 0/10px 8px repeat-x,linear-gradient(45deg,transparent 5px,var(--surface) 0) 0 0/10px 8px repeat-x}
+.receipt h3{font-family:var(--display);font-weight:400;font-size:16px;text-align:center;margin:0 0 2px}
+.receipt .sub{text-align:center;color:var(--faint);font-size:11px;margin-bottom:12px}
+.receipt dl{margin:0}
+.receipt .grp{border-top:1px dashed var(--border-strong);padding:10px 0 6px}
+.receipt .ln{display:flex;justify-content:space-between;gap:12px;padding:2px 0}
+.receipt dt{color:var(--muted)}
+.receipt dd{margin:0;text-align:right;color:var(--text)}
+.receipt dd.ok{color:var(--pass)}
+.receipt .end{border-top:1px dashed var(--border-strong);padding-top:10px;text-align:center;color:var(--faint);font-size:11px}
+.shots{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:16px}
+.shots .phone{border:1px solid var(--border-strong);border-radius:20px;padding:6px;background:var(--surface);overflow:hidden;align-self:start}
+.shots .phone img{display:block;width:100%;height:auto;border-radius:14px;aspect-ratio:375/760;object-fit:cover;object-position:top}
+.shots .tall img{aspect-ratio:1280/1060}
+.shots figcaption{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-top:8px}
+.shots figure{margin:0}
+.shots a{text-decoration:none;display:block}
+@media(max-width:560px){.shots{grid-template-columns:1fr}.shots .phone{max-width:200px}}
+
+/* ── Honest posture + files ──────────────────────────── */
+.posture{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px;margin-top:26px}
+.posture div{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px}
+.posture h3{font-size:15px;margin:0 0 6px}
+.posture p{margin:0;color:var(--muted);font-size:14.5px}
+.files{width:100%;border-collapse:collapse;margin-top:26px;font-size:14.5px}
+.files th,.files td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+.files th{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:500}
+.files td:first-child{white-space:nowrap}
+.files a{color:var(--text);text-decoration-color:var(--border-strong);text-underline-offset:3px}
+.files a:hover{text-decoration-color:var(--fail)}
+.files td.d{color:var(--muted)}
+@media(max-width:640px){.files td:first-child{white-space:normal}}
+
+footer{margin-top:90px;border-top:1px solid var(--border);padding:44px 0 60px;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:44px 44px}
+footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center}
+footer p{margin:0;color:var(--muted);font-size:14px}
+footer .big{font-family:var(--display);font-size:22px;color:var(--text);margin-bottom:4px}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="back" href="../index.html" aria-label="Back to the MDLC examples gallery" data-mdlc-backlink>&larr; Gallery</a>
+    <a class="mark" href="#top"><span class="ring" aria-hidden="true"></span>ThreatWatch</a>
+    <nav aria-label="Dossier">
+      <a href="#ledger">Gates</a>
+      <a href="#caught">Caught</a>
+      <a href="#governance">Governance</a>
+      <a class="keep" href="screens.html">Screens</a>
+      <a class="keep" href="architecture.html">Architecture</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <div class="hero">
+    <div class="wrap">
+      <div>
+        <p class="eyebrow">MDLC build dossier &middot; v0.3.3</p>
+        <h1><span class="r">Every gate failed it first.</span><span class="g">Then every gate passed.</span></h1>
+        <p class="lede">ThreatWatch is a multi-tenant security operations platform: signed event ingest, detection and correlation on Temporal, alert triage, a live dashboard and threat map. MDLC built it end to end from a one-page blueprint. The reviewer, the security auditor, the design scorer and the web baseline each sent it back at least once. This page is the record of what they caught and how each failure became a pass.</p>
+        <div class="cta">
+          <a class="btn primary" href="#ledger">See the gate ledger</a>
+          <a class="btn" href="screens.html">Browse all 29 screens</a>
+        </div>
+        <div class="facts">
+          <span><b>17.3 h</b> active</span>
+          <span><b>1</b> session, <b>29</b> subagents</span>
+          <span><b>Claude Opus 5.5</b></span>
+          <span><b>10</b> features in <b>6</b> waves</span>
+        </div>
+      </div>
+      <div class="frame">
+        <div class="chrome"><i></i><i></i><i></i><span>https://localhost:9443/dashboard</span><span class="live">LIVE</span></div>
+        <a href="screens.html#dashboard"><img src="media/dashboard-1280.png" width="1280" height="1836" alt="The ThreatWatch dashboard: open critical and high alerts, event trend, threat map, top sources and recent alerts"></a>
+      </div>
+    </div>
+  </div>
+
+  <section id="ledger" class="wrap" aria-labelledby="ledger-h">
+    <p class="eyebrow">Gate ledger</p>
+    <h2 id="ledger-h">Twenty-three runs. Fifteen sent it back.</h2>
+    <p class="lead">Each square is one run of one gate, in the order it happened. A red square sent the build back. The bar a gate measures against never moved: the build changed until it cleared. Select any square to see what that run found.</p>
+
+    <div class="ledger" id="gates">
+      <div class="lhead"><span>Gate &middot; attempts in order</span><span class="key"><span style="--c:var(--fail)">Sent back</span><span style="--c:var(--pass)">Passed</span></span></div>
+      <noscript><div class="lrow"><p class="lead">The interactive ledger needs JavaScript. Every run is listed in the <a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/threatwatch/REPORT.md">build report</a>.</p></div></noscript>
+    </div>
+    <div class="detail" id="detail" aria-live="polite"></div>
+  </section>
+
+  <section id="caught" class="wrap" aria-labelledby="caught-h">
+    <p class="eyebrow">What the gates caught</p>
+    <h2 id="caught-h">Recent alerts, from the build itself.</h2>
+    <p class="lead">Every one of these was written, committed, and passing its own tests when a gate flagged it. None of them would have shown up by running the app and clicking around.</p>
+    <div class="feed"><ul>
+      <li><span class="chip fail">High</span>
+        <span class="what">Runtime images were built on stale bases with fixable critical and high OS CVEs.<span class="why">Trivy found 9 critical and 108 high in the API and worker images. Rebuilt on patched bases with the npm CLI stripped out; the unfixable upstream residue is reasoned in ADR-028.</span></span>
+        <span class="who">Security S1-3<span class="chip pass">Resolved</span></span></li>
+      <li><span class="chip fail">Medium</span>
+        <span class="what">Outbound webhooks checked the destination IP, then connected to whatever DNS said next.<span class="why">A DNS-rebinding window let a customer webhook reach an internal address after passing the SSRF guard. Fixed by pinning the connection to the validated IP, then a reviewer insisted that pinned path get its own test.</span></span>
+        <span class="who">Security S1-1 &middot; R2-4<span class="chip pass">Resolved</span></span></li>
+      <li><span class="chip fail">Medium</span>
+        <span class="what">Sign-in, registration and account forms had no <code class="mono">method="post"</code>.<span class="why">Before JavaScript loads, a submit would put the password in the URL, where it lands in history and proxy logs. A live probe confirmed the server accepted such URLs.</span></span>
+        <span class="who">Security S1-2<span class="chip pass">Resolved</span></span></li>
+      <li><span class="chip fail">Fail</span>
+        <span class="what">The fix for duplicate requests broke duplicate requests.<span class="why">Round 1 caught concurrent requests with the same Idempotency-Key both running. The fix dropped the stored result when a client disconnected, so a retry ran the side effect again. Round 2 caught the regression; it was reverted and re-fixed.</span></span>
+        <span class="who">Reviewer R1-8 &rarr; R2-1<span class="chip pass">Resolved</span></span></li>
+      <li><span class="chip fail">Fail</span>
+        <span class="what">A crafted pagination cursor returned a 500 on nine list endpoints.<span class="why">Now a 400 with a field error. The next round found five more lists that still ignored a bad cursor silently.</span></span>
+        <span class="who">Reviewer R1-2 &middot; R2-3<span class="chip pass">Resolved</span></span></li>
+      <li><span class="chip fail">Fail</span>
+        <span class="what">Scheduled-job tests checked what the job returned, not what it did.<span class="why">Five of seven Temporal job tests asserted returned counts. The invariant requires asserting the effect in the database. They were rewritten to drive each job per organization and check the rows.</span></span>
+        <span class="who">Reviewer R1-1 &middot; INV-11<span class="chip pass">Resolved</span></span></li>
+      <li><span class="chip fail">Fail</span>
+        <span class="what">The alert list promised live updates and polled every 20 seconds instead.<span class="why">The WebSocket hook existed, but only the dashboard used it.</span></span>
+        <span class="who">Reviewer R1-3<span class="chip pass">Resolved</span></span></li>
+      <li><span class="chip warn">&#x2717; Design</span>
+        <span class="what">The integration-health tile rendered every integration: a page 14,708 px tall on a phone.<span class="why">Now the eight least healthy, with a link to the rest. The same pass caught IP addresses split mid-octet and table headers that had drifted from the rest of the app.</span></span>
+        <span class="who">Design score 1<span class="chip pass">Resolved</span></span></li>
+      <li><span class="chip fail">Fail</span>
+        <span class="what">Twenty-six loading skeletons used an ARIA label on an element that cannot have one.<span class="why">Surfaced only when a baseline run happened to snapshot the dashboard mid-load. Fixed across all 26, and reviewed again in round 4.</span></span>
+        <span class="who">Web baseline 15:36 &middot; RB-7<span class="chip pass">Resolved</span></span></li>
+    </ul></div>
+  </section>
+
+  <section id="held" class="wrap" aria-labelledby="held-h">
+    <div class="held">
+      <div>
+        <p class="eyebrow">Held, not waived</p>
+        <h2 id="held-h">The floor was 80. It stayed 80.</h2>
+        <p>The dashboard's Lighthouse performance score has a floor of 80. Six measurements came in under it, several on a host loaded by unrelated work. <strong>None was accepted or explained away.</strong> Each was re-measured on unchanged code.</p>
+        <p>The reruns kept surfacing real defects in between: a hydration mismatch, a pulse animation that ignored reduced motion, the skeleton ARIA bug. Those were fixed at the root. The gate passed at 81, with accessibility 100 on both the landing page and the dashboard.</p>
+      </div>
+      <figure class="chart" style="margin:0">
+        <svg viewBox="0 0 520 230" role="img" aria-labelledby="perf-t">
+          <title id="perf-t">Dashboard Lighthouse performance across seven definitive runs: 78, 79, 77, 79, 77, 75, then 81. The floor is 80.</title>
+          <g font-family="JetBrains Mono, monospace" font-size="11" fill="var(--faint)">
+            <text x="0" y="24">90</text><text x="0" y="118">80</text><text x="0" y="212">70</text>
+          </g>
+          <line x1="28" x2="520" y1="20" y2="20" stroke="var(--border)"/>
+          <line x1="28" x2="520" y1="208" y2="208" stroke="var(--border)"/>
+          <line x1="28" x2="520" y1="114" y2="114" stroke="var(--pass)" stroke-dasharray="5 5" stroke-width="1.5"/>
+          <text x="516" y="106" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="11" fill="var(--pass)">floor 80</text>
+          <g id="bars"></g>
+        </svg>
+        <figcaption class="cap">Definitive <code>--full</code> runs, 2026-10-05 UTC. Only runs that recorded a dashboard score are shown.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="governance" class="wrap" aria-labelledby="gov-h">
+    <div class="gov">
+      <div>
+        <p class="eyebrow">Governance</p>
+        <h2 id="gov-h">Anything touching auth waited for a human.</h2>
+        <p>Every commit was classified by what it changed and written to an append-only ledger: <strong>40 decision records over 23 changes</strong>. Eleven changes cleared automatically. <strong>Twelve were held for a person</strong> because they touched authentication, authorization, the security boundary or infrastructure. Nothing was blocked.</p>
+        <p>At the end, the build tried to commit the ledger itself. The guard refused it as audit tampering, so the last commit of that file is a human's to make.</p>
+        <div class="split" role="img" aria-label="23 changes: 11 auto-approved, 12 escalated to human approval">
+          <span class="h" style="flex:12"></span><span style="flex:11"></span>
+        </div>
+        <div class="splitkey"><span style="color:var(--fail)">12 held for human approval</span><span style="color:var(--pass)">11 auto-approved</span><span>0 blocked</span></div>
+      </div>
+      <pre class="jsonl" aria-label="Two records from GOVERNANCE-DECISIONS.jsonl, trimmed"><span class="k">{"id":</span><span class="v">"GD-0001"</span><span class="k">,"change":</span><span class="v">"F-1"</span><span class="k">,</span>
+<span class="k"> "category":[</span><span class="v">"api","application","authentication",</span>
+<span class="v">   … "security-boundary","tests","unknown"</span><span class="k">],</span>
+<span class="k"> "outcome":</span><span class="o">"HUMAN_APPROVAL"</span><span class="k">,</span>
+<span class="k"> "reason":</span><span class="v">"minimum for project authentication+</span>
+<span class="v">   dependencies+infrastructure+security-boundary+unknown"</span><span class="k">}</span>
+
+<span class="k">{"id":</span><span class="v">"GD-0030"</span><span class="k">,"change":</span><span class="v">"F-1"</span><span class="k">,"supersedes":</span><span class="v">"GD-0001"</span><span class="k">,</span>
+<span class="k"> "outcome":</span><span class="ok">"AUTO_APPROVE"</span><span class="k">,"approver":</span><span class="v">"human"</span><span class="k">,</span>
+<span class="k"> "reason":</span><span class="v">"approved by human"</span><span class="k">}</span></pre>
+    </div>
+  </section>
+
+  <section id="product" class="wrap" aria-labelledby="prod-h">
+    <p class="eyebrow">The product</p>
+    <h2 id="prod-h">Twenty-nine screens, measured at three widths in two themes.</h2>
+    <p class="lead">Every screen below was captured from the running stack. Each one was checked at 375, 768 and 1280 px in light and dark: 145 cells for layout overflow, contrast, keyboard focus, axe, console errors and Core Web Vitals.</p>
+    <div class="duo">
+      <div class="receipt" aria-label="Build receipt">
+        <h3>ThreatWatch</h3>
+        <div class="sub">v0.3.3 &middot; tag at b2597c7 &middot; 2026-10-05</div>
+        <dl>
+          <div class="grp">
+            <div class="ln"><dt>Server tests</dt><dd class="ok">403 / 403</dd></div>
+            <div class="ln"><dt>Web component tests</dt><dd class="ok">15 / 15</dd></div>
+            <div class="ln"><dt>End-to-end</dt><dd class="ok">42 / 42</dd></div>
+            <div class="ln"><dt>Smoke, live stack</dt><dd class="ok">24 / 24</dd></div>
+            <div class="ln"><dt>Coverage (floor 70%)</dt><dd>93.29%</dd></div>
+          </div>
+          <div class="grp">
+            <div class="ln"><dt>Invariants</dt><dd>43</dd></div>
+            <div class="ln"><dt>&nbsp; machine-proven</dt><dd>42</dd></div>
+            <div class="ln"><dt>&nbsp; manual, verdict</dt><dd class="ok">1 PASS</dd></div>
+            <div class="ln"><dt>Compliance</dt><dd>50&#x2713; 1&#x26A0; 0&#x2717;</dd></div>
+            <div class="ln"><dt>Baseline cells</dt><dd class="ok">145 / 145</dd></div>
+            <div class="ln"><dt>Lighthouse a11y</dt><dd class="ok">100 / 100</dd></div>
+          </div>
+          <div class="grp">
+            <div class="ln"><dt>Screens</dt><dd>29</dd></div>
+            <div class="ln"><dt>Public endpoints</dt><dd>78</dd></div>
+            <div class="ln"><dt>ADRs</dt><dd>32</dd></div>
+            <div class="ln"><dt>Commits</dt><dd>30</dd></div>
+          </div>
+          <div class="grp">
+            <div class="ln"><dt>Active time</dt><dd>17.3 h</dd></div>
+            <div class="ln"><dt>Assistant turns</dt><dd>6,289</dd></div>
+            <div class="ln"><dt>Output tokens</dt><dd>4.1 M</dd></div>
+            <div class="ln"><dt>Cache-read tokens</dt><dd>652.6 M</dd></div>
+          </div>
+        </dl>
+        <div class="end">Measured by the build&rsquo;s own pinned runners</div>
+      </div>
+      <div class="shots">
+        <figure class="tall"><a href="screens.html#landing" class="frame"><img src="media/landing-1280.png" width="1280" height="820" alt="ThreatWatch landing page: See every threat. Act on the right one." loading="lazy" style="aspect-ratio:1280/820"></a>
+          <figcaption>Landing, 1280 px &middot; performance 94, accessibility 100</figcaption></figure>
+        <figure><a href="screens.html#mobile" class="phone"><img src="media/dashboard-375.png" width="375" height="3389" alt="ThreatWatch dashboard on a 375 px phone" loading="lazy"></a>
+          <figcaption>Dashboard, 375 px</figcaption></figure>
+      </div>
+    </div>
+    <div class="cta"><a class="btn primary" href="screens.html">Browse all 29 screens</a><a class="btn" href="architecture.html">System architecture</a></div>
+  </section>
+
+  <section id="posture" class="wrap" aria-labelledby="posture-h">
+    <p class="eyebrow">Honest posture</p>
+    <h2 id="posture-h">What this build does not claim.</h2>
+    <div class="posture">
+      <div><h3>It runs locally</h3><p>The whole stack ships as Docker Compose behind Caddy TLS on <code class="mono">localhost:9443</code>. There is no public deployment of this build.</p></div>
+      <div><h3>Payments are deferred</h3><p>The blueprint asked for them; no workflow charges money, so ADR-006 defers them and keeps the money invariant in place for later.</p></div>
+      <div><h3>Scale is not measured</h3><p>Built for the small tier: one API, one worker, in-memory rate limits. Availability and horizontal-scale metrics are recorded as not measured.</p></div>
+      <div><h3>Four low findings remain</h3><p>Round 4 passed with four LOW advisories, none correctness-class, such as a search count label that screen readers skip. One compliance item is &#x26A0;: volume encryption is left to the deploy target.</p></div>
+      <div><h3>One drift line waits on a person</h3><p>The drift gate reads 41 of 42 because the governance ledger is uncommitted, and committing it is a human action by design.</p></div>
+    </div>
+  </section>
+
+  <section id="files" class="wrap" aria-labelledby="files-h">
+    <p class="eyebrow">Evidence pack</p>
+    <h2 id="files-h">Read it in the order it was written.</h2>
+    <table class="files">
+      <thead><tr><th scope="col">File</th><th scope="col">What it is</th></tr></thead>
+      <tbody>
+        <tr><td><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/threatwatch/RESEARCH.md">RESEARCH.md</a></td><td class="d">The blueprint: product vision, 12 key workflows, threat model, market research, GO decision.</td></tr>
+        <tr><td><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/threatwatch/ARCHITECTURE.md">ARCHITECTURE.md</a> &middot; <a href="architecture.html">diagram</a></td><td class="d">System design and the 43 invariants, each tied to the proof that enforces it.</td></tr>
+        <tr><td><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/threatwatch/SPEC.md">SPEC.md</a></td><td class="d">29 screens, 78 endpoints, workflows W1 to W12 and the error contract.</td></tr>
+        <tr><td><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/threatwatch/DECISIONS.md">DECISIONS.md</a></td><td class="d">32 ADRs, including every accepted residual and why.</td></tr>
+        <tr><td><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/tree/main/threatwatch/evidence/reviewer">Reviewer rounds</a></td><td class="d">Five independent review reports, verbatim, from round 1 FAIL to round 4 PASS.</td></tr>
+        <tr><td><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/tree/main/threatwatch/evidence/security">Security passes</a></td><td class="d">Three audit passes: scanners, live probes and manual review of auth, ingest, SSRF and outboxes.</td></tr>
+        <tr><td><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/tree/main/threatwatch/evidence/design">Design scores</a></td><td class="d">Three design-rubric scorings of all 29 screens, from 7 &#x2717; to 0 &#x2717;.</td></tr>
+        <tr><td><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/threatwatch/COMPLIANCE.md">COMPLIANCE.md</a></td><td class="d">Control mapping with evidence: 50 &#x2713;, 1 &#x26A0;, 0 &#x2717;.</td></tr>
+        <tr><td><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/threatwatch/GOVERNANCE-DECISIONS.jsonl">GOVERNANCE-DECISIONS.jsonl</a></td><td class="d">The append-only decision ledger: 40 records, 12 human approvals.</td></tr>
+        <tr><td><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/threatwatch/REPORT.md">REPORT.md</a></td><td class="d">The full build report: every gate, every run, smoke log and usage receipt.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div><p class="big">Built with MDLC</p><p>From a one-page blueprint to a gated, reviewed build in Claude Code.</p></div>
+    <div class="cta" style="margin:0"><a class="btn" href="../index.html">All examples</a><a class="btn primary" href="https://mdlc.ai">mdlc.ai</a></div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var R='evidence/reviewer/',S='evidence/security/',D='evidence/design/',REP='https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/threatwatch/REPORT.md';
+  var GATES=[
+    {name:'Reviewer Gate',sub:'independent, fresh context',runs:[
+      {l:'R1',ok:0,c:'d700300',t:'6 FAIL findings across gate items 2, 5, 6, 8 and 9. A crafted cursor returned 500 on nine lists, the alert list polled instead of pushing live, job tests asserted counts instead of effects, POST /rules ignored Idempotency-Key, and two declared settings had no reader.',f:'Fixed in RB-1 (a9ee654); SPEC amendments in ADR-027.',src:R+'round-1.md'},
+      {l:'R2',ok:0,c:'a9ee654',t:'The idempotency fix regressed: a client disconnect dropped the stored result, so a retry ran the side effect again. Plus warnings for target size on 22 screens, five lists still lax on cursors, and the SSRF-pinned path untested.',f:'Reverted and re-fixed in RB-2 (c230639, ADR-029).',src:R+'round-2.md'},
+      {l:'R2&#x2713;',ok:1,c:'c230639',t:'Every round-2 finding re-derived from the diff, not from the commit message. 72/72 targeted server tests, 25/25 web tests.',src:R+'round-2-reverify.md'},
+      {l:'R3',ok:1,c:'3fee33a',t:'Wide close. No blocker or major findings; one minor (the live pulse kept animating under reduced motion) and seven notes.',f:'R3-1 fixed in RB-5 (826c475).',src:R+'round-3-wide-close.md'},
+      {l:'R4',ok:1,c:'5fc6924',t:'Checklist items 1 to 9 PASS. Four LOW advisories, none correctness-class.',src:R+'round-4.md'}]},
+    {name:'Security Audit',sub:'scanners, live probes, manual review',runs:[
+      {l:'P1',ok:0,c:'d700300',t:'1 HIGH (stale base images with fixable OS CVEs), 3 MEDIUM (webhook SSRF guard open to DNS rebinding, credential forms without method="post", npm CLI shipped in runtime images), 7 LOW, 1 INFO.',f:'Every HIGH and MEDIUM fixed in RB-1.',src:S+'pass-1.md'},
+      {l:'P2',ok:0,c:'a9ee654',t:'All pass-1 HIGH and MEDIUM findings verified fixed. Three new LOWs: idempotency on disconnect, SMTP STARTTLS not enforced in production, the pinned dispatch path untested.',f:'Fixed in RB-2, failing closed; accepted residue reasoned in ADR-028.',src:S+'pass-2.md'},
+      {l:'P3',ok:1,c:'c230639',t:'S2-1 to S2-3 fixed and verified. The re-scan is clean. No CRITICAL finding was raised in any pass.',src:S+'pass-3.md'}]},
+    {name:'Design Quality',sub:'29 screens, rubric-scored',runs:[
+      {l:'S1',ok:0,c:'d700300',t:'6 &#x2713; / 16 &#x26A0; / 7 &#x2717;. An integration-health tile 14,708 px tall on a phone, IP addresses split mid-octet, table headers drifting from the rest of the app, a chart legend for a series that was never drawn.',f:'Fixed in RB-1.',src:D+'score-1.md'},
+      {l:'S2',ok:0,c:'a9ee654',t:'21 &#x2713; / 7 &#x26A0; / 1 &#x2717;.',f:'Fixed in RB-2.',src:D+'score-2.md'},
+      {l:'S3',ok:1,c:'c230639',t:'24 &#x2713; / 5 &#x26A0; / 0 &#x2717;; measured gate posture 29 / 0 / 0. The five residuals are reasoned in ADR-030.',src:D+'score-3.md'}]},
+    {name:'Web baseline',sub:'--full, 145 cells per run',runs:[
+      {l:'09:36',ok:0,c:'c5dd7a9',t:'5 failures. React #418 hydration mismatch on the account screen; dashboard performance 78.',f:'Hydration fixed in RB-4.',src:REP},
+      {l:'10:29',ok:0,c:'3fee33a',t:'1 failure. The live pulse kept animating under prefers-reduced-motion.',f:'Fixed in RB-5.',src:REP},
+      {l:'10:47',ok:0,c:'826c475',t:'1 failure. Dashboard performance 79, floor 80.',src:REP},
+      {l:'11:13',ok:0,c:'c7d8d3f',t:'1 failure. Dashboard performance 77, with host CPU at 45 to 67% from unrelated projects.',f:'Re-measured on unchanged code, not accepted.',src:REP},
+      {l:'12:39',ok:0,c:'c7d8d3f',t:'4 failures. Performance 79 and a navigation timeout on login at 375 px under load.',src:REP},
+      {l:'12:53',ok:0,c:'c7d8d3f',t:'17 failures. Performance 77 and navigation timeouts under load.',src:REP},
+      {l:'13:51',ok:0,c:'c7d8d3f',t:'1 failure. A long-lived local Caddy stalled responses over 40 KB, failing the static-asset probe. Environmental; cleared by restarting Caddy.',src:REP},
+      {l:'14:37',ok:0,c:'c7d8d3f',t:'1 failure. The same Caddy stall.',src:REP},
+      {l:'15:36',ok:0,c:'c7d8d3f',t:'10 failures. Timeouts and performance 75 under load, plus a real defect: a prohibited ARIA attribute on the dashboard loading skeleton.',f:'Fixed in RB-7 across 26 skeletons.',src:REP},
+      {l:'15:47',ok:1,c:'5fc6924',t:'0 failures. 145 cells pass. Dashboard performance 81; accessibility 100 on landing and dashboard; first-load JS 136 KB and 166 KB against a 400 KB budget.',src:REP}]},
+    {name:'Verification',sub:'one tree, exit codes read directly',runs:[
+      {l:'V',ok:1,c:'Wave 6',t:'Typecheck, lint with zero warnings (135 findings fixed in code, no disables), format, 403 server and 15 web tests, build, 42/42 end-to-end. Coverage 93.29% against a 70% floor.',src:REP}]},
+    {name:'Smoke test',sub:'live stack over HTTPS',runs:[
+      {l:'24',ok:1,c:'ba3c228',t:'24/24 against the deployed stack: signed ingest to alert to email, webhook replay deduplicated, a bad signature rejected, and org B getting 404 on seven of org A’s routes.',src:REP}]}
+  ];
+  var host=document.getElementById('gates'),detail=document.getElementById('detail'),all=[];
+  document.documentElement.classList.add('js');
+  GATES.forEach(function(g){
+    var row=document.createElement('div');row.className='lrow';
+    var fails=g.runs.filter(function(r){return !r.ok}).length;
+    row.innerHTML='<div class="lname">'+g.name+'<small>'+g.sub+'</small></div><div class="cells" role="group" aria-label="'+g.name+' runs"></div><div class="tally">'+
+      (fails?fails+' sent back &rarr; <b>PASS</b>':'<b>PASS</b> first run')+'</div>';
+    var cells=row.querySelector('.cells');
+    g.runs.forEach(function(r){
+      var b=document.createElement('button');b.type='button';b.className='cell '+(r.ok?'p':'f');b.innerHTML=r.l;
+      b.setAttribute('aria-pressed','false');
+      b.setAttribute('aria-label',g.name+', '+r.l.replace(/&#x2713;/,' re-verify')+': '+(r.ok?'passed':'sent back'));
+      b.addEventListener('click',function(){show(g,r,b)});
+      cells.appendChild(b);all.push({g:g,r:r,b:b});
+    });
+    host.appendChild(row);
+  });
+  function show(g,r,b){
+    all.forEach(function(x){x.b.setAttribute('aria-pressed',String(x.b===b))});
+    detail.style.setProperty('--c',r.ok?'var(--pass)':'var(--fail)');
+    detail.innerHTML='<div><div class="dh"><span class="chip '+(r.ok?'pass':'fail')+'">'+(r.ok?'Pass':'Sent back')+'</span><span>'+g.name+' &middot; '+r.l+' &middot; '+r.c+'</span></div>'+
+      '<p>'+r.t+'</p>'+(r.f?'<div class="fix"><b>Fix:</b> '+r.f+'</div>':'')+'</div>'+
+      '<a class="src" href="'+r.src+'">Read the report &rarr;</a>';
+  }
+  show(all[0].g,all[0].r,all[0].b);
+  // Reveal the squares in order, the way the runs happened.
+  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce||!('IntersectionObserver' in window)){all.forEach(function(x){x.b.classList.add('in')})}
+  else{var io=new IntersectionObserver(function(es){if(es.some(function(e){return e.isIntersecting})){io.disconnect();
+    all.forEach(function(x,i){setTimeout(function(){x.b.classList.add('in')},i*55)})}},{threshold:.25});io.observe(host)}
+  // Never leave the ledger blank if the observer never fires (thumbnails, print).
+  setTimeout(function(){all.forEach(function(x){x.b.classList.add('in')})},4000);
+
+  // Performance runs: 70..90 maps to y 208..20.
+  var P=[['09:36',78],['10:47',79],['11:13',77],['12:39',79],['12:53',77],['15:36',75],['15:47',81]],g=document.getElementById('bars'),ns='http://www.w3.org/2000/svg';
+  P.forEach(function(p,i){
+    var x=48+i*66,y=208-(p[1]-70)*9.4,ok=p[1]>=80,col=ok?'var(--pass)':'var(--fail)';
+    var r=document.createElementNS(ns,'rect');r.setAttribute('x',x);r.setAttribute('y',y);r.setAttribute('width',38);r.setAttribute('height',208-y);
+    r.setAttribute('rx',3);r.setAttribute('fill',col);r.setAttribute('fill-opacity',ok?'1':'.55');g.appendChild(r);
+    var v=document.createElementNS(ns,'text');v.setAttribute('x',x+19);v.setAttribute('y',y-7);v.setAttribute('text-anchor','middle');
+    v.setAttribute('font-family','JetBrains Mono, monospace');v.setAttribute('font-size','12');v.setAttribute('font-weight','600');v.setAttribute('fill',col);v.textContent=p[1];g.appendChild(v);
+    var t=document.createElementNS(ns,'text');t.setAttribute('x',x+19);t.setAttribute('y',225);t.setAttribute('text-anchor','middle');
+    t.setAttribute('font-family','JetBrains Mono, monospace');t.setAttribute('font-size','10');t.setAttribute('fill','var(--faint)');t.textContent=p[0];g.appendChild(t);
+  });
+})();
+</script>
+</body>
+</html>

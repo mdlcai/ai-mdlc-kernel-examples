@@ -4,13 +4,13 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>MDLC — Example Builds</title>
-<meta name="description" content="Eleven real applications, each built end-to-end by the MDLC methodology, from a one-page blueprint to a gate-passing build." />
+<meta name="description" content="Twelve real applications, each built end-to-end by the MDLC methodology, from a one-page blueprint to a gate-passing build." />
 <meta property="og:title" content="MDLC — Example Builds" />
-<meta property="og:description" content="Eleven real applications, each built end-to-end by the MDLC methodology. Live previews, architecture, and the full build report for each." />
+<meta property="og:description" content="Twelve real applications, each built end-to-end by the MDLC methodology. Live previews, architecture, and the full build report for each." />
 <meta property="og:type" content="website" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Audiowide&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
 <style>
   /* ── mdlc.ai design tokens (copied verbatim from the site :root) ─────────── */
   :root{
@@ -141,6 +141,35 @@
   .links a.live{color:#7ff0c8;border-color:rgba(16,185,129,.42);background:rgba(16,185,129,.1)}
   .links a.live:hover{border-color:var(--accent-green);color:#fff;background:rgba(16,185,129,.18)}
 
+  /* ── Flagship: ThreatWatch carries its own colours (crimson = sent back, teal = passed) ── */
+  .card.flagship{grid-column:1 / -1;position:relative;border:1px solid transparent;
+    background:linear-gradient(180deg,#1a0d12,#120a0e) padding-box,linear-gradient(115deg,#ff4d6a,#3dd6e0) border-box;
+    box-shadow:0 40px 100px -48px rgba(255,77,106,.55),0 30px 80px -50px rgba(61,214,224,.45)}
+  .card.flagship:hover{border-color:transparent}
+  @media(min-width:821px){
+    .card.flagship{flex-direction:row}
+    .card.flagship .shot{aspect-ratio:auto;width:50%;border-bottom:0;border-right:1px solid #2e1d24}
+    .card.flagship .body{flex:1;padding:30px 32px}
+  }
+  .card.flagship .shot{background:#0e090b}
+  .card.flagship .shot img{object-position:left top}
+  .card.flagship .shot .open span{background:#3dd6e0;color:#0e090b;box-shadow:0 12px 30px -10px rgba(61,214,224,.6)}
+  .card.flagship .body h3{font-family:'Audiowide',var(--font-display);font-size:30px;letter-spacing:.01em}
+  .card.flagship .badge{color:#ff8fa1;background:rgba(255,77,106,.1);border-color:rgba(255,77,106,.35)}
+  .card.flagship .badge.dossier{color:#0e090b;background:linear-gradient(100deg,#ff4d6a,#3dd6e0);border-color:transparent;font-weight:600}
+  .card.flagship .kicker{font-family:'Audiowide',var(--font-display);font-size:16px;line-height:1.4;margin:0}
+  .card.flagship .kicker .r{color:#ff4d6a}.card.flagship .kicker .g{color:#3dd6e0}
+  .card.flagship .gate{color:#9eeff4;background:rgba(61,214,224,.08);border-color:rgba(61,214,224,.3)}
+  .card.flagship .links a.lead{color:#0e090b;border-color:#3dd6e0;background:#3dd6e0;font-weight:600}
+  .card.flagship .links a.lead:hover{background:#7ae6ec;color:#0e090b}
+  .card.flagship .links a:hover{border-color:#ff4d6a;background:rgba(255,77,106,.08)}
+  .tape{display:flex;flex-direction:column;gap:5px;padding:12px 14px;border:1px solid #2e1d24;border-radius:var(--radius-sm);background:rgba(14,9,11,.6)}
+  .tape .row{display:grid;grid-template-columns:96px 1fr;align-items:center;gap:8px;font-family:var(--font-mono);font-size:10.5px;color:#a8959b;letter-spacing:.03em}
+  .tape .sq{display:flex;gap:3px;flex-wrap:wrap}
+  .tape .sq i{width:12px;height:12px;border-radius:2px;background:#ff4d6a;opacity:.7}
+  .tape .sq i.p{background:#3dd6e0;opacity:1}
+  .tape .cap{font-family:var(--font-mono);font-size:10.5px;color:#8c787e;margin-top:3px}
+
   /* ── How it's built ──────────────────────────────────────────────────────── */
   .how{padding:60px 0 18px}
   .how .lab{text-align:center;font-family:var(--font-mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan);margin-bottom:14px}
@@ -232,19 +261,38 @@
 
   <header class="hero">
     <div class="eyebrow"><span class="gl">✦</span> Reference Builds <span class="gl">→</span> Built with MDLC</div>
-    <h1>Eleven real apps,<br><em>built by the methodology.</em></h1>
+    <h1>Twelve real apps,<br><em>built by the methodology.</em></h1>
     <p class="sub">Each app below started as a one-page <code>RESEARCH.md</code> blueprint and came out the other side as a working, reviewed application. The architecture, the spec, the decisions, and the full build report are all there to prove it.</p>
     <div class="actions">
       <a class="pricing-cta pricing-cta-secondary" href="https://mdlc.ai/catches.html" style="display:inline-flex;align-items:center;gap:0.5rem;margin-top:0;padding:1rem 2.25rem;font-size:0.8rem;">See everything it catches →</a>
     </div>
     <div class="stats">
-      <span>11 apps, 0 hand-written</span>
-      <span>175 smoke flows passed</span>
+      <span>12 apps, 0 hand-written</span>
+      <span>199 smoke flows passed</span>
       <span>every gate, with receipts</span>
     </div>
   </header>
 
   <section class="grid" id="gallery">
+
+    <article class="card flagship">
+      <a class="shot" href="threatwatch/index.html"><img src="threatwatch/preview.png" alt="ThreatWatch build dossier" loading="lazy"><span class="open"><span>Open the dossier &rarr;</span></span></a>
+      <div class="body">
+        <h3>ThreatWatch <span class="badge dossier">Build dossier</span> <span class="badge">Security</span></h3>
+        <p class="kicker"><span class="r">Every gate failed it first.</span> <span class="g">Then every gate passed.</span></p>
+        <p>A multi-tenant security operations platform: signed ingest, detection and correlation on Temporal, alert triage, a live dashboard and threat map. The reviewer, security auditor, design scorer and web baseline each sent it back at least once, and no threshold was lowered to let it through. Twelve auth and security-boundary changes waited for a human to approve them.</p>
+        <div class="tape" role="img" aria-label="Gate runs in order: 23 runs, 15 sent the build back, every gate ends in a pass">
+          <div class="row"><span>Reviewer</span><span class="sq"><i></i><i></i><i class="p"></i><i class="p"></i><i class="p"></i></span></div>
+          <div class="row"><span>Security</span><span class="sq"><i></i><i></i><i class="p"></i></span></div>
+          <div class="row"><span>Design</span><span class="sq"><i></i><i></i><i class="p"></i></span></div>
+          <div class="row"><span>Web baseline</span><span class="sq"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="p"></i></span></div>
+          <div class="row"><span>Verify &middot; Smoke</span><span class="sq"><i class="p"></i><i class="p"></i></span></div>
+          <div class="cap">23 runs &middot; 15 sent it back &middot; 17.3 active hours on Claude Opus 5.5</div>
+        </div>
+        <div class="gates"><span class="gate">418 tests</span><span class="gate">42/42 e2e</span><span class="gate">24/24 smoke</span><span class="gate">43 invariants</span><span class="gate">93% coverage</span><span class="gate">a11y 100</span></div>
+        <div class="links"><a class="lead" href="threatwatch/index.html">Open the dossier</a><a href="threatwatch/screens.html">29 screens</a><a href="threatwatch/architecture.html">Architecture</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/threatwatch/REPORT.md">Build report</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/tree/main/threatwatch">Files &#8599;</a></div>
+      </div>
+    </article>
 
     <article class="card featured">
       <a class="shot" href="synapse/index.html"><img src="synapse/preview.png" alt="Synapse" loading="lazy"><span class="open"><span>Open preview →</span></span></a>

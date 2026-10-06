@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ThreatWatch Architecture</title>
+<meta name="description" content="System architecture, site map and key pages of ThreatWatch v0.3.3 — a multi-tenant SOC platform for small teams.">
+<style>
+:root{
+  --bg:#fbf7f8;--surface:#ffffff;--raised:#f7f0f2;--hover:#f3e9ec;--border:#e6d8dc;--border-strong:#cdb9bf;
+  --text:#1a0f13;--muted:#6b5a60;--faint:#8c787e;--primary:#d61f45;--on-primary:#fff;--grid:rgba(214,31,69,.06);
+  --crit:#c8102e;--high:#b54708;--med:#8a6100;--low:#1e7f4f;--info:#1f6fb2;--tele:#0e7c86;
+  --radius:8px;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e090b;--surface:#160d11;--raised:#1a1015;--hover:#21141a;--border:#2e1d24;--border-strong:#45303a;
+  --text:#f4ecee;--muted:#a8959b;--faint:#8c787e;--primary:#ff4d6a;--on-primary:#0e090b;--grid:rgba(255,77,106,.06);
+  --crit:#ff4d6a;--high:#ff8a3d;--med:#f5c451;--low:#4cc38a;--info:#5aa9e6;--tele:#3dd6e0;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e090b;--surface:#160d11;--raised:#1a1015;--hover:#21141a;--border:#2e1d24;--border-strong:#45303a;
+  --text:#f4ecee;--muted:#a8959b;--faint:#8c787e;--primary:#ff4d6a;--on-primary:#0e090b;--grid:rgba(255,77,106,.06);
+  --crit:#ff4d6a;--high:#ff8a3d;--med:#f5c451;--low:#4cc38a;--info:#5aa9e6;--tele:#3dd6e0;color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 var(--sans);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:44px 44px}
+a{color:var(--primary)}
+code,.mono{font-family:var(--mono);font-size:.86em}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+header.top{padding:40px 0 24px;border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.02em}
+.brand .dot{width:10px;height:10px;border-radius:50%;background:var(--primary);box-shadow:0 0 0 4px color-mix(in srgb,var(--primary) 25%,transparent)}
+h1{font-size:clamp(28px,5vw,42px);line-height:1.1;margin:14px 0 8px}
+.lede{color:var(--muted);max-width:760px;margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.chip{border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:13px;color:var(--muted)}
+.chip b{color:var(--text)}
+.toolbar{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+button{font:inherit;color:inherit;cursor:pointer}
+.btn{border:1px solid var(--border-strong);background:var(--surface);border-radius:var(--radius);padding:6px 12px;font-size:13px}
+.btn:hover{background:var(--hover)}
+nav.toc{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(6px);border-bottom:1px solid var(--border)}
+nav.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding-top:8px;padding-bottom:8px;scrollbar-width:none}
+nav.toc a{white-space:nowrap;text-decoration:none;color:var(--muted);font-size:13px;padding:4px 10px;border-radius:6px}
+nav.toc a:hover{background:var(--hover);color:var(--text)}
+section{padding:40px 0 8px}
+h2{font-size:22px;margin:0 0 6px;display:flex;align-items:baseline;gap:10px}
+h2 .n{font-family:var(--mono);font-size:13px;color:var(--primary)}
+.sub{color:var(--muted);margin:0 0 20px;max-width:820px}
+h3{font-size:16px;margin:0 0 6px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.grid{display:grid;gap:12px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))}
+.tablewrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+th{background:var(--raised);font-weight:600;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+.tag{display:inline-block;font-size:11.5px;padding:1px 8px;border-radius:999px;border:1px solid var(--border-strong);color:var(--muted);margin:2px 4px 2px 0;white-space:nowrap}
+.tag.p{border-color:var(--primary);color:var(--primary)}
+.tag.t{border-color:var(--tele);color:var(--tele)}
+.yes{color:var(--low);font-weight:700}.no{color:var(--faint)}
+/* topology svg */
+.diagram{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;overflow-x:auto}
+.diagram svg{display:block;min-width:760px;width:100%;height:auto}
+.diagram text{font-family:var(--sans);fill:var(--text)}
+.diagram .m{fill:var(--muted);font-size:11px}
+.diagram .box{fill:var(--raised);stroke:var(--border-strong)}
+.diagram .hot{fill:color-mix(in srgb,var(--primary) 12%,var(--surface));stroke:var(--primary)}
+.diagram .tel{fill:color-mix(in srgb,var(--tele) 12%,var(--surface));stroke:var(--tele)}
+.diagram .zone{fill:none;stroke:var(--border-strong);stroke-dasharray:6 5}
+.diagram .ln{stroke:var(--muted);stroke-width:1.5;fill:none}
+.diagram .lp{stroke:var(--primary);stroke-width:1.8;fill:none}
+.diagram .lt{stroke:var(--tele);stroke-width:1.5;fill:none;stroke-dasharray:4 4}
+/* pipeline */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:10px;counter-reset:s}
+.step{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 14px 12px;counter-increment:s}
+.step::before{content:counter(s);position:absolute;top:-10px;left:12px;background:var(--primary);color:var(--on-primary);font:700 12px var(--mono);width:22px;height:22px;border-radius:50%;display:grid;place-items:center}
+.step h4{margin:6px 0 4px;font-size:14px}
+.step p{margin:0;color:var(--muted);font-size:13px}
+/* sitemap */
+.sitemap{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px}
+.smg{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px}
+.smg h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--primary)}
+.smg ul{list-style:none;margin:0;padding:0}
+.smg li{font-family:var(--mono);font-size:12.5px;padding:3px 0 3px 12px;border-left:1px solid var(--border-strong);margin-left:4px}
+.smg li.child{margin-left:20px;color:var(--muted)}
+.smg li a{color:inherit;text-decoration:none}.smg li a:hover{color:var(--primary)}
+/* pages */
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.filters button{border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:13px;color:var(--muted)}
+.filters button[aria-pressed="true"]{background:var(--primary);border-color:var(--primary);color:var(--on-primary)}
+.pages{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,520px),1fr));gap:16px}
+.page{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column}
+.page[hidden]{display:none}
+.page.key{border-color:color-mix(in srgb,var(--primary) 45%,var(--border))}
+.page .meta{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px}
+.page .hd{display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
+.page .route{font-family:var(--mono);font-size:12.5px;color:var(--primary)}
+.page p{margin:0;color:var(--muted);font-size:13.5px}
+.kv{display:grid;grid-template-columns:84px 1fr;gap:4px 10px;font-size:12.5px}
+.kv dt{color:var(--faint)}.kv dd{margin:0}
+details summary{cursor:pointer;font-size:12.5px;color:var(--muted)}
+details ul{margin:6px 0 0;padding-left:18px;font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+/* wireframe */
+.wf{container-type:inline-size;background:var(--raised);border-bottom:1px solid var(--border);padding:12px}
+.scr{border:1px solid var(--border-strong);border-radius:6px;overflow:hidden;background:var(--bg);font-size:9px;line-height:1.2;color:var(--muted);aspect-ratio:16/9.4;display:flex;flex-direction:column}
+.chrome{display:flex;align-items:center;gap:4px;padding:4px 6px;background:var(--surface);border-bottom:1px solid var(--border)}
+.chrome i{width:6px;height:6px;border-radius:50%;background:var(--border-strong);display:block}
+.chrome span{margin-left:6px;flex:1;background:var(--raised);border-radius:3px;padding:1px 6px;font-family:var(--mono);font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.body{flex:1;display:flex;min-height:0}
+.side{width:22%;background:var(--surface);border-right:1px solid var(--border);padding:5px 4px;display:flex;flex-direction:column;gap:1px;overflow:hidden}
+.side .lg{color:var(--primary);font-weight:700;font-size:8.5px;padding:0 3px 4px}
+.side .gl{font-size:6.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);padding:3px 3px 1px}
+.side .it{padding:1px 3px;border-radius:2px;font-size:7.5px;white-space:nowrap;overflow:hidden}
+.side .it.on{background:color-mix(in srgb,var(--primary) 18%,transparent);color:var(--text)}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.tb{display:flex;align-items:center;gap:4px;padding:4px 6px;border-bottom:1px solid var(--border);background:var(--surface)}
+.tb .s{flex:1;max-width:55%;height:9px;border:1px solid var(--border-strong);border-radius:3px}
+.tb .av{margin-left:auto;width:9px;height:9px;border-radius:50%;background:var(--border-strong)}
+.ct{flex:1;padding:6px;display:flex;flex-direction:column;gap:5px;overflow:hidden;min-height:0}
+.row{display:flex;gap:5px;min-height:0}
+.f1{flex:1}.f2{flex:2}.f3{flex:3}
+.bx{background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:4px;min-width:0;overflow:hidden}
+.ttl{height:7px;width:38%;background:var(--text);opacity:.75;border-radius:2px}
+.ln{height:4px;background:var(--border-strong);border-radius:2px;margin:3px 0}
+.ln.s{width:55%}.ln.xs{width:30%}
+.kpi .v{height:8px;width:50%;background:var(--text);opacity:.65;border-radius:2px;margin-top:3px}
+.pill{display:inline-block;height:6px;width:16px;border-radius:3px;margin-right:2px}
+.c{background:var(--crit)}.h{background:var(--high)}.md{background:var(--med)}.lo{background:var(--low)}.inf{background:var(--info)}.tl{background:var(--tele)}.pr{background:var(--primary)}
+.tbl .tr{display:flex;gap:4px;align-items:center;padding:2px 0;border-bottom:1px solid var(--border)}
+.tbl .tr:last-child{border-bottom:0}
+.tbl .tr .ln{margin:0;flex:1}
+.tbl .th .ln{background:var(--faint)}
+.btnw{height:9px;width:28px;border-radius:2px;background:var(--primary)}
+.btnw.g{background:transparent;border:1px solid var(--border-strong)}
+.inp{height:9px;border:1px solid var(--border-strong);border-radius:2px;margin:3px 0}
+.lbl{height:3px;width:30%;background:var(--faint);border-radius:2px;margin-top:4px}
+.chart{flex:1;min-height:30px;position:relative}
+.chart svg{position:absolute;inset:0;width:100%;height:100%}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--border);padding-bottom:2px}
+.tabs i{height:4px;width:22px;background:var(--border-strong);border-radius:2px}
+.tabs i:first-child{background:var(--primary)}
+.dotmap{position:relative;flex:1;min-height:40px;background:radial-gradient(circle at 50% 50%,var(--raised),var(--surface))}
+.dotmap b{position:absolute;width:5px;height:5px;border-radius:50%;background:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 25%,transparent)}
+.center{flex:1;display:grid;place-items:center}
+.authcard{width:42%;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:6px}
+.tl-item{display:flex;gap:4px;align-items:center;margin:3px 0}
+.tl-item::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--primary);flex:none}
+footer{border-top:1px solid var(--border);margin-top:48px;padding:20px 0 40px;color:var(--faint);font-size:13px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+.legend span::before{content:"";display:inline-block;width:18px;height:0;border-top:2px solid var(--muted);vertical-align:middle;margin-right:6px}
+.legend .p::before{border-color:var(--primary)}.legend .t::before{border-top:2px dashed var(--tele)}
+@container (max-width:440px){.side .it{display:none}.side .gl{padding:4px 3px}.side{width:20%}}
+@media (max-width:560px){.kv{grid-template-columns:70px 1fr}.pages{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<a href="index.html" data-mdlc-backlink aria-label="Back to the ThreatWatch build dossier" style="position:fixed;left:16px;bottom:16px;z-index:9999;font:500 13px/1 ui-monospace,SFMono-Regular,Consolas,monospace;padding:10px 14px;border-radius:999px;background:#0e090b;color:#f4ecee;border:1px solid #45303a;text-decoration:none;box-shadow:0 8px 24px rgba(0,0,0,.35)">&larr; Build dossier</a>
+<header class="top">
+  <div class="wrap">
+    <div class="toolbar">
+      <div class="brand"><span class="dot" aria-hidden="true"></span>ThreatWatch <span class="chip mono">v0.3.3 · b2597c7</span></div>
+      <button class="btn" id="theme" type="button" aria-label="Toggle colour theme">Theme: auto</button>
+    </div>
+    <h1>Architecture &amp; site map</h1>
+    <p class="lede">A multi-tenant SOC platform for small teams. Signed event batches are ingested, a Temporal worker runs detection rules and correlation, findings become triaged alerts, and alerts notify by email or signed webhook through outboxes. This page documents the runtime system, the request pipeline, and every screen in the web app.</p>
+    <div class="chips">
+      <span class="chip"><b>8</b> containers</span>
+      <span class="chip"><b>29</b> routes</span>
+      <span class="chip"><b>12</b> key workflows</span>
+      <span class="chip"><b>7</b> scheduled jobs</span>
+      <span class="chip"><b>4</b> roles</span>
+      <span class="chip"><b>27</b> tables</span>
+      <span class="chip"><b>43</b> invariants</span>
+    </div>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Sections">
+  <div class="wrap">
+    <a href="#topology">Topology</a><a href="#services">Services</a><a href="#pipeline">Pipeline</a><a href="#sitemap">Site map</a>
+    <a href="#pages">Pages</a><a href="#workflows">Workflows</a><a href="#jobs">Jobs</a><a href="#rbac">RBAC</a>
+    <a href="#data">Data model</a><a href="#security">Security</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<section id="topology">
+  <h2><span class="n">01</span>System topology</h2>
+  <p class="sub">Everything runs as one Docker Compose project (<code>threatwatch-mdlc</code>) on a single host. Caddy is the only public entry point; Postgres and the API are not published.</p>
+  <div class="diagram" role="img" aria-label="Topology: browser and integrations reach Caddy over HTTPS; Caddy routes /api and /ws to the API and everything else to the Next.js web app; the API and worker share PostgreSQL and Temporal; the worker sends email to Mailpit or SMTP and signed webhooks to customer endpoints.">
+    <svg viewBox="0 0 1000 470" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker>
+      </defs>
+      <!-- external -->
+      <rect class="box" x="20" y="60" width="140" height="56" rx="8"/><text x="90" y="85" text-anchor="middle" font-weight="600">Browser</text><text class="m" x="90" y="102" text-anchor="middle">analysts · admins</text>
+      <rect class="tel" x="20" y="150" width="140" height="56" rx="8"/><text x="90" y="175" text-anchor="middle" font-weight="600">Integrations</text><text class="m" x="90" y="192" text-anchor="middle">firewall · EDR · IdP</text>
+      <rect class="box" x="20" y="330" width="140" height="56" rx="8"/><text x="90" y="355" text-anchor="middle" font-weight="600">Webhook endpoints</text><text class="m" x="90" y="372" text-anchor="middle">signed deliveries</text>
+      <!-- compose zone -->
+      <rect class="zone" x="200" y="20" width="780" height="430" rx="12"/>
+      <text class="m" x="216" y="40">docker compose · threatwatch-mdlc</text>
+      <rect class="hot" x="230" y="95" width="150" height="76" rx="8"/><text x="305" y="122" text-anchor="middle" font-weight="700">caddy</text><text class="m" x="305" y="140" text-anchor="middle">TLS (tls internal)</text><text class="m" x="305" y="155" text-anchor="middle">:9443 · :8088→https</text>
+      <rect class="box" x="450" y="50" width="170" height="70" rx="8"/><text x="535" y="78" text-anchor="middle" font-weight="700">web</text><text class="m" x="535" y="95" text-anchor="middle">Next.js 16 · :3000</text><text class="m" x="535" y="110" text-anchor="middle">CSP nonce · SSR shell</text>
+      <rect class="hot" x="450" y="160" width="170" height="80" rx="8"/><text x="535" y="188" text-anchor="middle" font-weight="700">api</text><text class="m" x="535" y="205" text-anchor="middle">Express 5 · :4000</text><text class="m" x="535" y="220" text-anchor="middle">REST /api/v1 · WS /ws</text>
+      <rect class="box" x="760" y="160" width="190" height="80" rx="8"/><text x="855" y="188" text-anchor="middle" font-weight="700">postgres:17</text><text class="m" x="855" y="205" text-anchor="middle">system of record</text><text class="m" x="855" y="220" text-anchor="middle">LISTEN/NOTIFY tw_events</text>
+      <rect class="box" x="760" y="50" width="190" height="70" rx="8"/><text x="855" y="78" text-anchor="middle" font-weight="700">temporal</text><text class="m" x="855" y="95" text-anchor="middle">dev server :7233</text><text class="m" x="855" y="110" text-anchor="middle">UI 127.0.0.1:8233</text>
+      <rect class="hot" x="450" y="300" width="170" height="80" rx="8"/><text x="535" y="328" text-anchor="middle" font-weight="700">worker</text><text class="m" x="535" y="345" text-anchor="middle">Temporal worker</text><text class="m" x="535" y="360" text-anchor="middle">detection · 7 schedules</text>
+      <rect class="box" x="760" y="300" width="190" height="56" rx="8"/><text x="855" y="325" text-anchor="middle" font-weight="700">mailpit</text><text class="m" x="855" y="342" text-anchor="middle">SMTP sink · UI :8026</text>
+      <rect class="box" x="760" y="380" width="190" height="50" rx="8"/><text x="855" y="402" text-anchor="middle" font-weight="700">migrate</text><text class="m" x="855" y="418" text-anchor="middle">one-shot prisma deploy + seed</text>
+      <!-- edges -->
+      <g color="var(--primary)">
+        <path class="lp" d="M160 88 H200 Q215 88 215 110 V120 H228" marker-end="url(#a)"/>
+        <path class="lp" d="M160 178 H200 Q215 178 215 155 V150 H228" marker-end="url(#a)"/>
+        <path class="lp" d="M380 125 H415 Q430 125 430 105 V85 H448" marker-end="url(#a)"/>
+        <path class="lp" d="M380 145 H415 Q430 145 430 170 V200 H448" marker-end="url(#a)"/>
+      </g>
+      <text class="m" x="394" y="78">/*</text><text class="m" x="384" y="222">/api/* · /ws</text>
+      <g color="var(--muted)">
+        <path class="ln" d="M535 120 V158" marker-end="url(#a)"/>
+        <path class="ln" d="M620 200 H758" marker-end="url(#a)"/>
+        <path class="ln" d="M620 180 Q690 150 690 110 V85 H758" marker-end="url(#a)"/>
+        <path class="ln" d="M620 330 Q700 330 700 280 V230 H758" marker-end="url(#a)"/>
+        <path class="ln" d="M620 350 Q720 350 740 120 H758" fill="none" marker-end="url(#a)"/>
+        <path class="ln" d="M620 365 Q690 365 690 328 H758" marker-end="url(#a)"/>
+        <path class="ln" d="M450 360 H240 Q220 360 200 358 H162" marker-end="url(#a)"/>
+      </g>
+      <g color="var(--tele)"><path class="lt" d="M758 222 H640 Q628 222 622 222" marker-end="url(#a)"/></g>
+      <text class="m" x="545" y="143">server session</text>
+      <text class="m" x="636" y="195">Prisma 7</text>
+      <text class="m" x="640" y="240" fill="var(--tele)">NOTIFY → WS fan-out</text>
+      <text class="m" x="697" y="148">start detectBatch</text>
+      <text class="m" x="250" y="352">HMAC-signed POST</text>
+      <text class="m" x="680" y="380">SMTP</text>
+    </svg>
+  </div>
+  <div class="legend"><span class="p">public HTTPS traffic</span><span>internal calls</span><span class="t">realtime notifications</span></div>
+</section>
+
+<section id="services">
+  <h2><span class="n">02</span>Services</h2>
+  <p class="sub">Each container, what it does, and how Compose decides it is healthy. All images bake the version and commit, and every tier reports them on its health endpoint.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Service</th><th>Image</th><th>Role</th><th>Health</th></tr></thead>
+    <tbody>
+      <tr><td><b>caddy</b></td><td><code>caddy:2.10-alpine</code></td><td>TLS termination, :80→:443 redirect, reverse proxy, WebSocket passthrough, security headers</td><td><code>caddy validate</code> + TCP</td></tr>
+      <tr><td><b>web</b></td><td><code>web/Dockerfile</code></td><td>Next.js 16 standalone. <code>proxy.ts</code> sets a per-request CSP nonce and the auth redirect; the <code>(app)</code> layout resolves the session server-side (ADR-031)</td><td><code>GET /healthz</code></td></tr>
+      <tr><td><b>api</b></td><td><code>server/Dockerfile</code> → api</td><td>Express 5 REST <code>/api/v1</code>, <code>/api/openapi.json</code>, <code>ws</code> hub at <code>/ws</code>, Temporal client, <code>LISTEN tw_events</code></td><td><code>GET /api/health</code> (db, temporal, listener)</td></tr>
+      <tr><td><b>worker</b></td><td><code>server/Dockerfile</code> → worker</td><td>Temporal worker on task queue <code>threatwatch</code>; registers the 7 schedules at boot</td><td><code>/healthz</code> on internal :4001</td></tr>
+      <tr><td><b>temporal</b></td><td><code>temporalio/temporal</code></td><td>Workflow engine (CLI dev server, SQLite file)</td><td><code>operator cluster health</code></td></tr>
+      <tr><td><b>postgres</b></td><td><code>postgres:17-alpine</code></td><td>System of record; LISTEN/NOTIFY fan-out</td><td><code>pg_isready</code></td></tr>
+      <tr><td><b>mailpit</b></td><td><code>axllent/mailpit</code></td><td>Local SMTP sink for development</td><td>HTTP</td></tr>
+      <tr><td><b>migrate</b></td><td>server image, one-shot</td><td><code>prisma migrate deploy</code> + seed; api and worker wait for it to complete</td><td>exit 0</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid g3" style="margin-top:12px">
+    <div class="card"><h3>server/</h3><p class="sub" style="margin:0;font-size:13.5px"><code>domain/</code> is pure logic (normalize, enrich, rules DSL, correlate, risk, state machines). <code>services/</code> is the only layer that touches Prisma, and every function takes a <code>TenantScope</code>. <code>api/</code> and <code>worker/</code> are thin adapters over services.</p></div>
+    <div class="card"><h3>web/</h3><p class="sub" style="margin:0;font-size:13.5px">App Router with <code>(auth)</code> and <code>(app)</code> route groups. Design tokens in <code>styles/tokens.css</code>, primitives in <code>components/ui.tsx</code>, and a same-origin API client in <code>lib/api.ts</code> that maps problem+json <code>errors[]</code> onto form fields.</p></div>
+    <div class="card"><h3>Stack</h3><p class="sub" style="margin:0;font-size:13.5px">Node 22 · TypeScript 5.9 · Express 5 · Prisma 7 · zod · pino · Temporal TS SDK · Next.js 16 · React 19 · Tailwind v4 · Vitest · Playwright + axe.</p></div>
+  </div>
+</section>
+
+<section id="pipeline">
+  <h2><span class="n">03</span>Core pipeline: event → alert → notification</h2>
+  <p class="sub">The path a signed batch takes from an integration to an analyst's screen. Every side effect is written to an outbox in the same transaction as the state that caused it, then drained by a worker job.</p>
+  <div class="steps">
+    <div class="step"><h4>Verify</h4><p><code>POST /api/v1/ingest/:id</code>. Body ≤ 256 KB; Standard Webhooks HMAC-SHA256 within ±300 s, constant-time. Any failure is the same 401.</p></div>
+    <div class="step"><h4>Ingest</h4><p>One transaction: receipt dedupe (replay → <code>200 {duplicate}</code>), normalize, enrich (geo, intel, asset), insert events, create a pending batch, <code>pg_notify</code>. Returns <code>202</code> with per-event errors.</p></div>
+    <div class="step"><h4>Detect</h4><p>Workflow <code>detect-&lt;batchId&gt;</code>: claim batch with a conditional write, evaluate enabled rules (match clauses + windowed thresholds). A sweep picks up batches if Temporal was down.</p></div>
+    <div class="step"><h4>Correlate</h4><p>Group by shared entity (source IP, asset, indicator, user) within 30 min of event time. Create alert with evidence, risk score and MITRE technique.</p></div>
+    <div class="step"><h4>Notify</h4><p>Policies enqueue <code>pending_emails</code> / <code>pending_deliveries</code> in the alert's transaction. Drains send with capped backoff and a DLQ; escalation re-notifies.</p></div>
+    <div class="step"><h4>Live</h4><p>One <code>LISTEN</code> client fans notifications to that org's WebSockets. Payloads carry ids only; the client refetches through scoped REST.</p></div>
+    <div class="step"><h4>Investigate</h4><p>Alert detail joins evidence, rule version, source profile, asset, correlation siblings and timeline. Transitions are validated by the alert state machine.</p></div>
+  </div>
+  <div class="card" style="margin-top:12px">
+    <h3>Alert lifecycle</h3>
+    <p class="sub" style="margin:0;font-size:13.5px"><span class="tag p">new</span> → <span class="tag">acknowledged</span> → <span class="tag">investigating</span> → <span class="tag t">resolved</span> or <span class="tag">false_positive</span>. Resolved and false-positive alerts can be reopened to investigating. An invalid transition returns 409 and the UI shows a conflict state.</p>
+  </div>
+</section>
+
+<section id="sitemap">
+  <h2><span class="n">04</span>Site map</h2>
+  <p class="sub">The sidebar groups match <code>web/src/lib/nav.ts</code>. Detail routes are reached from their list pages, search and pivots. Entries marked with a permission are hidden from roles that lack it; the API enforces every permission regardless.</p>
+  <div class="sitemap" id="sitemap-groups"></div>
+</section>
+
+<section id="pages">
+  <h2><span class="n">05</span>Pages</h2>
+  <p class="sub">Every screen with a wireframe of its layout, who can use it, the endpoints it binds and the UI states it implements. Highlighted cards are the key pages of the core analyst loop.</p>
+  <div class="filters" id="filters" role="group" aria-label="Filter pages"></div>
+  <div class="pages" id="page-list"></div>
+</section>
+
+<section id="workflows">
+  <h2><span class="n">06</span>Key workflows</h2>
+  <p class="sub">The twelve workflows from SPEC §5.2, each covered by a Playwright spec (W1–W12) that runs on desktop and mobile profiles.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>#</th><th>Workflow</th><th>Pages</th></tr></thead>
+    <tbody id="wf-rows"></tbody>
+  </table></div>
+</section>
+
+<section id="jobs">
+  <h2><span class="n">07</span>Scheduled jobs</h2>
+  <p class="sub">Temporal Schedules evaluated in UTC with overlap policy <code>SKIP</code> and a 10-minute catch-up window. Each job takes an injected <code>now</code>, claims work with a conditional write, and records a <code>job_runs</code> row. Owners can trigger any job from Settings → Jobs.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>#</th><th>Schedule</th><th>Cadence</th><th>Business effect</th></tr></thead>
+    <tbody>
+      <tr><td>T1</td><td><code>detection-sweep</code></td><td>1 min</td><td>Pending batches older than 30 s are claimed and evaluated</td></tr>
+      <tr><td>T2</td><td><code>email-drain</code></td><td>1 min</td><td>Due emails → sent, or backoff → DLQ after 3 failures</td></tr>
+      <tr><td>T3</td><td><code>delivery-drain</code></td><td>1 min</td><td>Signed webhooks → delivered on 2xx, or backoff 1m/5m/30m/2h/6h → DLQ</td></tr>
+      <tr><td>T4</td><td><code>escalation-check</code></td><td>1 min</td><td>Unacknowledged alerts past the policy threshold escalate exactly once</td></tr>
+      <tr><td>T5</td><td><code>ingestion-health</code></td><td>5 min</td><td>Integrations marked silent, degraded (&gt;20% errors) or healthy</td></tr>
+      <tr><td>T6</td><td><code>retention-sweep</code></td><td>daily 03:00</td><td>Events past org retention deleted (alert evidence kept as snapshots); receipts after 7 days</td></tr>
+      <tr><td>T7</td><td><code>report-generate</code></td><td>hourly :05</td><td>Due report schedules produce a report snapshot and queue recipient emails</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="rbac">
+  <h2><span class="n">08</span>Roles &amp; permissions</h2>
+  <p class="sub">One permission matrix in <code>services/auth/rbac.ts</code>. A resource in another org is always 404, never 403. The last active owner cannot be demoted or disabled.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Permission</th><th>owner</th><th>admin</th><th>analyst</th><th>viewer</th></tr></thead>
+    <tbody id="rbac-rows"></tbody>
+  </table></div>
+</section>
+
+<section id="data">
+  <h2><span class="n">09</span>Data model</h2>
+  <p class="sub">PostgreSQL 17 through Prisma 7. UUID v7 ids, <code>TIMESTAMPTZ</code> in UTC, enums as <code>TEXT</code> + <code>CHECK</code>, no floating-point columns. Every tenant table carries <code>org_id</code> with an index led by it.</p>
+  <div class="grid g3" id="data-groups"></div>
+</section>
+
+<section id="security">
+  <h2><span class="n">10</span>Security architecture</h2>
+  <p class="sub">Controls that shape how pages and endpoints behave.</p>
+  <div class="grid g2">
+    <div class="card"><h3>Sessions &amp; CSRF</h3><p class="sub" style="margin:0;font-size:13.5px"><code>__Host-tw_session</code> cookie (Secure, HttpOnly, SameSite), token stored as a SHA-256 hash. Every non-GET request needs a same-origin <code>Origin</code>; cross-origin mutations get 403 <code>CSRF_ORIGIN</code>.</p></div>
+    <div class="card"><h3>Ingest authenticity</h3><p class="sub" style="margin:0;font-size:13.5px">Per-integration secrets encrypted with AES-256-GCM. HMAC verified before parsing; replays are idempotent by message id; rate-limited per integration and per IP.</p></div>
+    <div class="card"><h3>Outbound safety</h3><p class="sub" style="margin:0;font-size:13.5px">Webhook URLs must be HTTPS and pass <code>assertSafeUrl</code>; delivery pins the resolved address to block DNS rebinding. Payloads are signed at insert time.</p></div>
+    <div class="card"><h3>Error contract</h3><p class="sub" style="margin:0;font-size:13.5px">RFC 9457 problem+json with <code>code</code>, <code>detail</code>, <code>errors[] {field, code, message}</code> and <code>requestId</code>. The web client attaches field errors to the offending control.</p></div>
+    <div class="card"><h3>Headers &amp; transport</h3><p class="sub" style="margin:0;font-size:13.5px">Nonce-based CSP from <code>proxy.ts</code>, frame and content-type protections from Caddy. Local HSTS is <code>max-age=0</code>; production sets a real policy at its trusted origin.</p></div>
+    <div class="card"><h3>Rate limits</h3><p class="sub" style="margin:0;font-size:13.5px">Global 300/min/IP · login 10/min/IP + 5/min/email · register 5/h/IP · ingest 120/min/integration + 600/min/IP · search 60/min/user.</p></div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">Generated from <code>ARCHITECTURE.md</code>, <code>SPEC.md</code> and <code>web/src</code> at ThreatWatch v0.3.3 (<code>b2597c7</code>), 2026-10-05.</div>
+</footer>
+
+<script>
+(function(){
+  // ---------- theme ----------
+  var root=document.documentElement, btn=document.getElementById('theme'), modes=['auto','dark','light'], mode='auto';
+  try{ mode=localStorage.getItem('tw-arch-theme')||'auto'; }catch(e){}
+  function apply(){ if(mode==='auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme',mode); btn.textContent='Theme: '+mode; }
+  btn.addEventListener('click',function(){ mode=modes[(modes.indexOf(mode)+1)%3]; try{localStorage.setItem('tw-arch-theme',mode);}catch(e){} apply(); });
+  apply();
+
+  // ---------- data ----------
+  var NAV=[
+    {g:'Monitor',items:[['Dashboard','/dashboard'],['Threat map','/map'],['Alerts','/alerts'],['Correlations','/correlations']]},
+    {g:'Investigate',items:[['Search','/search'],['Events','/events'],['Assets','/assets'],['Intel','/intel']]},
+    {g:'Detect',items:[['Rules','/rules'],['Integrations','/integrations']]},
+    {g:'Respond',items:[['Notifications','/notifications'],['Reports','/reports']]},
+    {g:'Settings',items:[['Account','/settings/account'],['Team','/settings/team'],['Organization','/settings/organization'],['Audit log','/settings/audit'],['Jobs','/settings/jobs']]}
+  ];
+  var ALL='all roles', WR=function(w){return 'all · write: '+w;};
+  // [id, name, route, group, wireframe, roles, purpose, states, binds[], key, navHref, workflows]
+  var P=[
+    ['landing','Landing','/','Public','landing','public','Product introduction with sign-in and create-account entry points and a theme toggle.','success',[],false,null,''],
+    ['login','Login','/login','Public','auth','public','Email and password sign-in. Field errors and rate-limit messages render inline.','idle · submitting · field error · rate-limited · redirect',['POST /api/v1/auth/login'],false,null,''],
+    ['register','Register','/register','Public','auth','public','Creates an organization and its first owner, then signs in.','idle · submitting · field errors · redirect',['POST /api/v1/auth/register'],false,null,''],
+    ['dashboard','Dashboard','/dashboard','Monitor','dashboard',ALL,'Live security posture: KPI tiles, event/alert time series, threat geography, latest alerts and integration health. Updates over WebSocket; onboarding empty state for new orgs.','first-use empty · skeleton · error · success · live',['GET /dashboard/summary','GET /dashboard/timeseries','GET /dashboard/geo','GET /alerts','GET /integrations'],true,'/dashboard','W3'],
+    ['map','Threat map','/map','Monitor','map',ALL,'Geographic view of attack sources with range, severity and integration filters. A point opens the source profile.','empty · loading · error · success',['GET /dashboard/geo'],false,'/map','W3'],
+    ['alerts','Alerts','/alerts','Monitor','list',ALL,'Triage queue with filters (status, severity, assignee, rule, source, asset, time, text), sorting, paging and bulk actions.','empty · filtered-empty · loading · error · success',['GET /alerts','POST /alerts/bulk','GET /users','GET /rules'],true,'/alerts','W4'],
+    ['alert','Alert detail','/alerts/[id]','Monitor','detail',WR('owner, admin, analyst'),'Investigation workspace: evidence events, rule version, source and asset context, correlated alerts, notifications and activity timeline. Transition, assign, escalate and add notes.','loading · not-found · error · success · conflict',['GET /alerts/:id','GET /alerts/:id/related','GET /alerts/:id/activity','GET /alerts/:id/notifications','POST /alerts/:id/transition','POST /alerts/:id/assign','POST /alerts/:id/escalate','POST /alerts/:id/notes'],true,'/alerts','W2 · W4 · W11'],
+    ['corrs','Correlations','/correlations','Monitor','list',ALL,'Groups of related activity around a shared entity, filterable by entity type and time.','empty · loading · error · success',['GET /correlations'],false,'/correlations','W7'],
+    ['corr','Correlation detail','/correlations/[id]','Monitor','timeline',ALL,'Timeline of the alerts and events in a correlation group with 1h/6h/24h zoom and entity pivots.','loading · not-found · error · success',['GET /correlations/:id'],false,'/correlations','W7'],
+    ['search','Search','/search','Investigate','search',ALL,'Cross-entity search for IPs, domains, hashes, hosts and users. Results pivot into alerts, events, assets and source profiles.','idle · empty explainer · loading · error · success',['GET /search'],true,'/search','W5 · W10'],
+    ['source','Source profile','/sources/[value]','Investigate','profile',ALL,'Threat profile of an IP, domain or indicator: intel matches, geography, activity over 1–90 days, related alerts and a pivot to events.','no-observations · loading · error · success',['GET /sources/:value'],false,'/search','W4 · W5'],
+    ['events','Events','/events','Investigate','list',ALL,'Normalized event explorer with field filters and a detail drawer per row.','empty · filtered-empty · loading · error · success',['GET /events','GET /events/:id'],false,'/events','W5 · W10'],
+    ['assets','Assets','/assets','Investigate','list',ALL,'Inventory of hosts, IPs, users and cloud resources discovered from events, with criticality and exposure.','empty · loading · error · success',['GET /assets'],false,'/assets','W6'],
+    ['asset','Asset detail','/assets/[id]','Investigate','profile',WR('owner, admin, analyst'),'Security profile of an asset: editable owner, criticality, tags, exposure and notes, plus alerts and activity.','loading · not-found · error · saving · success',['GET /assets/:id','PATCH /assets/:id','GET /assets/:id/activity'],false,'/assets','W4 · W6'],
+    ['intel','Intel','/intel','Investigate','list',WR('owner, admin'),'Threat indicators: bundled global feed plus org indicators. Add, CSV import and delete.','empty · loading · error · field errors · success',['GET /indicators','POST /indicators','POST /indicators/import','DELETE /indicators/:id'],false,'/intel','W2 · W5'],
+    ['rules','Rules','/rules','Detect','list',WR('owner, admin'),'Detection rules with enable switches, severity filters and match statistics.','empty · loading · error · success',['GET /rules','PATCH /rules/:id'],false,'/rules','W8'],
+    ['rulenew','New rule','/rules/new','Detect','form','owner, admin','Rule builder: match clauses, threshold windows, severity, confidence, MITRE technique and suppression. Test against recent events before saving.','idle · testing · test result · field errors · success',['POST /rules','POST /rules/test'],true,'/rules','W8'],
+    ['rule','Rule detail','/rules/[id]','Detect','form',WR('owner, admin'),'Edit a rule (each save creates a version), view version history and hit statistics, test and delete.','loading · not-found · error · saving · success',['GET /rules/:id','PUT /rules/:id','PATCH /rules/:id','DELETE /rules/:id','GET /rules/:id/versions','GET /rules/:id/stats','POST /rules/:id/test'],false,'/rules','W8'],
+    ['integrations','Integrations','/integrations','Detect','list',WR('owner, admin'),'Connected sources with status and health. Creating one reveals its signing secret once.','first-use empty · loading · error · field errors · secret reveal',['GET /integrations','POST /integrations'],false,'/integrations','W1 · W9'],
+    ['integration','Integration detail','/integrations/[id]','Detect','profile',WR('owner, admin'),'Ingest health, recent batches and errors, secret rotation, test events, batch retry and enable/disable.','loading · not-found · error · success · degraded/silent banners',['GET /integrations/:id','PATCH /integrations/:id','DELETE /integrations/:id','POST /integrations/:id/rotate-secret','POST /integrations/:id/test','GET /integrations/:id/errors','GET /integrations/:id/batches','POST …/batches/:batchId/retry'],true,'/integrations','W1 · W9'],
+    ['notifs','Notifications','/notifications','Respond','settings','owner, admin','Notification policies (minimum severity, email or webhook channel, recipients, escalation) and signed webhook endpoints.','empty · loading · error · field errors (UNSAFE_URL) · success',['GET/POST/PATCH/DELETE /notification-policies','GET/POST/PATCH/DELETE /delivery-endpoints','POST /delivery-endpoints/:id/rotate-secret'],false,'/notifications','W11'],
+    ['notiflog','Notification log','/notifications/log','Respond','list','owner, admin','Every email and webhook attempt with status, filterable by channel, and retry for failed or dead-lettered items.','empty · loading · error · success',['GET /notifications/log','POST /notifications/log/:id/retry'],false,'/notifications','W11'],
+    ['reports','Reports','/reports','Respond','list',WR('owner, admin'),'Generated reports and daily/weekly schedules with recipients.','empty · loading · error · field errors · success',['GET /reports','POST /reports','GET /report-schedules','POST /report-schedules','DELETE /report-schedules/:id'],false,'/reports','W12'],
+    ['report','Report detail','/reports/[id]','Respond','dashboard','all · send: owner, admin','Snapshot of security activity for a period: totals, severity mix, top sources, rules and assets. Send to recipients.','loading · not-found · error · success',['GET /reports/:id','POST /reports/:id/send'],false,'/reports','W12'],
+    ['account','Account','/settings/account','Settings','form',ALL,'Change password and sign out. Users flagged to change their password are redirected here.','idle · field errors · success',['GET /auth/session','POST /auth/password','POST /auth/logout'],false,'/settings/account',''],
+    ['team','Team','/settings/team','Settings','list','owner, admin','Invite users, change roles, disable and reset passwords (temporary password shown once).','loading · error · field errors · temp password reveal',['GET /users','POST /users','PATCH /users/:id','POST /users/:id/reset-password'],false,'/settings/team',''],
+    ['org','Organization','/settings/organization','Settings','form','all · write: owner','Organization name and event retention (7–365 days).','loading · error · saving · success',['GET /org','PATCH /org'],false,'/settings/organization',''],
+    ['audit','Audit log','/settings/audit','Settings','list','owner, admin','Who did what and when, filterable by action, actor and time.','empty · loading · error · success',['GET /audit-logs'],false,'/settings/audit',''],
+    ['jobs','Jobs','/settings/jobs','Settings','list','owner, admin · run: owner','Status of each scheduled job with its latest runs and a run-now action.','loading · error · running · success · failed highlight',['GET /admin/jobs','POST /admin/jobs/:job/run'],false,'/settings/jobs','W11 · W12']
+  ];
+
+  // ---------- wireframes ----------
+  function L(c){return '<div class="ln '+(c||'')+'"></div>';}
+  function rows(n,lead){var h='<div class="tbl"><div class="tr th">'+L()+L()+L()+L()+'</div>';var s=['c','h','md','lo','inf','h','md'];for(var i=0;i<n;i++)h+='<div class="tr">'+(lead?'<span class="pill '+s[i%s.length]+'"></span>':'')+L()+L('s')+L()+L('xs')+'</div>';return h+'</div>';}
+  function kpi(){return '<div class="bx kpi f1">'+L('xs')+'<div class="v"></div></div>';}
+  function areaChart(){return '<div class="chart"><svg viewBox="0 0 100 40" preserveAspectRatio="none"><path d="M0 32 L10 28 L20 30 L30 18 L40 22 L50 12 L60 20 L70 14 L80 24 L90 10 L100 16 L100 40 L0 40Z" fill="var(--primary)" opacity=".15"/><path d="M0 32 L10 28 L20 30 L30 18 L40 22 L50 12 L60 20 L70 14 L80 24 L90 10 L100 16" fill="none" stroke="var(--primary)" stroke-width="1.2" vector-effect="non-scaling-stroke"/><path d="M0 36 L20 34 L40 33 L60 30 L80 32 L100 29" fill="none" stroke="var(--tele)" stroke-width="1" vector-effect="non-scaling-stroke"/></svg></div>';}
+  function dots(){return '<div class="dotmap"><b style="left:22%;top:38%"></b><b style="left:48%;top:30%"></b><b style="left:70%;top:46%"></b><b style="left:78%;top:28%"></b><b style="left:55%;top:62%"></b></div>';}
+  function head(btn){return '<div class="row" style="align-items:center;justify-content:space-between"><div class="ttl"></div>'+(btn?'<div class="btnw"></div>':'')+'</div>';}
+  function filters(){return '<div class="row"><div class="inp f2"></div><div class="inp f1"></div><div class="inp f1"></div><div class="inp f1"></div></div>';}
+  function field(){return '<div class="lbl"></div><div class="inp"></div>';}
+  var WF={
+    dashboard:function(){return head()+'<div class="row">'+kpi()+kpi()+kpi()+kpi()+'</div><div class="row f1"><div class="bx f2" style="display:flex;flex-direction:column">'+L('xs')+areaChart()+'</div><div class="bx f1" style="display:flex;flex-direction:column">'+L('xs')+dots()+'</div></div><div class="row"><div class="bx f2">'+rows(2,true)+'</div><div class="bx f1">'+L()+L('s')+L()+'</div></div>';},
+    map:function(){return head()+filters()+'<div class="row f1"><div class="bx f3" style="display:flex">'+dots()+'</div><div class="bx f1">'+L('xs')+L()+L('s')+L()+L('s')+L()+'</div></div>';},
+    list:function(){return head(true)+filters()+'<div class="bx f1">'+rows(6,true)+'</div><div class="row" style="justify-content:flex-end"><div class="btnw g"></div><div class="btnw g"></div></div>';},
+    detail:function(){return '<div class="row" style="align-items:center"><span class="pill c"></span><div class="ttl"></div><div style="flex:1"></div><div class="btnw g"></div><div class="btnw"></div></div><div class="row f1"><div class="bx f2" style="display:flex;flex-direction:column;gap:3px"><div class="tabs"><i></i><i></i><i></i><i></i></div>'+rows(4,false)+'</div><div class="f1" style="display:flex;flex-direction:column;gap:5px"><div class="bx">'+L('xs')+L()+L('s')+'</div><div class="bx f1"><div class="tl-item">'+L()+'</div><div class="tl-item">'+L('s')+'</div><div class="tl-item">'+L()+'</div></div></div></div>';},
+    timeline:function(){return head()+'<div class="row"><div class="btnw g"></div><div class="btnw"></div><div class="btnw g"></div></div><div class="bx f1" style="display:flex;flex-direction:column">'+areaChart()+'<div class="tl-item">'+L()+'</div><div class="tl-item">'+L('s')+'</div><div class="tl-item">'+L()+'</div></div>';},
+    search:function(){return '<div class="row"><div class="inp f1" style="height:13px;border-color:var(--primary)"></div><div class="btnw"></div></div><div class="row"><div class="btnw g"></div><div class="btnw g"></div><div class="btnw g"></div><div class="btnw g"></div></div><div class="bx">'+L('xs')+rows(2,true)+'</div><div class="row f1"><div class="bx f1">'+L('xs')+rows(2,false)+'</div><div class="bx f1">'+L('xs')+L()+L('s')+'</div></div>';},
+    profile:function(){return '<div class="row" style="align-items:center"><div class="ttl"></div><div style="flex:1"></div><div class="btnw g"></div></div><div class="row">'+kpi()+kpi()+kpi()+'</div><div class="row f1"><div class="bx f2" style="display:flex;flex-direction:column">'+L('xs')+areaChart()+'</div><div class="bx f1">'+L('xs')+field()+field()+'</div></div><div class="bx">'+rows(2,true)+'</div>';},
+    form:function(){return head()+'<div class="row f1"><div class="bx f2">'+field()+'<div class="row"><div class="f1">'+field()+'</div><div class="f1">'+field()+'</div></div><div class="lbl"></div><div class="row"><div class="inp f1"></div><div class="inp f1"></div><div class="inp f1"></div></div><div class="row"><div class="inp f1"></div><div class="inp f1"></div><div class="inp f1"></div></div>'+field()+'</div><div class="bx f1">'+L('xs')+L()+L('s')+L()+'<div class="row" style="margin-top:4px"><div class="btnw g"></div></div></div></div><div class="row" style="justify-content:flex-end"><div class="btnw g"></div><div class="btnw"></div></div>';},
+    settings:function(){return head(true)+'<div class="bx">'+rows(3,false)+'</div>'+'<div class="row" style="align-items:center;justify-content:space-between"><div class="ln xs" style="width:20%"></div><div class="btnw g"></div></div><div class="bx f1">'+rows(2,false)+'</div>';}
+  };
+  function screen(p){
+    var type=p[4], url='localhost:9443'+p[2];
+    if(type==='landing') return '<div class="scr"><div class="chrome"><i></i><i></i><i></i><span>'+url+'</span></div><div class="ct" style="padding:10px"><div class="row" style="justify-content:space-between;align-items:center"><span style="color:var(--primary);font-weight:700">ThreatWatch</span><div class="row"><div class="btnw g"></div><div class="btnw"></div></div></div><div style="flex:1;display:flex;gap:10px;align-items:center"><div class="f1"><div class="ttl" style="width:80%;height:10px"></div><div class="ttl" style="width:60%;height:10px;margin-top:4px"></div>'+L()+L('s')+'<div class="row" style="margin-top:6px"><div class="btnw"></div><div class="btnw g"></div></div></div><div class="bx f1" style="display:flex;flex-direction:column;height:70%">'+areaChart()+'</div></div><div class="row">'+kpi()+kpi()+kpi()+'</div></div></div>';
+    if(type==='auth') return '<div class="scr"><div class="chrome"><i></i><i></i><i></i><span>'+url+'</span></div><div class="center"><div class="authcard"><div style="color:var(--primary);font-weight:700;margin-bottom:4px">ThreatWatch</div><div class="ttl" style="width:60%"></div>'+field()+field()+(p[0]==='register'?field()+field():'')+'<div class="btnw" style="width:100%;margin-top:6px"></div>'+L('s')+'</div></div></div>';
+    var side='<div class="side"><div class="lg">ThreatWatch</div>';
+    NAV.forEach(function(g){side+='<div class="gl">'+g.g+'</div>';g.items.forEach(function(it){side+='<div class="it'+(it[1]===p[10]?' on':'')+'">'+it[0]+'</div>';});});
+    side+='</div>';
+    return '<div class="scr"><div class="chrome"><i></i><i></i><i></i><span>'+url.replace('[id]','…').replace('[value]','203.0.113.10')+'</span></div><div class="body">'+side+'<div class="main"><div class="tb"><div class="s"></div><span class="pill tl" style="width:8px"></span><div class="av"></div></div><div class="ct">'+WF[type]()+'</div></div></div></div>';
+  }
+
+  // ---------- render pages ----------
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  var list=document.getElementById('page-list');
+  list.innerHTML=P.map(function(p){
+    var binds=p[8].length?'<details><summary>'+p[8].length+' bound endpoint'+(p[8].length>1?'s':'')+'</summary><ul>'+p[8].map(function(b){return '<li>'+esc(b.indexOf('/api')===-1&&b.indexOf(' /')>-1?b.replace(' /',' /api/v1/'):b)+'</li>';}).join('')+'</ul></details>':'';
+    return '<article class="page'+(p[9]?' key':'')+'" id="p-'+p[0]+'" data-group="'+p[3]+'" data-key="'+(p[9]?1:0)+'">'+
+      '<div class="wf" aria-hidden="true">'+screen(p)+'</div>'+
+      '<div class="meta"><div class="hd"><h3>'+esc(p[1])+(p[9]?' <span class="tag p">key page</span>':'')+'</h3><span class="route">'+esc(p[2])+'</span></div>'+
+      '<p>'+esc(p[6])+'</p>'+
+      '<dl class="kv"><dt>Section</dt><dd>'+p[3]+'</dd><dt>Roles</dt><dd>'+esc(p[5])+'</dd>'+(p[11]?'<dt>Workflows</dt><dd>'+p[11]+'</dd>':'')+'<dt>States</dt><dd>'+esc(p[7])+'</dd></dl>'+binds+'</div></article>';
+  }).join('');
+
+  // filters
+  var groups=['Key pages','All','Public','Monitor','Investigate','Detect','Respond','Settings'], fbox=document.getElementById('filters'), active='Key pages';
+  try{ active=localStorage.getItem('tw-arch-filter')||'Key pages'; }catch(e){}
+  function applyFilter(){
+    Array.prototype.forEach.call(fbox.children,function(b){b.setAttribute('aria-pressed',b.textContent.indexOf(active)===0?'true':'false');});
+    Array.prototype.forEach.call(list.children,function(el){
+      var show=active==='All'||(active==='Key pages'?el.dataset.key==='1':el.dataset.group===active);
+      el.hidden=!show;
+    });
+  }
+  groups.forEach(function(g){
+    var n=g==='All'?P.length:g==='Key pages'?P.filter(function(p){return p[9];}).length:P.filter(function(p){return p[3]===g;}).length;
+    var b=document.createElement('button');b.type='button';b.textContent=g+' ('+n+')';
+    b.addEventListener('click',function(){active=g;try{localStorage.setItem('tw-arch-filter',g);}catch(e){}applyFilter();});
+    fbox.appendChild(b);
+  });
+  applyFilter();
+
+  // ---------- sitemap ----------
+  var sm=document.getElementById('sitemap-groups'), perm={'/notifications':'policies:read','/settings/team':'users:read','/settings/audit':'audit:read','/settings/jobs':'jobs:read'};
+  function link(p){return '<a href="#p-'+p[0]+'" data-jump="'+p[0]+'">'+esc(p[2])+'</a>';}
+  var groupsAll=[{g:'Public',items:[]}].concat(NAV);
+  sm.innerHTML=groupsAll.map(function(g){
+    var top=P.filter(function(p){return p[3]===g.g&&(g.g==='Public'||!/\[|\/new|\/log/.test(p[2]));});
+    var html='<div class="smg"><h4>'+g.g+'</h4><ul>';
+    top.forEach(function(t){
+      html+='<li>'+link(t)+(perm[t[2]]?' <span class="tag">'+perm[t[2]]+'</span>':'')+'</li>';
+      P.filter(function(c){return c[3]===g.g&&c!==t&&c[2].indexOf(t[2]+'/')===0;}).forEach(function(c){html+='<li class="child">'+link(c)+'</li>';});
+    });
+    if(g.g==='Investigate') html+='<li class="child">'+link(P.filter(function(p){return p[0]==='source';})[0])+'</li>';
+    return html+'</ul></div>';
+  }).join('');
+  sm.addEventListener('click',function(e){
+    var a=e.target.closest('a[data-jump]'); if(!a) return;
+    var el=document.getElementById('p-'+a.dataset.jump);
+    if(el&&el.hidden){active='All';applyFilter();}
+  });
+
+  // ---------- workflows ----------
+  var W=[
+    ['W1','Security telemetry ingestion: source → ThreatWatch',['integrations','integration']],
+    ['W2','Threat detection: event → detection → alert',['alert','intel']],
+    ['W3','Real-time monitoring: events → dashboard',['dashboard','map']],
+    ['W4','Alert investigation',['alerts','alert','source','asset']],
+    ['W5','Threat-source investigation: IP / domain / indicator → profile',['search','source','events','intel']],
+    ['W6','Asset investigation: asset → security profile',['assets','asset']],
+    ['W7','Threat correlation: events → connected activity',['corrs','corr']],
+    ['W8','Detection management: rule → detection',['rules','rulenew','rule']],
+    ['W9','Integration management',['integrations','integration']],
+    ['W10','Investigation search: question → evidence',['search','events']],
+    ['W11','Notification: detection → notification',['notifs','notiflog','alert','jobs']],
+    ['W12','Reporting: activity → security report',['reports','report','jobs']]
+  ];
+  var byId={};P.forEach(function(p){byId[p[0]]=p;});
+  document.getElementById('wf-rows').innerHTML=W.map(function(w){
+    return '<tr><td class="mono">'+w[0]+'</td><td>'+esc(w[1])+'</td><td>'+w[2].map(function(id){return '<a class="tag" style="text-decoration:none" href="#p-'+id+'" data-jump="'+id+'">'+esc(byId[id][1])+'</a>';}).join('')+'</td></tr>';
+  }).join('');
+  document.getElementById('wf-rows').addEventListener('click',function(e){var a=e.target.closest('a[data-jump]');if(a&&document.getElementById('p-'+a.dataset.jump).hidden){active='All';applyFilter();}});
+
+  // ---------- rbac ----------
+  var R=[
+    ['dashboard · alerts · events · assets · intel · rules · integrations · reports : read',1,1,1,1],
+    ['alerts : write · assets : write',1,1,1,0],
+    ['intel · rules · integrations · reports : write; policies : read/write',1,1,0,0],
+    ['users : read · audit : read · jobs : read',1,1,0,0],
+    ['users : write',1,'✓*',0,0],
+    ['org : read',1,1,1,1],
+    ['org : write · jobs : run',1,0,0,0]
+  ];
+  document.getElementById('rbac-rows').innerHTML=R.map(function(r){
+    return '<tr><td class="mono">'+r[0]+'</td>'+r.slice(1).map(function(v){return '<td>'+(v===1?'<span class="yes" aria-label="allowed">✓</span>':v===0?'<span class="no" aria-label="denied">—</span>':'<span class="yes">'+v+'</span>')+'</td>';}).join('')+'</tr>';
+  }).join('')+'<tr><td colspan="5" style="color:var(--muted);font-size:12.5px">* Admins cannot create, modify or reset an owner, and cannot grant the owner role.</td></tr>';
+
+  // ---------- data model ----------
+  var D=[
+    ['Tenancy & identity','organizations, users, sessions, audit_logs, idempotency_keys'],
+    ['Ingest','integrations, webhook_receipts, ingest_batches, ingest_errors, events'],
+    ['Context & intel','assets, indicators, geo_ip_ranges (global), mitre_techniques (global)'],
+    ['Detection','rules, rule_versions, correlation_groups'],
+    ['Alerts','alerts, alert_events, alert_activity'],
+    ['Notification outboxes','notification_policies, delivery_endpoints, pending_emails, pending_deliveries'],
+    ['Reporting & jobs','report_schedules, reports, job_runs']
+  ];
+  document.getElementById('data-groups').innerHTML=D.map(function(d){
+    return '<div class="card"><h3>'+d[0]+'</h3><div>'+d[1].split(', ').map(function(t){return '<span class="tag'+(/pending_|webhook_receipts/.test(t)?' p':/global/.test(t)?' t':'')+'">'+esc(t)+'</span>';}).join('')+'</div></div>';
+  }).join('')+'<div class="card"><h3>Key uniqueness</h3><p class="sub" style="margin:0;font-size:13px">Events dedupe on <code>(integration_id, source_event_id)</code>; receipts on <code>(integration_id, message_id)</code>; idempotency on <code>(org_id, key)</code>; emails on <code>(to_address, template_key, business_ref)</code>.</p></div>';
+})();
+</script>
+</body>
+</html>
