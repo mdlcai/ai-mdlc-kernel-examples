@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ThreatWatch - IP Threat Map</title>
+<!--
+  ThreatWatch IP map. Opened from the ThreatWatch dashboard's "Map" button.
+  Live data: /api/threatwatch/alerts (open, 48h) + /dashboard, geolocated by RDAP country.
+  ?company=<id> picks the company; ?demo=1 renders mock data with no backend calls.
+  Rendering: js/threatwatch-map.js   Data shaping: js/threatwatch-map-data.js
+-->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/threatwatch-map.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <a class="brand-mark" href="index.html#/threatwatch" title="Back to ThreatWatch" aria-label="Back to ThreatWatch"></a>
+      <div>
+        <div class="crumbs"><a href="index.html#/threatwatch">CyberOps <b>/</b> ThreatWatch</a> <b>/</b> Map</div>
+        <h1 class="title">THREAT<span>//</span>MAP</h1>
+      </div>
+    </div>
+    <div class="clocks">
+      <div class="clock"><div class="clock-zone">CENTRAL</div><div class="clock-time" id="clk-ct">--:--:--</div></div>
+      <div class="clock"><div class="clock-zone" id="clk-utc-zone">GMT</div><div class="clock-time" id="clk-utc">--:--:--</div></div>
+    </div>
+    <div class="topright">
+      <div class="seg-ctl" id="companies" hidden></div>
+      <span class="pill"><span class="dot crit pulse" id="pill-dot"></span><span id="pill-live">LOADING…</span></span>
+      <span class="pill" id="pill-updated">UPDATED --</span>
+      <a class="pill back" href="index.html#/threatwatch">&larr; Threat Watch</a>
+      <a class="pill back brand" href="index.html">☆ CYBEROPS ☆</a>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- ================= left column ================= -->
+    <aside class="col side">
+      <section class="card">
+        <div class="card-head"><h2 class="card-title">Threat Overview</h2><span class="card-sub">open alerts · 48h</span></div>
+        <div class="card-body" id="kpis"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h2 class="card-title">Top Attack Sources</h2><span class="card-sub">click to locate</span></div>
+        <div class="card-body tbl-scroll"><table><thead><tr><th>IP Address</th><th>CC</th><th style="text-align:right">Alerts</th></tr></thead><tbody id="top-sources"></tbody></table></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h2 class="card-title">Top Countries</h2><span class="card-sub" id="countries-src"></span></div>
+        <div class="card-body tbl-scroll"><table><thead><tr><th>Country</th><th style="text-align:right">Events</th></tr></thead><tbody id="countries"></tbody></table></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h2 class="card-title">Feed Health</h2><span class="card-sub">InsightIDR queries</span></div>
+        <div class="card-body" id="health"></div>
+      </section>
+    </aside>
+
+    <!-- ================= main column ================= -->
+    <main class="col">
+      <section class="card map-card">
+        <div class="card-head">
+          <h2 class="card-title">Network Map</h2>
+          <div class="map-toolbar">
+            <input class="search" id="search" placeholder="Search IP / country / network" autocomplete="off" spellcheck="false">
+            <div id="sev-chips" class="chips"></div>
+            <select class="select" id="group" title="Graph grouping">
+              <option value="org">Group: Network</option><option value="country">Group: Country</option><option value="none">Group: None</option>
+            </select>
+            <select class="select" id="zone" title="Filter by network zone">
+              <option value="all">Zone: All</option><option value="external">Zone: External</option><option value="dmz">Zone: DMZ</option><option value="internal">Zone: Internal</option>
+            </select>
+            <div class="seg-ctl" id="view-ctl"><button data-view="geo">Map</button><button data-view="graph" class="on">Graph</button></div>
+            <div class="seg-ctl"><button id="tg-arcs" class="on" title="Attack arcs / links">Links</button><button id="tg-muted" title="Overlay currently-muted alerts on the map (view only - does not change what's muted)">Show Muted</button></div>
+          </div>
+        </div>
+        <div class="map-wrap" id="map-wrap">
+          <canvas id="map"></canvas>
+          <div class="map-overlay map-stats" id="map-stats"></div>
+          <div class="map-overlay hint" id="hint">drag a node to pin it · hover to trace links · click for details</div>
+          <div class="map-overlay legend">
+            <span><i class="dot critical"></i>Critical</span><span><i class="dot high"></i>High</span>
+            <span><i class="dot medium"></i>Medium</span><span><i class="dot low"></i>Low</span>
+            <span><i class="asset-key"></i>Target</span>
+          </div>
+          <div class="map-overlay zoom"><button id="z-in" title="Zoom in">+</button><button id="z-out" title="Zoom out">&minus;</button><button id="z-fit" title="Reset view">&#x2922;</button><button id="z-unmove" hidden>&#x27F2;</button></div>
+          <aside class="drawer" id="drawer" aria-live="polite"></aside>
+        </div>
+      </section>
+
+      <div class="row2">
+        <section class="card">
+          <div class="card-head"><h2 class="card-title">Alert Feed</h2><span class="card-sub" id="log-count">--</span></div>
+          <div class="logs" id="logs"></div>
+        </section>
+        <section class="card">
+          <div class="card-head"><h2 class="card-title">Detections by Rule</h2><span class="card-sub" id="rule-count">--</span></div>
+          <div class="card-body tbl-scroll"><table><thead><tr><th>Rule</th><th>Severity</th><th style="text-align:right">Alerts</th><th style="text-align:right">Sources</th></tr></thead><tbody id="rules"></tbody></table></div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="tip" id="tip"></div>
+
+<script src="js/api.js"></script>
+<script src="js/threatwatch-map-data.js"></script>
+<script src="js/threatwatch-map.js"></script>
+</body>
+</html>
