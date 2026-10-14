@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STΛRDΛNCΞR Build Dossier · MDLC</title>
+<meta name="description" content="STΛRDΛNCΞR, a system intelligence platform built by MDLC. Build status, gate results, security audit and open items, as recorded in the build.">
+<meta name="theme-color" content="#06070a">
+<style>
+:root{--bg:#06070a;--surface:#0e1116;--raised:#141922;--border:rgba(255,255,255,.09);--text:#ebe7df;--muted:#a3a9b5;--faint:#7a808c;--amber:#ffb547;--ember:#ff7a3d;--green:#5fe3a1;--red:#ff5d6c;--cyan:#5fd4ff;--mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;--sans:"Inter","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;color-scheme:dark}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6}
+body{padding:0 16px 64px}
+.wrap{max-width:960px;margin:0 auto}
+header{padding:48px 0 28px;border-bottom:1px solid var(--border)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber)}
+h1{font-family:var(--sans);font-weight:600;font-size:clamp(28px,4.5vw,44px);letter-spacing:-.01em;margin:12px 0 10px}
+.lede{color:var(--muted);max-width:680px;font-size:16px}
+.status{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;border:1px solid rgba(255,181,71,.45);color:var(--amber);border-radius:999px;padding:7px 14px}
+.status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--amber)}
+.back{display:inline-block;margin-top:20px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--cyan);text-decoration:none}
+section{margin-top:44px}
+h2{font-size:22px;font-weight:600;margin-bottom:6px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+.stat b{display:block;font-family:var(--mono);font-size:24px;font-weight:600}
+.stat span{font-size:12px;color:var(--muted);letter-spacing:.02em}
+.ok b{color:var(--green)} .warn b{color:var(--amber)} .bad b{color:var(--red)}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:14px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:500}
+tr:last-child td{border-bottom:0}
+td code{font-family:var(--mono);font-size:12px;color:var(--cyan)}
+.tag{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:3px 8px;white-space:nowrap}
+.t-ok{background:rgba(95,227,161,.12);color:var(--green)}
+.t-warn{background:rgba(255,181,71,.12);color:var(--amber)}
+.t-bad{background:rgba(255,93,108,.12);color:var(--red)}
+.t-open{background:rgba(255,255,255,.06);color:var(--muted)}
+.note{margin-top:14px;color:var(--muted);font-size:14px}
+ul{padding-left:20px;color:var(--muted);font-size:15px}
+li{margin-bottom:6px}
+.wrap table{display:block;overflow-x:auto}
+footer{margin-top:52px;color:var(--faint);font-size:12px;font-family:var(--mono);letter-spacing:.04em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Build dossier · MDLC kernel</div>
+  <h1>STΛRDΛNCΞR</h1>
+  <p class="lede">A system intelligence platform: it reads what your observations mean together, and nothing it proposes happens until governance says it can. This page records what the build produced, what passed, what failed on the way, and what is still open.</p>
+  <div class="status">Halted at Stage 4 · not yet shipped</div>
+  <br><a class="back" href="https://mdlc.ai/proof.html">&larr; Back to proof</a>
+</header>
+
+<section>
+  <h2>Where the build stands</h2>
+  <p class="sub">Version 0.1.6, built 13 to 14 October 2026. The build is paused on one failing performance invariant, so this is not a finished release.</p>
+  <div class="grid">
+    <div class="stat ok"><b>263 / 263</b><span>tests passing at the final checkpoint</span></div>
+    <div class="stat ok"><b>18</b><span>features built in order</span></div>
+    <div class="stat ok"><b>23 / 26</b><span>security and web requirements implemented, 3 with notes, 0 gaps</span></div>
+    <div class="stat warn"><b>55 / 56</b><span>invariants proven; INV-55 (performance) open</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Gate results</h2>
+  <p class="sub">Each gate's outcome as recorded in the build's reports. A gate that failed and was fixed is listed with its fix.</p>
+  <table>
+    <thead><tr><th>Gate</th><th>Result</th><th>What it recorded</th></tr></thead>
+    <tbody>
+      <tr><td>Research</td><td><span class="tag t-ok">Pass</span></td><td>Go decision, 2026-10-12. 30 RESEARCH.md fields reconciled into the build: 27 applied, 2 resolved by the design template, 1 applied with a residual.</td></tr>
+      <tr><td>Checkpoints CP-1 to CP-8</td><td><span class="tag t-ok">Pass</span></td><td>Typecheck, lint and formatting clean at each checkpoint. Schema diff 0. Only the specified routes exist.</td></tr>
+      <tr><td>Security Audit (2 passes)</td><td><span class="tag t-warn">Remediated</span></td><td>Pass 1 found 1 high, 3 medium and 6 low, and fixed the high and medium items, including an open redirect and a missing per-user stream cap. Pass 2 found one more medium (an unbounded entity listing), which was fixed. Seven low items are deferred with reasons.</td></tr>
+      <tr><td>COMPLIANCE.md</td><td><span class="tag t-ok">23 pass</span></td><td>Of 26 spec and web rows: 23 implemented and clean, 3 with a documented note, 0 gaps.</td></tr>
+      <tr><td>Frontend audit</td><td><span class="tag t-ok">99 / 99 cells</span></td><td>Accessibility, landmarks and viewport checks pass on every screen. Lighthouse on mobile: accessibility, best practices and SEO each 100.</td></tr>
+      <tr><td>Performance (INV-55)</td><td><span class="tag t-bad">Open</span></td><td>The build is halted here. The overview page's LCP was cut from 6.6 s to 2.0 s, and a speed pass on time-to-interactive is the next step.</td></tr>
+      <tr><td>Smoke test</td><td><span class="tag t-ok">52 / 52</span></td><td>Automated run passes. Manual checklist covers sign-up, sign-in, CRUD, unhappy paths, a database outage and missing environment variables.</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Items not verified automatically: live Stripe billing (no keys in the build environment; simulated billing mode is covered) and email delivery (the product has none by design).</p>
+</section>
+
+<section>
+  <h2>Security audit: what was found</h2>
+  <p class="sub">Findings from the two-pass audit. Remediated items were fixed in the build; deferred items are accepted with the reason recorded.</p>
+  <table>
+    <thead><tr><th>ID</th><th>Severity</th><th>Finding</th><th>Disposition</th></tr></thead>
+    <tbody>
+      <tr><td><code>S-1</code></td><td><span class="tag t-bad">High</span></td><td>Production dependency audit showed 4 high-severity issues in the Prisma CLI chain.</td><td><span class="tag t-ok">Remediated</span> moved to dev dependencies, with pinned overrides.</td></tr>
+      <tr><td><code>S-2</code></td><td><span class="tag t-warn">Medium</span></td><td>Open redirect after login, confirmed live.</td><td><span class="tag t-ok">Remediated</span> control characters and backslashes refused.</td></tr>
+      <tr><td><code>S-3</code></td><td><span class="tag t-warn">Medium</span></td><td>Baseline fixture seeded a public reset token for the baseline owner.</td><td><span class="tag t-ok">Remediated</span> reset targets a throwaway account. Residual: low.</td></tr>
+      <tr><td><code>S-4</code></td><td><span class="tag t-warn">Medium</span></td><td>No per-user cap on live-update streams; one member could hold every org slot.</td><td><span class="tag t-ok">Remediated</span> six streams per user per replica.</td></tr>
+      <tr><td><code>N-1</code></td><td><span class="tag t-warn">Medium</span></td><td>Entity listing scanned a whole org per request with no cost limit.</td><td><span class="tag t-ok">Remediated</span> per-org budget with 429 responses.</td></tr>
+      <tr><td><code>S-5</code>, <code>S-10</code></td><td><span class="tag t-open">Low</span></td><td>Export rate limit did not match the spec; placeholder secrets passed validation.</td><td><span class="tag t-ok">Remediated</span></td></tr>
+      <tr><td><code>S-6</code> to <code>S-9</code>, <code>N-2</code></td><td><span class="tag t-open">Low</span></td><td>Redis without authentication (internal network only), root vendor containers, no email verification (no outbound mail in v1), per-batch retry cost.</td><td><span class="tag t-open">Deferred</span> each with a recorded reason.</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Result after pass 2: 0 critical, 0 high, 0 medium and 7 low residual items, all deferred with reasons.</p>
+</section>
+
+<section>
+  <h2>Open items</h2>
+  <ul>
+    <li>INV-55 (performance) is the only failing invariant. The build stops here until it passes or the numbers are reported.</li>
+    <li>Pending reviews, some still open at the last checkpoint: features F-02, F-04, F-05, F-07, F-08, F-09, F-10, F-11, F-12, F-13, F-14, F-16, F-18, and the reviewer findings C-4, C-6, C-11, C-20, C-24 and C-31.</li>
+    <li>Before release: tag the version, complete the build, and run the full baseline once more at the final commit.</li>
+  </ul>
+</section>
+
+<footer>MDLC kernel · STΛRDΛNCΞR 0.1.6 · status as recorded in the build reports</footer>
+
+</div>
+</body>
+</html>
