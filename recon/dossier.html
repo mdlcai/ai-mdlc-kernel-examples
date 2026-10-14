@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recon Build Dossier · MDLC</title>
+<meta name="description" content="Recon, a continuous attack-surface monitoring app built by MDLC. Build status, gate results, security audit and open items, as recorded in the build.">
+<meta name="theme-color" content="#06070a">
+<style>
+:root{--bg:#06070a;--surface:#0e1116;--raised:#141922;--border:rgba(255,255,255,.09);--text:#ebe7df;--muted:#a3a9b5;--faint:#7a808c;--amber:#ffb547;--ember:#ff7a3d;--green:#5fe3a1;--red:#ff5d6c;--cyan:#5fd4ff;--mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;--sans:"Inter","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;color-scheme:dark}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6}
+body{padding:0 16px 64px}
+.wrap{max-width:960px;margin:0 auto}
+header{padding:48px 0 28px;border-bottom:1px solid var(--border)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber)}
+h1{font-family:var(--sans);font-weight:600;font-size:clamp(28px,4.5vw,44px);letter-spacing:-.01em;margin:12px 0 10px}
+.lede{color:var(--muted);max-width:680px;font-size:16px}
+.status{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;border:1px solid rgba(255,181,71,.45);color:var(--amber);border-radius:999px;padding:7px 14px}
+.status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--amber)}
+.back{display:inline-block;margin-top:20px;margin-right:24px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--cyan);text-decoration:none}
+section{margin-top:44px}
+h2{font-size:22px;font-weight:600;margin-bottom:6px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+.stat b{display:block;font-family:var(--mono);font-size:24px;font-weight:600}
+.stat span{font-size:12px;color:var(--muted);letter-spacing:.02em}
+.ok b{color:var(--green)} .warn b{color:var(--amber)} .bad b{color:var(--red)}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:14px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:500}
+tr:last-child td{border-bottom:0}
+td code{font-family:var(--mono);font-size:12px;color:var(--cyan)}
+.tag{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:3px 8px;white-space:nowrap}
+.t-ok{background:rgba(95,227,161,.12);color:var(--green)}
+.t-warn{background:rgba(255,181,71,.12);color:var(--amber)}
+.t-bad{background:rgba(255,93,108,.12);color:var(--red)}
+.t-open{background:rgba(255,255,255,.06);color:var(--muted)}
+.note{margin-top:14px;color:var(--muted);font-size:14px}
+ul{padding-left:20px;color:var(--muted);font-size:15px}
+li{margin-bottom:6px}
+.wrap table{display:block;overflow-x:auto}
+footer{margin-top:52px;color:var(--faint);font-size:12px;font-family:var(--mono);letter-spacing:.04em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Build dossier · MDLC kernel</div>
+  <h1>Recon</h1>
+  <p class="lede">Recon watches the hosts, ports, services and certificates that an organization exposes to the internet. It keeps a baseline for each asset, scans on a schedule, and raises a change event when the exposed surface moves. Each team is a separate tenant, and an asset can only be scanned after its owner proves control of it. Alerts go to Slack, a signed webhook or email, and reports export as PDF, JSON or CSV. This page records what the build produced, what passed, what was fixed on the way, and what is still open.</p>
+  <div class="status">Verified on local stack · version 0.1.1</div>
+  <br><a class="back" href="./index.html">Open the build &rarr;</a><a class="back" href="https://mdlcai.github.io/ai-mdlc-kernel-examples/">&larr; All builds</a>
+</header>
+
+<section>
+  <h2>Where the build stands</h2>
+  <p class="sub">Version 0.1.1, deployed as a local docker-compose stack behind HTTPS (deploy tag 0.1.1-functional-verified). The final verification run and all eight functional smoke flows pass. Vault, Resend, Sentry and Slack were not provisioned, so their cloud paths were not exercised.</p>
+  <div class="grid">
+    <div class="stat ok"><b>29</b><span>tests passing at the final verification run</span></div>
+    <div class="stat ok"><b>8 / 8</b><span>functional smoke flows pass against https://localhost</span></div>
+    <div class="stat ok"><b>15 / 15</b><span>machine-checked invariants pass</span></div>
+    <div class="stat ok"><b>46</b><span>build inputs reconciled, no unresolved conflicts</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Gate results</h2>
+  <p class="sub">Each gate's outcome as recorded in the build's reports. A gate that failed and was fixed is listed with its fix.</p>
+  <table>
+    <thead><tr><th>Gate</th><th>Result</th><th>What it recorded</th></tr></thead>
+    <tbody>
+      <tr><td>Research</td><td><span class="tag t-ok">Pass</span></td><td>GO verdict, research dated 2026-06-04. Stack verified against vendor documentation. Two substitutions were recorded: TypeORM 0.3.x instead of 1.0, and Next.js 15 LTS instead of 16.</td></tr>
+      <tr><td>Build input reconciliation</td><td><span class="tag t-ok">Pass</span></td><td>46 non-blank fields reconciled. No unresolved Conflict. The secrets local fallback is recorded as Deferred.</td></tr>
+      <tr><td>Security audit</td><td><span class="tag t-ok">Passed</span></td><td>Pass 1 found 3 medium items and no critical or high items. Item 3 was fixed. Items 1 and 2 were accepted with rationale and tracking. Residual: 0 critical, 0 high.</td></tr>
+      <tr><td>COMPLIANCE.md</td><td><span class="tag t-warn">2 with notes</span></td><td>Of 19 requirement and domain-signal rows: 17 implemented, 2 with notes (SEC-9 secrets and SEC-12 encryption at rest, both delegated to production infrastructure), 0 gaps.</td></tr>
+      <tr><td>Verification gate (final)</td><td><span class="tag t-ok">Pass</span></td><td>Typecheck 0, tests 0 (29 passing), build 0, invariant-lint 0 (15 of 15). Run as a clean sequential pass.</td></tr>
+      <tr><td>Smoke test</td><td><span class="tag t-ok">8 / 8</span></td><td>Health, auth bootstrap, asset discovery, continuous scanning, change detection, alert routing, reporting and tenant isolation all pass. Full request and response evidence is in smoke-test.log.</td></tr>
+      <tr><td>Deploy target</td><td><span class="tag t-open">Local stack</span></td><td>Outcome C: five services healthy (db, redis, api, web, nginx). HTTP redirects to HTTPS with 301. Externals were not provisioned, so the stack runs with the local fallbacks.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>Security audit: what was found</h2>
+  <p class="sub">Findings from the three-pass audit (initial scan, auto-remediation, re-scan). Remediated items were fixed in the build; accepted items carry the recorded rationale.</p>
+  <table>
+    <thead><tr><th>ID</th><th>Severity</th><th>Finding</th><th>Disposition</th></tr></thead>
+    <tbody>
+      <tr><td><code>1</code></td><td><span class="tag t-warn">Medium</span></td><td>postcss below 8.5.10 has an XSS-in-CSS-stringify advisory. It comes in transitively through Next 15 and is used at build time.</td><td><span class="tag t-open">Accepted</span> root override applied, but Next 15 still bundles a nested postcss 8.4.31. Tracked with a re-audit on each Next minor bump.</td></tr>
+      <tr><td><code>2</code></td><td><span class="tag t-warn">Medium</span></td><td>Same advisory, through Next's nested postcss.</td><td><span class="tag t-open">Accepted</span> the nested copy is build-time only, is not in the runtime image or the request path, and never stringifies attacker-controlled CSS.</td></tr>
+      <tr><td><code>3</code></td><td><span class="tag t-warn">Medium</span></td><td>Development default JWT and webhook signing secrets could be used if the environment variables were unset in production.</td><td><span class="tag t-ok">Fixed</span> <code>assertProductionSecrets()</code> stops production boot when either secret is unset or equal to its development default.</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Result after pass 3: 0 critical, 0 high, and both residual medium items accepted with rationale. Adversarial review confirmed tenant isolation (runtime smoke flow W7), the SSRF guard, authorization-to-scan, idempotent outbox delivery, webhook signing before send, and append-only audit logging.</p>
+</section>
+
+<section>
+  <h2>Open items</h2>
+  <ul>
+    <li>Production secrets: set <code>VAULT_ADDR</code> and <code>VAULT_TOKEN</code>. Vault was not provisioned, so SEC-9 runs on the environment fallback locally.</li>
+    <li>Encryption at rest (SEC-12) is delegated to the storage layer. Managed-disk or volume encryption must be documented and enabled for production.</li>
+    <li>The nested postcss 8.4.31 inside Next 15 is accepted. Re-run <code>npm audit</code> on each Next minor bump.</li>
+    <li>Domain verification by DNS TXT or HTTP file was not run. The smoke test completed asset verification with the demo auto-verify (ADR-015), which applies only when private targets are allowed. The scan gate that requires an authorized asset is enforced in every mode.</li>
+    <li>Change detection in the smoke test used the demo drift affordance (ADR-016), which is set only in the demo compose file. Production runs produce only real diffs.</li>
+    <li>Alert routing in the smoke test recorded a failed delivery to a self-signed target. The record is correct for that target, but no alert reached a live endpoint.</li>
+    <li>Cloud paths for Vault, Resend, Sentry and Slack are not verified. Email delivery is not verified because the product has no outbound mail in v1.</li>
+    <li>The rate limiter uses an in-memory store. A Redis-backed store is recommended before running more than one instance (SEC-5).</li>
+    <li>The scan engine is the native Node TCP and TLS engine (ADR-007). The naabu and nmap adapters exist behind the ScanEngine interface but were not used in this build.</li>
+  </ul>
+</section>
+
+<footer>MDLC kernel · Recon 0.1.1 · status as recorded in the build reports</footer>
+
+</div>
+</body>
+</html>

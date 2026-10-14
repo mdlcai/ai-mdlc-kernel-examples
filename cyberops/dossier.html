@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CyberOps Build Dossier · MDLC</title>
+<meta name="description" content="CyberOps, a multi-tenant security operations platform built by MDLC. Build status, gate results, security audit and open items, as recorded in the build.">
+<meta name="theme-color" content="#06070a">
+<style>
+:root{--bg:#06070a;--surface:#0e1116;--raised:#141922;--border:rgba(255,255,255,.09);--text:#ebe7df;--muted:#a3a9b5;--faint:#7a808c;--amber:#ffb547;--ember:#ff7a3d;--green:#5fe3a1;--red:#ff5d6c;--cyan:#5fd4ff;--mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;--sans:"Inter","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;color-scheme:dark}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6}
+body{padding:0 16px 64px}
+.wrap{max-width:960px;margin:0 auto}
+header{padding:48px 0 28px;border-bottom:1px solid var(--border)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber)}
+h1{font-family:var(--sans);font-weight:600;font-size:clamp(28px,4.5vw,44px);letter-spacing:-.01em;margin:12px 0 10px}
+.lede{color:var(--muted);max-width:680px;font-size:16px}
+.status{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;border:1px solid rgba(255,181,71,.45);color:var(--amber);border-radius:999px;padding:7px 14px}
+.status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--amber)}
+.back{display:inline-block;margin-top:20px;margin-right:22px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--cyan);text-decoration:none}
+section{margin-top:44px}
+h2{font-size:22px;font-weight:600;margin-bottom:6px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+.stat b{display:block;font-family:var(--mono);font-size:24px;font-weight:600}
+.stat span{font-size:12px;color:var(--muted);letter-spacing:.02em}
+.ok b{color:var(--green)} .warn b{color:var(--amber)} .bad b{color:var(--red)}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:14px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:500}
+tr:last-child td{border-bottom:0}
+td code{font-family:var(--mono);font-size:12px;color:var(--cyan)}
+.tag{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:3px 8px;white-space:nowrap}
+.t-ok{background:rgba(95,227,161,.12);color:var(--green)}
+.t-warn{background:rgba(255,181,71,.12);color:var(--amber)}
+.t-bad{background:rgba(255,93,108,.12);color:var(--red)}
+.t-open{background:rgba(255,255,255,.06);color:var(--muted)}
+.note{margin-top:14px;color:var(--muted);font-size:14px}
+ul{padding-left:20px;color:var(--muted);font-size:15px}
+li{margin-bottom:6px}
+.wrap table{display:block;overflow-x:auto}
+footer{margin-top:52px;color:var(--faint);font-size:12px;font-family:var(--mono);letter-spacing:.04em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Build dossier · MDLC kernel</div>
+  <h1>CyberOps</h1>
+  <p class="lede">A multi-tenant security operations platform for teams that test infrastructure they own. Targets must be verified before any scan may touch them. The platform runs safe reconnaissance, correlates CVSS and CWE tagged findings, plans AI-assisted pentests that stop at a human approval gate, investigates indicators, maps findings to SOC 2, PCI DSS and OWASP controls, and exports PDF, JSON and CSV reports. This page records what the build produced, what passed, what failed on the way, and what is still open.</p>
+  <div class="status">Complete · Security audit PASS WITH ADVISORY</div>
+  <br><a class="back" href="./index.html">Open the build &rarr;</a><a class="back" href="https://mdlcai.github.io/ai-mdlc-kernel-examples/">&larr; All builds</a>
+</header>
+
+<section>
+  <h2>Where the build stands</h2>
+  <p class="sub">Comprehensive depth, large scale tier, Solo tier. The build was generated from the RESEARCH.md blueprint and records a live production address in its README. The ship target in DECISIONS.md ADR-008 is the local docker-compose stack.</p>
+  <div class="grid">
+    <div class="stat ok"><b>29</b><span>tests in the final build</span></div>
+    <div class="stat ok"><b>17</b><span>features built in dependency order</span></div>
+    <div class="stat ok"><b>15 / 15</b><span>architectural invariants checked by the linter</span></div>
+    <div class="stat ok"><b>17 / 17</b><span>functional smoke checks; 5 / 5 Playwright e2e</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Gate results</h2>
+  <p class="sub">Each gate's outcome as recorded in the build's reports. The Reviewer Gate failed its first three rounds and passed on the fourth, after fixes.</p>
+  <table>
+    <thead><tr><th>Gate</th><th>Result</th><th>What it recorded</th></tr></thead>
+    <tbody>
+      <tr><td>Research</td><td><span class="tag t-ok">Go</span></td><td>Go decision at Stage 0. Build Input Reconciliation: 37 non-blank fields, 37 rows dispositioned, 0 unresolved conflicts.</td></tr>
+      <tr><td>Verification Gate</td><td><span class="tag t-ok">Pass</span></td><td>First clean run: typecheck, lint with zero warnings, 23 of 23 tests, build, and invariant lint 14 of 14. The final count is 29 tests and 15 invariants (see the stat grid).</td></tr>
+      <tr><td>Reviewer Gate</td><td><span class="tag t-warn">Failed, then Pass</span></td><td>Independent fresh-context review. Round 1 failed on an object-level authorization check that was defined and tested but never called. Rounds 2 and 3 failed on further holes. Round 4 passed after fixes (ADR-013, ADR-014).</td></tr>
+      <tr><td>Security Audit Gate</td><td><span class="tag t-warn">Pass with advisory</span></td><td>Three passes. 0 critical, 0 exploitable-in-context high. Two base-high dependency advisories in Next 15's vendored build tooling are accepted and tracked to the Next 16 upgrade. SAST and secret scanners were not available in the build sandbox.</td></tr>
+      <tr><td>Per-feature loop</td><td><span class="tag t-ok">17 built</span></td><td>Each feature had its own security and design pass. Interface Contract Validation ran after features 5, 10, 15 and at the end: every endpoint has a handler, 20 of 20 screens route, and 5 of 5 workflows complete through the UI.</td></tr>
+      <tr><td>COMPLIANCE.md</td><td><span class="tag t-ok">14 rows</span></td><td>SPEC security requirements mapped to code. 3 rows are implemented with a documented note (SEC-7, SEC-10, SEC-12), 0 gaps.</td></tr>
+      <tr><td>Functional smoke and e2e</td><td><span class="tag t-ok">17 / 17, 5 / 5</span></td><td>Functional smoke run and Playwright e2e run against the containerized stack.</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Not verified automatically: Nuclei and Trivy adapters run only when their binaries are present, and the AWS managed services named in the architecture (Secrets Manager, RDS, ElastiCache) were not provisioned in the build environment (ADR-008).</p>
+</section>
+
+<section>
+  <h2>Security audit: what was found</h2>
+  <p class="sub">Dependency findings from the three-pass audit, followed by the object-level authorization findings from the Reviewer Gate rounds.</p>
+  <table>
+    <thead><tr><th>ID</th><th>Severity</th><th>Finding</th><th>Disposition</th></tr></thead>
+    <tbody>
+      <tr><td><code>A</code></td><td><span class="tag t-bad">High (base)</span></td><td><code>sharp</code> libvips CVEs reached through Next 15 (image optimization, an optional dependency).</td><td><span class="tag t-warn">Accepted</span> contextual low. The app processes no user-supplied images. Tracked to the Next 16 upgrade (ADR-006).</td></tr>
+      <tr><td><code>B</code></td><td><span class="tag t-bad">High (base)</span></td><td><code>postcss</code> source-map issues in Next's vendored copy. Reachable only at build time on trusted input.</td><td><span class="tag t-warn">Accepted</span> contextual low. The app's own PostCSS is pinned to 8.5.26. Tracked to Next 16.</td></tr>
+      <tr><td><code>R-1</code></td><td><span class="tag t-bad">High</span></td><td>Reviewer round 1: the object-level authorization check was defined and unit-tested but never called, leaving owner-bearing resources open to intra-tenant IDOR.</td><td><span class="tag t-ok">Remediated</span> wired into every owner-bearing path. Enforced by INV-15.</td></tr>
+      <tr><td><code>R-2</code></td><td><span class="tag t-warn">Medium</span></td><td>Reviewer round 1: webhook HMAC was computed over a re-serialized body.</td><td><span class="tag t-ok">Remediated</span> HMAC verified over the raw request body.</td></tr>
+      <tr><td><code>R-3</code></td><td><span class="tag t-warn">Medium</span></td><td>Reviewer round 1: the HTTP probe re-resolved the hostname, a DNS-rebinding window.</td><td><span class="tag t-ok">Remediated</span> probe connects to the pre-validated IP.</td></tr>
+      <tr><td><code>R-4</code></td><td><span class="tag t-warn">Medium</span></td><td>Reviewer round 2: report download and pentest approval caused side effects before the access check.</td><td><span class="tag t-ok">Remediated</span> in round 3.</td></tr>
+      <tr><td><code>R-5</code></td><td><span class="tag t-warn">Medium</span></td><td>Reviewer round 3: pentest creation leaked asset access.</td><td><span class="tag t-ok">Remediated</span> in round 4 (ADR-014).</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Result after pass 3 of the security audit: 0 critical, 0 exploitable-in-context high. The residual items are the two accepted dependency advisories above.</p>
+</section>
+
+<section>
+  <h2>Open items</h2>
+  <ul>
+    <li>Upgrade Next 15 to Next 16 to clear the two accepted dependency advisories (A and B). Tracked in ADR-006.</li>
+    <li>Application-level field encryption for evidence blobs is a tracked follow-up. Column and volume encryption is delegated to production infrastructure (SEC-10).</li>
+    <li>Scope verification accepts a manual, audited attestation as well as DNS TXT proof. When attested, the DNS proof is decorative (SEC-7).</li>
+    <li>Add Semgrep, Gitleaks and Trivy to CI. They were not run during the build (security audit advisory).</li>
+    <li>Cloud swap: the AWS managed services and a production Resend key were not provisioned in the build. The swap is documented in QUICKSTART (ADR-008).</li>
+  </ul>
+</section>
+
+<footer>MDLC kernel · CyberOps · status as recorded in the build reports</footer>
+
+</div>
+</body>
+</html>

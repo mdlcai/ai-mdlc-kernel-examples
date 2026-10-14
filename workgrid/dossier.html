@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WorkGrid Build Dossier · MDLC</title>
+<meta name="description" content="WorkGrid, a multi-tenant work-management app built with the MDLC kernel. Build status, gate results, security audit and open items, as recorded in the build.">
+<meta name="theme-color" content="#06070a">
+<style>
+:root{--bg:#06070a;--surface:#0e1116;--raised:#141922;--border:rgba(255,255,255,.09);--text:#ebe7df;--muted:#a3a9b5;--faint:#7a808c;--amber:#ffb547;--ember:#ff7a3d;--green:#5fe3a1;--red:#ff5d6c;--cyan:#5fd4ff;--mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;--sans:"Inter","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;color-scheme:dark}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6}
+body{padding:0 16px 64px}
+.wrap{max-width:960px;margin:0 auto}
+header{padding:48px 0 28px;border-bottom:1px solid var(--border)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber)}
+h1{font-family:var(--sans);font-weight:600;font-size:clamp(28px,4.5vw,44px);letter-spacing:-.01em;margin:12px 0 10px}
+.lede{color:var(--muted);max-width:680px;font-size:16px}
+.status{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;border:1px solid rgba(95,227,161,.45);color:var(--green);border-radius:999px;padding:7px 14px}
+.status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--green)}
+.back{display:inline-block;margin-top:20px;margin-right:22px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--cyan);text-decoration:none}
+section{margin-top:44px}
+h2{font-size:22px;font-weight:600;margin-bottom:6px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+.stat b{display:block;font-family:var(--mono);font-size:24px;font-weight:600}
+.stat span{font-size:12px;color:var(--muted);letter-spacing:.02em}
+.ok b{color:var(--green)} .warn b{color:var(--amber)} .bad b{color:var(--red)}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:14px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:500}
+tr:last-child td{border-bottom:0}
+td code{font-family:var(--mono);font-size:12px;color:var(--cyan)}
+.tag{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:3px 8px;white-space:nowrap}
+.t-ok{background:rgba(95,227,161,.12);color:var(--green)}
+.t-warn{background:rgba(255,181,71,.12);color:var(--amber)}
+.t-bad{background:rgba(255,93,108,.12);color:var(--red)}
+.t-open{background:rgba(255,255,255,.06);color:var(--muted)}
+.note{margin-top:14px;color:var(--muted);font-size:14px}
+ul{padding-left:20px;color:var(--muted);font-size:15px}
+li{margin-bottom:6px}
+.wrap table{display:block;overflow-x:auto}
+footer{margin-top:52px;color:var(--faint);font-size:12px;font-family:var(--mono);letter-spacing:.04em}
+@media (max-width:600px){body{padding:0 16px 48px}header{padding:36px 0 24px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Build dossier · MDLC kernel</div>
+  <h1>WorkGrid</h1>
+  <p class="lede">A multi-tenant work-management app that keeps tickets, tasks and projects on one grid. Tickets route by severity and SLA, tasks can depend on each other, workflows can require approvals, and dashboards update in real time. This page records what the build produced, what passed, what failed on the way, and what is still open.</p>
+  <div class="status">Deployed to local stack · gates passed</div>
+  <br><a class="back" href="./index.html">Open the build &rarr;</a><a class="back" href="https://mdlcai.github.io/ai-mdlc-kernel-examples/">&larr; All builds</a>
+</header>
+
+<section>
+  <h2>Where the build stands</h2>
+  <p class="sub">Build 0.1.3 as recorded in SECURITY-AUDIT.md. The app was brought up with Docker Compose on a local stack. No cloud target was configured, so the build was not deployed to a hosted environment.</p>
+  <div class="grid">
+    <div class="stat ok"><b>61 / 61</b><span>unit and integration tests passing (11 suites)</span></div>
+    <div class="stat ok"><b>15 / 15</b><span>functional smoke checks passing, plus 9 / 9 UI workflow tests</span></div>
+    <div class="stat ok"><b>13 / 13</b><span>machine-checked invariants passing; 4 more verified by manual review</span></div>
+    <div class="stat ok"><b>15 of 16</b><span>compliance controls implemented, 1 with an accepted build-time note, 0 gaps</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Gate results</h2>
+  <p class="sub">Each gate's outcome as recorded in the build's reports. A gate that failed and was fixed is listed with its fix.</p>
+  <table>
+    <thead><tr><th>Gate</th><th>Result</th><th>What it recorded</th></tr></thead>
+    <tbody>
+      <tr><td>Research</td><td><span class="tag t-ok">Pass</span></td><td>GO decision, logged 2026-06-05. The stack was confirmed on current stable lines.</td></tr>
+      <tr><td>Build input reconciliation</td><td><span class="tag t-ok">Pass</span></td><td>38 of 38 non-blank input fields applied and traceable. No unresolved conflicts.</td></tr>
+      <tr><td>Interface contract validation</td><td><span class="tag t-ok">Pass</span></td><td>Every SPEC endpoint has a handler, shared types match the <code>/v1</code> routes, every screen is reachable, and every environment variable is listed in <code>.env.example</code>.</td></tr>
+      <tr><td>Security audit</td><td><span class="tag t-warn">Remediated</span></td><td>The first pass found 1 high and 6 medium items. The high item and 4 medium items were fixed in the build. Two medium items are deferred to architecture decisions, and the postcss advisory is accepted with a recorded rationale. The gate is recorded as passing.</td></tr>
+      <tr><td>COMPLIANCE.md</td><td><span class="tag t-ok">15 pass</span></td><td>15 controls implemented and clean, 1 implemented with a build-time note (SEC-13), 0 gaps.</td></tr>
+      <tr><td>Design quality</td><td><span class="tag t-ok">18 / 18 screens</span></td><td>All screens conform to the design tokens. Tokens match the uploaded template verbatim and the fonts match.</td></tr>
+      <tr><td>Verification</td><td><span class="tag t-ok">Pass</span></td><td>Typecheck passes for the shared, API and web packages. The API build and the web production build both pass (18 routes). Unit and integration tests: 61 of 61.</td></tr>
+      <tr><td>Invariant lint</td><td><span class="tag t-ok">13 / 13</span></td><td>13 machine-checkable invariants pass. 4 manual invariants (audit append-only trigger, log redaction, RLS FORCE policy, tenant-room emits) were verified by inspection.</td></tr>
+      <tr><td>Smoke test</td><td><span class="tag t-ok">15 / 15 and 9 / 9</span></td><td>Functional smoke covers health, HTTPS redirect, register and login, unauthenticated rejection, ticket CRUD, tenant isolation, webhook signature rejection and the structured error contract. The 9 UI workflow tests cover the landing page and workflows W1 to W8.</td></tr>
+      <tr><td>Drift detection</td><td><span class="tag t-ok">0 drifts</span></td><td>No drift between the invariants and the code at ship time. The build then went to the local-stack deploy.</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Not verified in the build: live email and third-party integrations. Resend, GitHub and Slack run through logging no-op adapters because no credentials were configured (ADR-0008). Load testing against the performance targets in SPEC section 9 is not recorded in the build reports.</p>
+</section>
+
+<section>
+  <h2>Security audit and smoke fixes: what was found</h2>
+  <p class="sub">Findings from the security audit and the smoke runs. Remediated items were fixed in the build. Deferred and accepted items carry the reason recorded in the build.</p>
+  <table>
+    <thead><tr><th>ID</th><th>Severity</th><th>Finding</th><th>Disposition</th></tr></thead>
+    <tbody>
+      <tr><td><code>#1</code></td><td><span class="tag t-bad">High</span></td><td>No check at boot that production JWT secrets were set. The compose file fell back to public development secrets while running in production mode.</td><td><span class="tag t-ok">Remediated</span> the API refuses to start in production if the secrets are unset, equal the dev defaults, or equal each other.</td></tr>
+      <tr><td><code>#2</code></td><td><span class="tag t-warn">Medium</span></td><td>The stricter 10-per-minute auth limiter was defined but not applied to login, register or refresh.</td><td><span class="tag t-ok">Remediated</span> applied at the auth controller.</td></tr>
+      <tr><td><code>#3</code></td><td><span class="tag t-warn">Medium</span></td><td>Behind the proxy, every request showed the proxy's address, so rate limits and audit IPs were shared.</td><td><span class="tag t-ok">Remediated</span> trust proxy is set so the real client address is used.</td></tr>
+      <tr><td><code>#4</code></td><td><span class="tag t-warn">Medium</span></td><td>Breached-password screening (HIBP) is not implemented, although SEC-3 describes it.</td><td><span class="tag t-open">Deferred</span> needs an architecture decision on outbound calls before it is added.</td></tr>
+      <tr><td><code>#5</code></td><td><span class="tag t-warn">Medium</span></td><td>No column-level encryption of personal data. Log redaction and disk encryption are in place.</td><td><span class="tag t-open">Deferred</span> needs a key-management decision before regulated personal data is stored.</td></tr>
+      <tr><td><code>#6</code>, <code>#7</code></td><td><span class="tag t-warn">Medium</span></td><td>Two moderate advisories in the postcss package (CSS stringify XSS), pulled in by Next.js build tooling.</td><td><span class="tag t-open">Accepted</span> build-time only and not in the runtime image (ADR-0013). Re-checked on each Next.js minor.</td></tr>
+      <tr><td><code>ADR-0011</code></td><td><span class="tag t-warn">Bug</span></td><td>Refresh-token JWTs lacked a unique <code>jti</code>.</td><td><span class="tag t-ok">Fixed</span> found at smoke and fixed at the root cause.</td></tr>
+      <tr><td><code>ADR-0012</code></td><td><span class="tag t-warn">Bug</span></td><td>The web client did not unwrap the response envelope, so every organization-scoped screen returned "Organization not found".</td><td><span class="tag t-ok">Fixed</span> found by UI smoke and fixed.</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Residual after the audit: 0 critical and 0 high items. The remaining medium items are the two deferred (#4, #5) and the two accepted (#6, #7). The content security policy uses the helmet default in production and was not changed, because a stricter policy had broken Next.js hydration in earlier builds. This is recorded as a residual.</p>
+</section>
+
+<section>
+  <h2>Open items</h2>
+  <ul>
+    <li>Breached-password screening (#4) needs an architecture decision on the outbound call and its allowlist before it is built.</li>
+    <li>Column-level encryption of personal data (#5) needs a key-management decision before regulated personal data is stored.</li>
+    <li>The postcss advisories (#6, #7) are accepted for now. Re-check on the next Next.js minor version.</li>
+    <li>The content security policy in production is the helmet default. A nonce-based policy was not added.</li>
+    <li>Live email and the GitHub and Slack integrations are not exercised. The adapters are no-ops until credentials are configured. No cloud deployment has been made.</li>
+    <li>The load test named in SPEC section 9 has no recorded result in the build reports.</li>
+  </ul>
+</section>
+
+<footer>MDLC kernel · WorkGrid 0.1.3 · status as recorded in the build reports</footer>
+
+</div>
+</body>
+</html>

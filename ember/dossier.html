@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ember Build Dossier · MDLC</title>
+<meta name="description" content="Ember, a single-origin coffee storefront built by MDLC. Build status, gate results, security audit and open items, as recorded in the build.">
+<meta name="theme-color" content="#06070a">
+<style>
+:root{--bg:#06070a;--surface:#0e1116;--raised:#141922;--border:rgba(255,255,255,.09);--text:#ebe7df;--muted:#a3a9b5;--faint:#7a808c;--amber:#ffb547;--ember:#ff7a3d;--green:#5fe3a1;--red:#ff5d6c;--cyan:#5fd4ff;--mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;--sans:"Inter","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;color-scheme:dark}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6}
+body{padding:0 16px 64px}
+.wrap{max-width:960px;margin:0 auto}
+header{padding:48px 0 28px;border-bottom:1px solid var(--border)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber)}
+h1{font-family:var(--sans);font-weight:600;font-size:clamp(28px,4.5vw,44px);letter-spacing:-.01em;margin:12px 0 10px}
+.lede{color:var(--muted);max-width:680px;font-size:16px}
+.status{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;border:1px solid rgba(255,181,71,.45);color:var(--amber);border-radius:999px;padding:7px 14px}
+.status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--amber)}
+.back{display:inline-block;margin-top:20px;margin-right:24px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--cyan);text-decoration:none}
+section{margin-top:44px}
+h2{font-size:22px;font-weight:600;margin-bottom:6px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+.stat b{display:block;font-family:var(--mono);font-size:24px;font-weight:600}
+.stat span{font-size:12px;color:var(--muted);letter-spacing:.02em}
+.ok b{color:var(--green)} .warn b{color:var(--amber)} .bad b{color:var(--red)}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:14px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:500}
+tr:last-child td{border-bottom:0}
+td code{font-family:var(--mono);font-size:12px;color:var(--cyan)}
+.tag{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:3px 8px;white-space:nowrap}
+.t-ok{background:rgba(95,227,161,.12);color:var(--green)}
+.t-warn{background:rgba(255,181,71,.12);color:var(--amber)}
+.t-bad{background:rgba(255,93,108,.12);color:var(--red)}
+.t-open{background:rgba(255,255,255,.06);color:var(--muted)}
+.note{margin-top:14px;color:var(--muted);font-size:14px}
+ul{padding-left:20px;color:var(--muted);font-size:15px}
+li{margin-bottom:6px}
+.wrap table{display:block;overflow-x:auto}
+footer{margin-top:52px;color:var(--faint);font-size:12px;font-family:var(--mono);letter-spacing:.04em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Build dossier · MDLC kernel</div>
+  <h1>Ember</h1>
+  <p class="lede">A single-origin coffee storefront. Customers browse coffees, read tasting notes and brew guides, add bags to a cart, and check out with Stripe, with an optional subscription that ships a favorite roast on a schedule. Staff manage the catalog and product images from an admin area. This page records what the build produced, what passed, and what is still open.</p>
+  <div class="status">Contract-verified · v0.1.2 · local stack</div>
+  <br><a class="back" href="./index.html">Open the build &rarr;</a><a class="back" href="https://mdlcai.github.io/ai-mdlc-kernel-examples/">&larr; All builds</a>
+</header>
+
+<section>
+  <h2>Where the build stands</h2>
+  <p class="sub">Version 0.1.2-contract-verified. Research, architecture and the security audit are dated 7 June 2026. The stack runs locally under Docker Compose with Caddy for HTTPS. Live Stripe and Resend flows were not exercised, so this is contract-verified rather than functionally verified.</p>
+  <div class="grid">
+    <div class="stat ok"><b>39 / 39</b><span>tests passing (shared 10, api 29)</span></div>
+    <div class="stat ok"><b>23</b><span>functional smoke flows pass, 0 fail; 3 deferred until Stripe or Resend keys are set</span></div>
+    <div class="stat ok"><b>12 / 12</b><span>machine-checkable invariants pass; 3 manual invariants prose-audited clean</span></div>
+    <div class="stat ok"><b>0</b><span>critical, high or medium residual after the security re-scan; 1 low item deferred</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Gate results</h2>
+  <p class="sub">Each gate's outcome as recorded in the build's reports. A gate that failed and was fixed is listed with its fix.</p>
+  <table>
+    <thead><tr><th>Gate</th><th>Result</th><th>What it recorded</th></tr></thead>
+    <tbody>
+      <tr><td>Research</td><td><span class="tag t-ok">GO</span></td><td>Stage 0 decision on 2026-06-07, comprehensive depth. All 27 non-blank build inputs reconciled into the build as Applied, with 0 unresolved conflicts.</td></tr>
+      <tr><td>Architecture and spec</td><td><span class="tag t-ok">Self-verified</span></td><td>ARCHITECTURE.md and SPEC.md written and self-verified at their stage exits. Decisions and their rationale are logged in DECISIONS.md (ADR-001 to ADR-012).</td></tr>
+      <tr><td>Verification (Stage 3 exit)</td><td><span class="tag t-ok">Pass</span></td><td>Install, typecheck for shared, api and web, and the production build (web: 13 routes; api: tsc dist) all exit 0. Tests: 39 passing, including the racing test that checks stock never goes negative.</td></tr>
+      <tr><td>Interface contract validation</td><td><span class="tag t-ok">Pass</span></td><td>API endpoint coverage against the spec, the frontend-to-backend contract, reverse UI coverage, auth middleware wiring, database schema alignment and environment variable completeness.</td></tr>
+      <tr><td>Security audit (3 passes)</td><td><span class="tag t-warn">Remediated</span></td><td>Pass 1 found 2 medium and 2 low issues and no critical or high. The three fixable items were remediated; one low item was deferred. The re-scan found 0 critical, 0 high, 0 medium and 1 low residual.</td></tr>
+      <tr><td>COMPLIANCE.md</td><td><span class="tag t-warn">12 clean · 3 notes · 0 gaps</span></td><td>Posture A 12, B 3, C 0. The three notes cover delegated at-rest encryption, subresource integrity on first-party JavaScript, and the PCI attestation, which is an organizational process.</td></tr>
+      <tr><td>Design quality gate</td><td><span class="tag t-warn">11 clean · 2 notes · 0 gaps</span></td><td>13 screens scored against the design floor, the ecommerce archetype and template conformance. Token discipline verified: 0 hex values outside the token layer. Two notes, listed under open items.</td></tr>
+      <tr><td>Drift detection</td><td><span class="tag t-ok">0 drifts</span></td><td>Deterministic re-evaluation of the invariants at ship: 12 machine-checkable pass, 3 manual items prose-audited clean.</td></tr>
+      <tr><td>Deploy target</td><td><span class="tag t-warn">Local stack</span></td><td>No external cloud target was provisioned, and no Stripe or Resend keys are present. The stack runs locally with Caddy serving HTTPS on a non-default port.</td></tr>
+      <tr><td>Functional smoke test</td><td><span class="tag t-ok">23 PASS · 0 FAIL</span></td><td>Browse to cart, reorder scoping, staff add product, auth bootstrap, negative paths and large-cookie resilience pass. Checkout, subscription and confirmation email return the contract-correct 503 because their providers are not configured (3 deferred).</td></tr>
+      <tr><td>Invariant lint</td><td><span class="tag t-ok">12 pass · 0 failing</span></td><td>Twelve machine-checkable invariants evaluated and passing. Three manual invariants (tenant isolation, money and PII, stock) prose-audited clean.</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Items not verified automatically: live Stripe checkout and subscriptions (no keys in the build environment), order confirmation email through Resend (no key), and HIBP breached-password screening against the live range API. The build's recorded verdict is contract-verified. Functional verification requires real Stripe and Resend keys and a passing run of smoke steps 6 to 8.</p>
+</section>
+
+<section>
+  <h2>Security audit: what was found</h2>
+  <p class="sub">Findings from the three-pass audit (scan, remediate, re-scan). Remediated items were fixed in the build; the deferred item is accepted with the reason recorded.</p>
+  <table>
+    <thead><tr><th>ID</th><th>Severity</th><th>Finding</th><th>Disposition</th></tr></thead>
+    <tbody>
+      <tr><td><code>F1</code></td><td><span class="tag t-warn">Medium</span></td><td>Login and upload rate limiters keyed on the raw client IP without IPv6 normalization. An IPv6 client could rotate its address within a /64 to bypass the per-IP login limit.</td><td><span class="tag t-ok">Remediated</span> the limiter now applies IP key normalization. The startup validation error is gone.</td></tr>
+      <tr><td><code>F2</code></td><td><span class="tag t-warn">Medium</span></td><td>The web tier used Node's default 16 KB header limit, so a Cookie header of 16 KB or more returned 431, while the API tier accepted it.</td><td><span class="tag t-ok">Remediated</span> the web tier runs with a 32 KB header buffer. A large cookie on the home page now returns 200.</td></tr>
+      <tr><td><code>F3</code></td><td><span class="tag t-open">Low</span></td><td>Redis client settings caused a startup race in the rate-limit store, with noisy errors and a narrow window where a limiter was not ready.</td><td><span class="tag t-ok">Remediated</span> the offline queue is enabled, so boot-time commands wait for the connection.</td></tr>
+      <tr><td><code>F4</code></td><td><span class="tag t-open">Low</span></td><td>A moderate advisory in postcss, pulled in transitively by next. It affects CSS stringification at build time only. The fix needs a breaking next downgrade.</td><td><span class="tag t-open">Deferred</span> not reachable in the runtime server-rendered output. Revisit on the next minor upgrade of next.</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Result after the re-scan: 0 critical, 0 high, 0 medium and 1 low residual item (F4), deferred with a recorded reason. The audit also confirmed signature verification before webhook processing, atomic stock decrement with a database check constraint, and 404 (not 403) on cross-customer lookups.</p>
+</section>
+
+<section>
+  <h2>Open items</h2>
+  <ul>
+    <li>Live payments are unverified. Checkout and subscriptions return a contract-correct 503 without Stripe keys. Functional verification needs Stripe test keys and a passing run of smoke steps 6 to 8.</li>
+    <li>Order confirmation email is unverified. It needs a Resend key. Without one, the order completes and the email stays queued in the outbox.</li>
+    <li>The build runs on a local stack only. No external cloud target was provisioned.</li>
+    <li>At-rest encryption is delegated to the managed Postgres or host volume, and is marked as a note rather than a control in this build. Confirm provider encryption before production use.</li>
+    <li>Subresource integrity is not applied to first-party JavaScript (SEC-10). Next manages its own asset hashes. Revisit for SAQ A script attestation.</li>
+    <li>The PCI Attestation of Compliance and the operational controls (vendor management, access reviews) are an organizational process outside the codebase.</li>
+    <li>The product gallery shows token placeholders because no real product images were uploaded.</li>
+    <li>Admin product editing supports create and image upload only. Per-field editing is deferred, as recorded in the design gate.</li>
+    <li>Recorded deviation: ADR-012 pins Prisma to 6.19.3, while the architecture and spec documents name Prisma 7.</li>
+  </ul>
+</section>
+
+<footer>MDLC kernel · Ember 0.1.2-contract-verified · status as recorded in the build reports</footer>
+
+</div>
+</body>
+</html>

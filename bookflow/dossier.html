@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BookFlow Build Dossier · MDLC</title>
+<meta name="description" content="BookFlow, a bookings and approvals platform built by MDLC. Build status, gate results, security audit and open items, as recorded in the build.">
+<meta name="theme-color" content="#06070a">
+<style>
+:root{--bg:#06070a;--surface:#0e1116;--raised:#141922;--border:rgba(255,255,255,.09);--text:#ebe7df;--muted:#a3a9b5;--faint:#7a808c;--amber:#ffb547;--ember:#ff7a3d;--green:#5fe3a1;--red:#ff5d6c;--cyan:#5fd4ff;--mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;--sans:"Inter","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;color-scheme:dark}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6}
+body{padding:0 16px 64px}
+.wrap{max-width:960px;margin:0 auto}
+header{padding:48px 0 28px;border-bottom:1px solid var(--border)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber)}
+h1{font-family:var(--sans);font-weight:600;font-size:clamp(28px,4.5vw,44px);letter-spacing:-.01em;margin:12px 0 10px}
+.lede{color:var(--muted);max-width:680px;font-size:16px}
+.status{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;border:1px solid rgba(255,181,71,.45);color:var(--amber);border-radius:999px;padding:7px 14px}
+.status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--amber)}
+.back{display:inline-block;margin-top:20px;margin-right:18px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--cyan);text-decoration:none}
+section{margin-top:44px}
+h2{font-size:22px;font-weight:600;margin-bottom:6px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+.stat b{display:block;font-family:var(--mono);font-size:24px;font-weight:600}
+.stat span{font-size:12px;color:var(--muted);letter-spacing:.02em}
+.ok b{color:var(--green)} .warn b{color:var(--amber)} .bad b{color:var(--red)}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:14px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:500}
+tr:last-child td{border-bottom:0}
+td code{font-family:var(--mono);font-size:12px;color:var(--cyan)}
+.tag{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:3px 8px;white-space:nowrap}
+.t-ok{background:rgba(95,227,161,.12);color:var(--green)}
+.t-warn{background:rgba(255,181,71,.12);color:var(--amber)}
+.t-bad{background:rgba(255,93,108,.12);color:var(--red)}
+.t-open{background:rgba(255,255,255,.06);color:var(--muted)}
+.note{margin-top:14px;color:var(--muted);font-size:14px}
+ul{padding-left:20px;color:var(--muted);font-size:15px}
+li{margin-bottom:6px}
+.wrap table{display:block;overflow-x:auto}
+footer{margin-top:52px;color:var(--faint);font-size:12px;font-family:var(--mono);letter-spacing:.04em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Build dossier · MDLC kernel</div>
+  <h1>BookFlow</h1>
+  <p class="lede">A bookings and approvals portal for rooms, equipment and services. Employees request a resource for a time window, approval rules set by the organisation decide who signs off, and the database itself refuses any overlapping booking on the same resource. Every change is written to an append-only audit log. This page records what the build produced, what passed, what was fixed on the way, and what is still open.</p>
+  <div class="status">Gates pass · local-stack deploy (Outcome C)</div>
+  <br><a class="back" href="./index.html">Open the build &rarr;</a><a class="back" href="https://mdlcai.github.io/ai-mdlc-kernel-examples/">&larr; All builds</a>
+</header>
+
+<section>
+  <h2>Where the build stands</h2>
+  <p class="sub">Build 0.1.x, a Next.js web app with a NestJS API, Postgres and a background worker, run as a Docker Compose stack. The build recorded all automated gates as passing and deployed to a local stack. No cloud deployment was made.</p>
+  <div class="grid">
+    <div class="stat ok"><b>10 / 10</b><span>unit and integration tests passing</span></div>
+    <div class="stat ok"><b>17 / 17</b><span>end-to-end smoke flows passing against the running stack</span></div>
+    <div class="stat ok"><b>9 / 9</b><span>machine-checked invariants passing (15 invariants in total, 6 drift-audited by hand)</span></div>
+    <div class="stat warn"><b>3</b><span>compliance rows with a documented infrastructure note, 0 gaps</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Gate results</h2>
+  <p class="sub">Each gate's outcome as recorded in the build's reports. A gate that failed and was fixed is listed with its fix.</p>
+  <table>
+    <thead><tr><th>Gate</th><th>Result</th><th>What it recorded</th></tr></thead>
+    <tbody>
+      <tr><td>Research</td><td><span class="tag t-ok">Go</span></td><td>Go decision. Research was performed because the wizard document had no prior research section.</td></tr>
+      <tr><td>Input reconciliation</td><td><span class="tag t-ok">Pass</span></td><td>37 non-blank input fields, 37 reconciliation rows, 0 unresolved conflicts. Each field is recorded as Applied.</td></tr>
+      <tr><td>Interface contract validation</td><td><span class="tag t-ok">Pass</span></td><td>API endpoint coverage, frontend to backend contract, UI coverage of every endpoint and all 9 key workflows, auth wiring, database schema alignment, and environment variable completeness.</td></tr>
+      <tr><td>Typecheck and production build</td><td><span class="tag t-ok">Clean</span></td><td>Typecheck for the API and the web app is clean. The production build succeeds for both, with 16 web routes.</td></tr>
+      <tr><td>Unit and integration tests</td><td><span class="tag t-ok">10 / 10</span></td><td>Workflow evaluation, Svix signature verification, booking conflict returning 409, and tenant isolation.</td></tr>
+      <tr><td>Invariant lint</td><td><span class="tag t-ok">9 / 9</span></td><td>9 machine checks pass. 6 further invariants were drift-audited by hand.</td></tr>
+      <tr><td>Security audit</td><td><span class="tag t-ok">Pass</span></td><td>Pass 1 found one high and one medium finding. The high finding was remediated by upgrading Next.js to 16.2.7. The medium finding was deferred (see the findings table). Result: 0 critical and 0 high residual findings. Secret detection, static analysis and configuration review each recorded 0 findings.</td></tr>
+      <tr><td>COMPLIANCE.md</td><td><span class="tag t-ok">12 pass, 3 notes</span></td><td>Of 15 rows, 12 are implemented and audit-clean, 3 carry a documented infrastructure note (TLS, encryption at rest, backup schedule), and 0 are gaps.</td></tr>
+      <tr><td>Functional smoke test</td><td><span class="tag t-ok">17 / 17</span></td><td>Automated run against the running stack. Covers health, W1 to W9 flows, tenant isolation, anonymous access returning 401, and negative paths. Outbox verified: 18 notification emails delivered to the stub transport, 0 pending. A headless browser login reached the dashboard with live data.</td></tr>
+      <tr><td>Deploy target</td><td><span class="tag t-open">Local stack</span></td><td>Outcome C: docker compose brought up db, api, worker and web. No cloud target or external credentials were available in the build environment.</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Fixed during the build: the smoke test caught a placeholder Resend key that passed the build but failed on the first real send. The key check was hardened, and the outbox then drained cleanly (ADR-0012). Not verified automatically: real email delivery through Resend (the build used a stub transport by design, ADR-0009).</p>
+</section>
+
+<section>
+  <h2>Security audit: what was found</h2>
+  <p class="sub">Findings from the three-pass security audit. Remediated items were fixed in the build; deferred items are accepted with the reason recorded.</p>
+  <table>
+    <thead><tr><th>ID</th><th>Severity</th><th>Finding</th><th>Disposition</th></tr></thead>
+    <tbody>
+      <tr><td><code>F-1</code></td><td><span class="tag t-bad">High</span></td><td>The Next.js 14.2.x line carries several advisories (RSC denial of service, cache poisoning, SSRF on WebSocket upgrade, middleware bypass) that are fixed only in the 16.x line.</td><td><span class="tag t-ok">Remediated</span> Next.js upgraded to 16.2.7, with React 19.</td></tr>
+      <tr><td><code>F-2</code></td><td><span class="tag t-warn">Medium</span></td><td>Transitive postcss below 8.5.10 (XSS through unescaped style closing tags during CSS stringify). Build-time tooling only.</td><td><span class="tag t-open">Deferred</span> Next.js vendors its own postcss 8.4.31, which npm overrides cannot rewrite. The app's own tree resolves postcss 8.5.15. Clears when a stable Next.js release ships a patched bundle.</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Result after the final pass: 0 critical, 0 high, 1 medium (F-2, deferred with tracking) and 0 low findings. Full test suite green after remediation.</p>
+</section>
+
+<section>
+  <h2>Open items</h2>
+  <ul>
+    <li>F-2 (medium, build-time only) is deferred until a stable Next.js release bundles a patched postcss.</li>
+    <li>Real email delivery through Resend was not exercised. The build used the stub transport by design.</li>
+    <li>TLS termination, encryption at rest and the backup schedule with point-in-time recovery are infrastructure responsibilities. The build documents them but does not verify them from inside the app.</li>
+    <li>Cloud deployment was not performed. The upgrade path is documented in the build's QUICKSTART.md.</li>
+    <li>The manual smoke checklist (SMOKE-TEST.md) has no recorded results in the evidence files.</li>
+  </ul>
+</section>
+
+<footer>MDLC kernel · BookFlow · status as recorded in the build reports</footer>
+
+</div>
+</body>
+</html>

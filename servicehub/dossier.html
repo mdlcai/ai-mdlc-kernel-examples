@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ServiceHub Build Dossier · MDLC</title>
+<meta name="description" content="ServiceHub, a multi-tenant IT service management platform built with the MDLC kernel. Build status, gate results, security audit and open items, as recorded in the build.">
+<meta name="theme-color" content="#06070a">
+<style>
+:root{--bg:#06070a;--surface:#0e1116;--raised:#141922;--border:rgba(255,255,255,.09);--text:#ebe7df;--muted:#a3a9b5;--faint:#7a808c;--amber:#ffb547;--ember:#ff7a3d;--green:#5fe3a1;--red:#ff5d6c;--cyan:#5fd4ff;--mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;--sans:"Inter","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;color-scheme:dark}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6}
+body{padding:0 16px 64px}
+.wrap{max-width:960px;margin:0 auto}
+header{padding:48px 0 28px;border-bottom:1px solid var(--border)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber)}
+h1{font-family:var(--sans);font-weight:600;font-size:clamp(28px,4.5vw,44px);letter-spacing:-.01em;margin:12px 0 10px}
+.lede{color:var(--muted);max-width:680px;font-size:16px}
+.status{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;border:1px solid rgba(255,181,71,.45);color:var(--amber);border-radius:999px;padding:7px 14px}
+.status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--amber)}
+.back{display:inline-block;margin-top:20px;margin-right:22px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--cyan);text-decoration:none}
+section{margin-top:44px}
+h2{font-size:22px;font-weight:600;margin-bottom:6px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+.stat b{display:block;font-family:var(--mono);font-size:24px;font-weight:600}
+.stat span{font-size:12px;color:var(--muted);letter-spacing:.02em}
+.ok b{color:var(--green)} .warn b{color:var(--amber)} .bad b{color:var(--red)}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:14px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:500}
+tr:last-child td{border-bottom:0}
+td code{font-family:var(--mono);font-size:12px;color:var(--cyan)}
+.tag{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:3px 8px;white-space:nowrap}
+.t-ok{background:rgba(95,227,161,.12);color:var(--green)}
+.t-warn{background:rgba(255,181,71,.12);color:var(--amber)}
+.t-bad{background:rgba(255,93,108,.12);color:var(--red)}
+.t-open{background:rgba(255,255,255,.06);color:var(--muted)}
+.note{margin-top:14px;color:var(--muted);font-size:14px}
+ul{padding-left:20px;color:var(--muted);font-size:15px}
+li{margin-bottom:6px}
+.wrap table{display:block;overflow-x:auto}
+footer{margin-top:52px;color:var(--faint);font-size:12px;font-family:var(--mono);letter-spacing:.04em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Build dossier · MDLC kernel</div>
+  <h1>ServiceHub</h1>
+  <p class="lede">A multi-tenant IT service desk. Employees submit requests and incidents through a self-service portal and follow them to resolution. Agents triage, comment and resolve, with internal notes that requesters never see. Managers watch the team queue, SLA breaches and exportable reports. Each tenant's data is isolated in the database, and a requester who opens another employee's ticket or attachment gets a 404.</p>
+  <div class="status">Built · gates passed · runs on a local stack</div>
+  <br><a class="back" href="./index.html">Open the build &rarr;</a><a class="back" href="https://mdlcai.github.io/ai-mdlc-kernel-examples/">&larr; All builds</a>
+</header>
+
+<section>
+  <h2>Where the build stands</h2>
+  <p class="sub">Version 0.1.1 after the security audit fix. The build ran on a local Docker Compose stack; no external cloud target was provisioned.</p>
+  <div class="grid">
+    <div class="stat ok"><b>10 / 10</b><span>unit tests passing (@servicehub/api)</span></div>
+    <div class="stat ok"><b>27 / 27</b><span>functional smoke checks passing</span></div>
+    <div class="stat ok"><b>15 / 16</b><span>invariants machine-checked and passing; INV-14 verified by manual audit</span></div>
+    <div class="stat warn"><b>17</b><span>compliance items clean; 2 with notes, 0 gaps</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Gate results</h2>
+  <p class="sub">Each gate's outcome as recorded in the build's reports.</p>
+  <table>
+    <thead><tr><th>Gate</th><th>Result</th><th>What it recorded</th></tr></thead>
+    <tbody>
+      <tr><td>Research</td><td><span class="tag t-ok">GO</span></td><td>Stage 0 research recorded as GO, drawing on 14 vendor and official sources, 8 GitHub references and 25 other sources.</td></tr>
+      <tr><td>Build Input Reconciliation</td><td><span class="tag t-ok">38 / 38</span></td><td>Every non-blank build constraint and domain signal is marked Applied. No Conflict rows.</td></tr>
+      <tr><td>Verification gate</td><td><span class="tag t-ok">Pass</span></td><td>npm install exit 0. Typecheck (api and web) exit 0. Unit tests 10 / 10. Production build exit 0. Invariant lint: 15 passed, 0 failed, 1 manual.</td></tr>
+      <tr><td>Pre-Delivery Completeness</td><td><span class="tag t-open">Recorded</span></td><td>REPORT.md lists each check as met: every SPEC endpoint mapped, all entities migrated with RLS policies installed, FE and BE validation, auth flow, all 13 screens routable, and environment files present. No separate pass count is given.</td></tr>
+      <tr><td>Security audit (3 passes)</td><td><span class="tag t-ok">Pass</span></td><td>Pass 1 found 2 medium and 1 low. Pass 2 fixed the medium dependency finding. Pass 3 re-scan: 0 critical, 0 high, 1 medium and 1 low, both accepted with recorded rationale.</td></tr>
+      <tr><td>COMPLIANCE.md</td><td><span class="tag t-ok">17 pass</span></td><td>SPEC section 4 controls SEC-1 to SEC-14 and the compliance-tagged clauses. 17 implemented and clean, 2 with notes (encryption at rest, postcss), 0 gaps.</td></tr>
+      <tr><td>Reviewer gate</td><td><span class="tag t-ok">Pass</span></td><td>Adversarial fresh-context review by independent subagents plus an orchestrator integration review. Verdict PASS.</td></tr>
+      <tr><td>Smoke test</td><td><span class="tag t-ok">27 / 27</span></td><td>Functional smoke run against the local stack covers auth, the four key workflows, object-level authorization, internal-note confidentiality, RBAC, webhook signature rejection and large-header resilience.</td></tr>
+      <tr><td>Deploy target</td><td><span class="tag t-open">Local stack</span></td><td>Outcome C: no external cloud target provisioned. Docker Compose brought up postgres, redis, migrate, api, worker, web and caddy. Health endpoint returned 200 with db and redis up. Resend was stubbed.</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Not verified automatically: email delivery (Resend is stubbed in the local build) and an end-to-end run through the UI (see open items).</p>
+</section>
+
+<section>
+  <h2>Security audit: what was found</h2>
+  <p class="sub">Findings from the audit in SECURITY-AUDIT.md. Remediated items were fixed in the build. Accepted items carry the reason recorded.</p>
+  <table>
+    <thead><tr><th>ID</th><th>Severity</th><th>Finding</th><th>Disposition</th></tr></thead>
+    <tbody>
+      <tr><td><code>F1</code></td><td><span class="tag t-warn">Medium</span></td><td>The file-type parser (v16) could loop forever on malformed input. It was reachable through the attachment upload path before the allowlist check.</td><td><span class="tag t-ok">Remediated</span> dependency removed. A dependency-free magic-byte sniffer now checks the 6 permitted types. Covered by the attachment upload, download and IDOR smoke checks.</td></tr>
+      <tr><td><code>F2</code></td><td><span class="tag t-warn">Medium</span></td><td>postcss below 8.5.10 (XSS through an unescaped <code>&lt;/style&gt;</code> in stringify), pulled in transitively by Next.js.</td><td><span class="tag t-open">Accepted</span> postcss only processes build-authored CSS, so there is no untrusted-input path in this build. Tracked until Next.js bumps its bundled postcss (ADR-12).</td></tr>
+      <tr><td><code>F3</code></td><td><span class="tag t-open">Low</span></td><td>Development secrets are present as values in docker-compose.yml.</td><td><span class="tag t-open">Accepted</span> dev-only. The application reads secrets only from env, and .env.example documents the production replacement.</td></tr>
+      <tr><td>SAST and secrets sweep</td><td><span class="tag t-ok">None</span></td><td>Reviewed: SQL injection (parameterized queries), password hashing and webhook HMAC comparison, error handling, object-level authorization, anti-enumeration, security headers. Regex sweep for inline credentials found no matches.</td><td>No findings recorded.</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Result after pass 3: 0 critical, 0 high, 1 medium and 1 low residual, both accepted with rationale.</p>
+</section>
+
+<section>
+  <h2>Open items</h2>
+  <ul>
+    <li>postcss (F2) stays open until Next.js ships a release that bundles a fixed postcss. The audit found no fix without downgrading Next.js to v9.</li>
+    <li>Encryption at rest is delegated to infrastructure (managed Postgres and volume encryption). It is not claimed as implemented in the application. The chosen KMS or volume encryption must be documented at deploy time.</li>
+    <li>Development secrets in docker-compose.yml must be replaced with production values from .env.example before any real deployment.</li>
+    <li>Attachment AV scanning is a pluggable interface with a quarantine flag. No antivirus engine is wired in. Magic-byte validation is in place.</li>
+    <li>The local build used the local-disk storage driver. The storage interface is abstracted for an S3-compatible driver (ADR-06).</li>
+    <li>SLA timers run on a 24/7 clock. A business-hours calendar is a documented extension point and is not built.</li>
+    <li>Email delivery was not exercised: Resend was stubbed. The HIBP breach check skips when offline and logs the skip.</li>
+    <li>UI end-to-end run: REPORT.md states that Playwright specs drive W1 to W4 through the UI. SMOKE-TEST.md describes the recorded run at the API contract level, and no Playwright result is recorded in the evidence.</li>
+  </ul>
+</section>
+
+<footer>MDLC kernel · ServiceHub 0.1.1 · status as recorded in the build reports</footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SmartCoder Build Dossier · MDLC</title>
+<meta name="description" content="SmartCoder, a medical-coding training and QA platform on synthetic data, built with MDLC. Build status, gate results, security audit and open items, as recorded in the build.">
+<meta name="theme-color" content="#06070a">
+<style>
+:root{--bg:#06070a;--surface:#0e1116;--raised:#141922;--border:rgba(255,255,255,.09);--text:#ebe7df;--muted:#a3a9b5;--faint:#7a808c;--amber:#ffb547;--ember:#ff7a3d;--green:#5fe3a1;--red:#ff5d6c;--cyan:#5fd4ff;--mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;--sans:"Inter","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;color-scheme:dark}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6}
+body{padding:0 16px 64px}
+.wrap{max-width:960px;margin:0 auto}
+header{padding:48px 0 28px;border-bottom:1px solid var(--border)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber)}
+h1{font-family:var(--sans);font-weight:600;font-size:clamp(28px,4.5vw,44px);letter-spacing:-.01em;margin:12px 0 10px}
+.lede{color:var(--muted);max-width:680px;font-size:16px}
+.status{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;border:1px solid rgba(255,181,71,.45);color:var(--amber);border-radius:999px;padding:7px 14px}
+.status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--amber)}
+.back{display:inline-block;margin-top:20px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--cyan);text-decoration:none}
+.links{display:flex;gap:24px;flex-wrap:wrap}
+.links .back{margin-top:20px}
+section{margin-top:44px}
+h2{font-size:22px;font-weight:600;margin-bottom:6px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+.stat b{display:block;font-family:var(--mono);font-size:24px;font-weight:600}
+.stat span{font-size:12px;color:var(--muted);letter-spacing:.02em}
+.ok b{color:var(--green)} .warn b{color:var(--amber)} .bad b{color:var(--red)}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:14px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:500}
+tr:last-child td{border-bottom:0}
+td code{font-family:var(--mono);font-size:12px;color:var(--cyan)}
+.tag{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:3px 8px;white-space:nowrap}
+.t-ok{background:rgba(95,227,161,.12);color:var(--green)}
+.t-warn{background:rgba(255,181,71,.12);color:var(--amber)}
+.t-bad{background:rgba(255,93,108,.12);color:var(--red)}
+.t-open{background:rgba(255,255,255,.06);color:var(--muted)}
+.note{margin-top:14px;color:var(--muted);font-size:14px}
+ul{padding-left:20px;color:var(--muted);font-size:15px}
+li{margin-bottom:6px}
+.wrap table{display:block;overflow-x:auto}
+footer{margin-top:52px;color:var(--faint);font-size:12px;font-family:var(--mono);letter-spacing:.04em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Build dossier · MDLC kernel</div>
+  <h1>SmartCoder</h1>
+  <p class="lede">SmartCoder is a training and quality-assurance tool for medical coding teams, and it runs only on synthetic patient encounters. Coders work a queue and assign ICD-10-CM diagnosis codes and procedure codes entered by code. A validation engine checks each chart for format, sequencing and code-combination problems. Supervisors audit submitted charts and return them with feedback, and managers watch a live queue dashboard. This page records what the build produced, which gates passed, which findings were fixed or accepted, and what is still open.</p>
+  <div class="status">Functional-verified · local stack · v0.1.3</div>
+  <div class="links">
+    <a class="back" href="./index.html">Open the build &rarr;</a>
+    <a class="back" href="https://mdlcai.github.io/ai-mdlc-kernel-examples/">&larr; All builds</a>
+  </div>
+</header>
+
+<section>
+  <h2>Where the build stands</h2>
+  <p class="sub">Version 0.1.3, after the security audit pass. Built at comprehensive depth with review gates set to auto, so each gate was self-verified by the build. The stack ran locally in Docker at https://localhost with a self-signed certificate. No cloud deployment is recorded.</p>
+  <div class="grid">
+    <div class="stat ok"><b>14</b><span>features built, F-01 to F-14</span></div>
+    <div class="stat ok"><b>7 / 7</b><span>shared unit tests passing</span></div>
+    <div class="stat ok"><b>14 / 14</b><span>invariant lint checks passing</span></div>
+    <div class="stat ok"><b>16 / 16</b><span>functional smoke flows passing, plus 4 / 4 UI end-to-end flows</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Gate results</h2>
+  <p class="sub">Each gate's outcome as recorded in the build's reports. A gate that failed and was fixed is listed with its fix.</p>
+  <table>
+    <thead><tr><th>Gate</th><th>Result</th><th>What it recorded</th></tr></thead>
+    <tbody>
+      <tr><td>Research</td><td><span class="tag t-ok">GO</span></td><td>RESEARCH.md verdict GO. v1 covers ICD-10-CM only, because CPT descriptors are license-restricted.</td></tr>
+      <tr><td>Build input reconciliation</td><td><span class="tag t-ok">Pass</span></td><td>34 of 34 non-blank input fields applied. One benign substitution: the requested Bull library was built with BullMQ, its maintained successor.</td></tr>
+      <tr><td>Interface contract validation</td><td><span class="tag t-ok">Pass</span></td><td>Every SPEC §3 route is implemented. Frontend calls match the API paths, every endpoint is reachable from a screen, the schema matches SPEC §6, and the environment file lists every variable.</td></tr>
+      <tr><td>Invariant lint</td><td><span class="tag t-ok">14 / 14</span></td><td>Passing after ADR-013 refined the INV-1 pattern, plus two runner-scope fixes.</td></tr>
+      <tr><td>Security Audit Gate (inline, 0.1.1)</td><td><span class="tag t-warn">Remediated</span></td><td>Pass 1 found 1 critical and 2 medium items. The critical item (AUTH-1) and the medium item (CFG-1) were fixed. DEP-1 was accepted. One low item was deferred.</td></tr>
+      <tr><td>Security audit, narrative (0.1.3)</td><td><span class="tag t-ok">Pass</span></td><td>Three passes: scan, auto-remediation, re-scan. The Content-Security-Policy, the import rate limit and a database guard on the audit log were added in this pass. Zero critical and zero high items open. The gate passes.</td></tr>
+      <tr><td>COMPLIANCE.md</td><td><span class="tag t-warn">Notes</span></td><td>16 requirement rows: 14 implemented, 2 with notes (SEC-11 and SEC-12, both delegated to the deployment environment), 0 gaps. The posture summary line in the file says 13 implemented.</td></tr>
+      <tr><td>Functional smoke test</td><td><span class="tag t-ok">16 / 16</span></td><td>Every SPEC §5 workflow, run against https://localhost. The first run failed flow W2 with a 500 caused by an ambiguous org_id column (ADR-015). The fix was made and the full matrix was re-run.</td></tr>
+      <tr><td>UI workflow end-to-end (Playwright)</td><td><span class="tag t-ok">4 / 4</span></td><td>W1 to W4 pass. This run found ADR-016: the UI used chart statuses the schema does not have, so the coding panel stayed read-only for coders. Fixed to the schema's draft, pending_audit, completed and returned statuses.</td></tr>
+      <tr><td>Reviewer Gate</td><td><span class="tag t-ok">Pass</span></td><td>Fresh-context review of RESEARCH, ARCHITECTURE and SPEC against the implementation.</td></tr>
+      <tr><td>Deploy drift scan</td><td><span class="tag t-ok">0 drifts</span></td><td>Local Docker stack (deploy outcome C). Postgres, Redis, API, worker, web and nginx are up, and the API reports healthy.</td></tr>
+      <tr><td>Manual smoke checklist (SMOKE-TEST.md)</td><td><span class="tag t-open">Not recorded</span></td><td>18 manual checks with expected results are listed. The evidence files do not record a result for each check.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>Security audit: what was found</h2>
+  <p class="sub">Findings from the inline Security Audit Gate and the narrative audit at 0.1.3. Remediated items were fixed in the build. Accepted and deferred items have the reason recorded.</p>
+  <table>
+    <thead><tr><th>ID</th><th>Severity</th><th>Finding</th><th>Disposition</th></tr></thead>
+    <tbody>
+      <tr><td><code>AUTH-1</code></td><td><span class="tag t-bad">Critical</span></td><td>Registering with an existing email returned that user's record and set a session for it, which allowed account takeover.</td><td><span class="tag t-ok">Remediated</span> the response keeps the same 201 shape but sets no session and returns no account data.</td></tr>
+      <tr><td><code>CFG-1</code></td><td><span class="tag t-warn">Medium</span></td><td>JWT and webhook signing secrets fell back to development defaults.</td><td><span class="tag t-ok">Remediated</span> production boot refuses weak or missing secrets.</td></tr>
+      <tr><td><code>DEP-1</code></td><td><span class="tag t-warn">Medium</span></td><td>postcss below 8.5.10 has an XSS advisory. It is a transitive dependency of Next.js build tooling.</td><td><span class="tag t-open">Accepted</span> build-time only and not reachable at runtime. The npm fix downgrades Next to v9. Re-check on each Next minor bump.</td></tr>
+      <tr><td><code>SEC-13</code></td><td><span class="tag t-warn">Medium</span></td><td>The Content-Security-Policy header was missing from nginx.conf, although COMPLIANCE.md marked the control as done.</td><td><span class="tag t-ok">Remediated</span> the CSP was added. Residual: script and style keep <code>'unsafe-inline'</code>, accepted because a nonce policy broke Next.js standalone hydration in earlier builds.</td></tr>
+      <tr><td><code>SEC-15</code></td><td><span class="tag t-warn">Medium</span></td><td>Import uploads had a 5 MB size cap but no rate limit. ARCHITECTURE.md named a RateLimitGuard that did not exist in the source.</td><td><span class="tag t-ok">Remediated</span> a per-organization rate limit runs before an upload is accepted. The architecture document was corrected.</td></tr>
+      <tr><td><code>SEC-07</code></td><td><span class="tag t-open">Info</span></td><td>The audit log was append-only by application convention only, with no database guard.</td><td><span class="tag t-ok">Hardened</span> migration 003 adds triggers that reject UPDATE and DELETE on audit_log.</td></tr>
+      <tr><td><code>SEC-04</code></td><td><span class="tag t-open">Low</span></td><td>The CSRF guard accepts requests that send no Origin header.</td><td><span class="tag t-open">Deferred</span> the session cookie is SameSite=lax and httpOnly. Tracked for a later double-submit token pass.</td></tr>
+      <tr><td>Register (ADR-014)</td><td><span class="tag t-open">Low</span></td><td>Registering an existing email returns 201 without a session cookie, a small enumeration signal.</td><td><span class="tag t-open">Deferred</span> far less serious than the takeover it replaced.</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Result after the narrative audit: 0 critical, 0 high and 0 medium items open. DEP-1 is accepted with rationale. The secret scan and the SQL injection sweep are clean, and every query is parameterized. The narrative audit lists one low item deferred (SEC-04). The inline gate also tracked the register residual.</p>
+</section>
+
+<section>
+  <h2>Open items</h2>
+  <ul>
+    <li>Encryption and secrets are delegated, not built in. Chart payloads (PHI-equivalent JSONB) are stored as plaintext in Postgres, and at-rest encryption relies on the host disk (SEC-12). The secrets loader falls back to environment variables locally, and AWS Secrets Manager is not wired in production (SEC-11). The data is Synthea synthetic.</li>
+    <li>External services are placeholder-gated and not provisioned: Resend, Datadog, Sentry and AWS Secrets Manager. Email stays queued in the outbox, so email delivery is not verified.</li>
+    <li>No measured results are recorded for the SPEC §9 performance budgets: chart load under 2 s, audit submission under 500 ms and queue refresh under 1 s.</li>
+    <li>The manual smoke checklist has no recorded result for each of its 18 checks.</li>
+    <li>CPT is out of v1, and procedure codes are entered by code only. CPT licensing must be resolved before any CPT descriptors ship (RESEARCH §6).</li>
+    <li>The annual ICD-10-CM refresh process is not formalized, and code-set pinning per scenario is a post-v1 item (RESEARCH §6).</li>
+  </ul>
+</section>
+
+<footer>MDLC kernel · SmartCoder 0.1.3 · status as recorded in the build reports</footer>
+
+</div>
+</body>
+</html>

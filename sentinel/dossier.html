@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sentinel Build Dossier · MDLC</title>
+<meta name="description" content="Sentinel, a unified application security scanner built with the MDLC kernel. Build status, gate results, security audit and open items, as recorded in the build.">
+<meta name="theme-color" content="#06070a">
+<style>
+:root{--bg:#06070a;--surface:#0e1116;--raised:#141922;--border:rgba(255,255,255,.09);--text:#ebe7df;--muted:#a3a9b5;--faint:#7a808c;--amber:#ffb547;--ember:#ff7a3d;--green:#5fe3a1;--red:#ff5d6c;--cyan:#5fd4ff;--mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;--sans:"Inter","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;color-scheme:dark}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6}
+body{padding:0 16px 64px}
+.wrap{max-width:960px;margin:0 auto}
+header{padding:48px 0 28px;border-bottom:1px solid var(--border)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber)}
+h1{font-family:var(--sans);font-weight:600;font-size:clamp(28px,4.5vw,44px);letter-spacing:-.01em;margin:12px 0 10px}
+.lede{color:var(--muted);max-width:680px;font-size:16px}
+.status{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;border:1px solid rgba(255,181,71,.45);color:var(--amber);border-radius:999px;padding:7px 14px}
+.status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--amber)}
+.back{display:inline-block;margin-top:20px;margin-right:20px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--cyan);text-decoration:none}
+section{margin-top:44px}
+h2{font-size:22px;font-weight:600;margin-bottom:6px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+.stat b{display:block;font-family:var(--mono);font-size:24px;font-weight:600}
+.stat span{font-size:12px;color:var(--muted);letter-spacing:.02em}
+.ok b{color:var(--green)} .warn b{color:var(--amber)} .bad b{color:var(--red)}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:14px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:500}
+tr:last-child td{border-bottom:0}
+td code{font-family:var(--mono);font-size:12px;color:var(--cyan)}
+.tag{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:3px 8px;white-space:nowrap}
+.t-ok{background:rgba(95,227,161,.12);color:var(--green)}
+.t-warn{background:rgba(255,181,71,.12);color:var(--amber)}
+.t-bad{background:rgba(255,93,108,.12);color:var(--red)}
+.t-open{background:rgba(255,255,255,.06);color:var(--muted)}
+.note{margin-top:14px;color:var(--muted);font-size:14px}
+ul{padding-left:20px;color:var(--muted);font-size:15px}
+li{margin-bottom:6px}
+.wrap table{display:block;overflow-x:auto}
+footer{margin-top:52px;color:var(--faint);font-size:12px;font-family:var(--mono);letter-spacing:.04em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Build dossier · MDLC kernel</div>
+  <h1>Sentinel</h1>
+  <p class="lede">Sentinel is a unified application security scanner. You point it at a repository, domain or IP, and it runs open-source scanners (static code, dependency, web, secrets and infrastructure checks) inside sandboxed containers. It then merges the results into one deduplicated, severity-sorted list with triage and status tracking. This page records what the build produced, which gates passed, what was fixed on the way, and what is still open.</p>
+  <div class="status">Built · local-stack deploy · not released</div>
+  <br>
+  <a class="back" href="./index.html">Open the build &rarr;</a>
+  <a class="back" href="https://mdlcai.github.io/ai-mdlc-kernel-examples/">&larr; All builds</a>
+</header>
+
+<section>
+  <h2>Where the build stands</h2>
+  <p class="sub">Small tier, comprehensive build depth, review gates set to auto. The app runs as a local stack: cloud services were not provisioned, so the in-memory store and inline queue handle scans. The build records no production release.</p>
+  <div class="grid">
+    <div class="stat ok"><b>21 / 21</b><span>tests passing (npm test)</span></div>
+    <div class="stat ok"><b>23 / 23</b><span>automated smoke checks passing against the live API</span></div>
+    <div class="stat ok"><b>11 / 11</b><span>machine-checked invariants pass; 2 manual invariants audited pass</span></div>
+    <div class="stat ok"><b>13 / 15</b><span>security requirements implemented; 2 with notes, 0 gaps</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Gate results</h2>
+  <p class="sub">Each gate's outcome as recorded in the build's reports.</p>
+  <table>
+    <thead><tr><th>Gate</th><th>Result</th><th>What it recorded</th></tr></thead>
+    <tbody>
+      <tr><td>Research</td><td><span class="tag t-ok">Go</span></td><td>GO decision in RESEARCH.md. Open items were scoped as Stage-1 spikes, not blockers.</td></tr>
+      <tr><td>Build input reconciliation</td><td><span class="tag t-ok">43 / 43 rows</span></td><td>Every non-blank input field has a row. No unresolved conflicts. One sub-item deferred: the <code>has_geo</code> domain signal (ADR-008).</td></tr>
+      <tr><td>Interface contract validation</td><td><span class="tag t-ok">Pass</span></td><td>Every SPEC section 3 endpoint is implemented. The 9 web routes map to the 11 SPEC screens. End-to-end specs W1 to W8 are present.</td></tr>
+      <tr><td>Invariant lint</td><td><span class="tag t-ok">11 pass, 0 fail</span></td><td>Plus 2 manual invariants (INV-12, INV-13), audited as pass.</td></tr>
+      <tr><td>Verification gate</td><td><span class="tag t-ok">Pass</span></td><td>Clean install, web build, production build, tests and invariant lint all exit 0. Backend is plain ESM with no compile step.</td></tr>
+      <tr><td>Reviewer gate</td><td><span class="tag t-ok">Items 1 to 6 pass</span></td><td>Item 7 (advisory, not blocking): the nine production scanner engines are wired as adapters behind <code>SCANNERS_DOCKER_ENABLED</code>. The demo SCA engine is on by default (ADR-006). The full scanner fleet is a documented extension.</td></tr>
+      <tr><td>Security audit gate</td><td><span class="tag t-warn">Remediated</span></td><td>Three passes. Result: 0 critical, 0 high, and 1 medium accepted as not reachable (ADR-012). The reachable copy of the flagged dependency was patched.</td></tr>
+      <tr><td>Compliance (COMPLIANCE.md)</td><td><span class="tag t-ok">13 pass</span></td><td>Of 15 security requirements: 13 implemented and clean, 2 with open notes (SEC-12 retention purge, SEC-13 TLS delegated to the proxy), 0 gaps.</td></tr>
+      <tr><td>Smoke test</td><td><span class="tag t-ok">23 / 23</span></td><td>Automated run against the live API covers auth, CRUD, target ownership, SSRF, scan to findings, triage, dashboard, export, cross-tenant isolation, webhook signature and large-cookie handling.</td></tr>
+      <tr><td>Deploy</td><td><span class="tag t-open">Local stack</span></td><td>Outcome C: cloud externals (managed Postgres and Redis, AWS Secrets Manager, Resend) were not provisioned. The app was verified at localhost:4000, and <code>/api/health</code> returned 200.</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Not verified automatically: the manual smoke checklist (sign-up, sign-in, CRUD, unhappy paths, database outage, missing environment variables) and the non-authored-input checks are listed in SMOKE-TEST.md with no recorded results. Email delivery is not part of v1.</p>
+</section>
+
+<section>
+  <h2>Security audit: what was found</h2>
+  <p class="sub">Findings from the audit. Remediated items were fixed in the build. The deferred and accepted items carry the reason recorded.</p>
+  <table>
+    <thead><tr><th>ID</th><th>Severity</th><th>Finding</th><th>Disposition</th></tr></thead>
+    <tbody>
+      <tr><td><code>A1</code></td><td><span class="tag t-warn">Medium</span></td><td>Dependency audit: <code>postcss</code> below 8.5.10 (XSS in CSS stringify), pulled in transitively under <code>next</code> and <code>@tailwindcss/postcss</code>.</td><td><span class="tag t-ok">Remediated</span> root override to postcss 8.5.15 for the application's own copy. The copy bundled inside Next 16.2.9 cannot be overridden and stays as a residual.</td></tr>
+      <tr><td><code>A1</code> residual</td><td><span class="tag t-warn">Medium</span></td><td>Bundled postcss 8.4.31 inside Next. Runs only at build time, on first-party CSS. Not reachable in the threat model.</td><td><span class="tag t-open">Accepted</span> tracked to upgrade when Next ships a release with postcss 8.5.10 or later (ADR-012).</td></tr>
+      <tr><td><code>A2</code></td><td><span class="tag t-open">Verified</span></td><td>Login timing: argon2 verify runs even for unknown emails.</td><td><span class="tag t-ok">Clean</span> already implemented.</td></tr>
+      <tr><td><code>A3</code></td><td><span class="tag t-open">Verified</span></td><td>Hardcoded secrets in source (INV-5 pattern scan over 87 files).</td><td><span class="tag t-ok">Clean</span> none found.</td></tr>
+      <tr><td><code>A4</code></td><td><span class="tag t-open">Verified</span></td><td>Session cookie flags, HSTS, CSP and header buffer size.</td><td><span class="tag t-ok">Clean</span> Secure, httpOnly and sameSite=lax cookies; HSTS; CSP; 32 KB header limit.</td></tr>
+      <tr><td><code>A5</code></td><td><span class="tag t-open">Verified</span></td><td>Committed <code>.env</code> or secrets in the repo.</td><td><span class="tag t-ok">Clean</span> only <code>.env.example</code> with placeholders is committed.</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Result after the final pass: 0 critical, 0 high, 1 medium accepted (not reachable). The security audit records the self-SAST category as "pass with advisory": no Semgrep run was made against the build's own tree.</p>
+</section>
+
+<section>
+  <h2>Open items</h2>
+  <ul>
+    <li>SEC-12 retention: the 90-day findings and 1-year audit retention is defined, but the scheduled purge job is documented rather than running as a cron job.</li>
+    <li>SEC-13 TLS is terminated at the Caddy proxy, so this control is delegated to infrastructure and carried as a note.</li>
+    <li>Production scanner engines: Trivy, Semgrep, OSV-Scanner, gitleaks, checkov, ZAP, Nuclei, nmap and masscan are adapters behind a flag. The remaining adapters and Docker images are logged as technical debt (ADR-006).</li>
+    <li>Spikes still open: gVisor compatibility for raw-socket scanners, ZAP and nmap adapter fidelity, and the egress-firewall implementation (ADR-002, ARCHITECTURE section 8). None block the small-tier build.</li>
+    <li>Deferred low-severity items: Redis without authentication (internal network only), root vendor containers, no email verification (no outbound mail in v1), and per-batch retry cost.</li>
+    <li>Geo signal <code>has_geo</code> is not built (ADR-008). Revisit if a geo-aware feature is specified.</li>
+    <li>Manual checks not recorded as run: the UI walkthrough and the non-authored-input checks in SMOKE-TEST.md.</li>
+  </ul>
+</section>
+
+<footer>MDLC kernel · Sentinel · status as recorded in the build reports</footer>
+
+</div>
+</body>
+</html>

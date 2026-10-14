@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCP Sentinel Build Dossier · MDLC</title>
+<meta name="description" content="MCP Sentinel, a security scanner for Model Context Protocol servers built with MDLC. Build status, gate results, security audit and open items, as recorded in the build.">
+<meta name="theme-color" content="#06070a">
+<style>
+:root{--bg:#06070a;--surface:#0e1116;--raised:#141922;--border:rgba(255,255,255,.09);--text:#ebe7df;--muted:#a3a9b5;--faint:#7a808c;--amber:#ffb547;--ember:#ff7a3d;--green:#5fe3a1;--red:#ff5d6c;--cyan:#5fd4ff;--mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;--sans:"Inter","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;color-scheme:dark}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6}
+body{padding:0 16px 64px}
+.wrap{max-width:960px;margin:0 auto}
+header{padding:48px 0 28px;border-bottom:1px solid var(--border)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber)}
+h1{font-family:var(--sans);font-weight:600;font-size:clamp(28px,4.5vw,44px);letter-spacing:-.01em;margin:12px 0 10px}
+.lede{color:var(--muted);max-width:680px;font-size:16px}
+.status{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;border:1px solid rgba(255,181,71,.45);color:var(--amber);border-radius:999px;padding:7px 14px}
+.status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--amber)}
+.back{display:inline-block;margin-top:20px;margin-right:18px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--cyan);text-decoration:none}
+section{margin-top:44px}
+h2{font-size:22px;font-weight:600;margin-bottom:6px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+.stat b{display:block;font-family:var(--mono);font-size:24px;font-weight:600}
+.stat span{font-size:12px;color:var(--muted);letter-spacing:.02em}
+.ok b{color:var(--green)} .warn b{color:var(--amber)} .bad b{color:var(--red)}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:14px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:500}
+tr:last-child td{border-bottom:0}
+td code{font-family:var(--mono);font-size:12px;color:var(--cyan)}
+.tag{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:3px 8px;white-space:nowrap}
+.t-ok{background:rgba(95,227,161,.12);color:var(--green)}
+.t-warn{background:rgba(255,181,71,.12);color:var(--amber)}
+.t-bad{background:rgba(255,93,108,.12);color:var(--red)}
+.t-open{background:rgba(255,255,255,.06);color:var(--muted)}
+.note{margin-top:14px;color:var(--muted);font-size:14px}
+ul{padding-left:20px;color:var(--muted);font-size:15px}
+li{margin-bottom:6px}
+.wrap table{display:block;overflow-x:auto}
+footer{margin-top:52px;color:var(--faint);font-size:12px;font-family:var(--mono);letter-spacing:.04em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Build dossier · MDLC kernel</div>
+  <h1>MCP Sentinel</h1>
+  <p class="lede">MCP Sentinel points at a Model Context Protocol endpoint, lists the server's tools, resources and prompts, and grades what it finds from A to F. The checks for tool poisoning, excessive scope, leaked secrets, rug pulls and missing auth are deterministic pattern and hash checks, with no language model in the scan path. This page records what the build produced, what passed, what was fixed on the way, and what is still open.</p>
+  <div class="status">0.1.1-functional-verified · local stack</div>
+  <br><a class="back" href="./index.html">Open the build &rarr;</a><a class="back" href="https://mdlcai.github.io/ai-mdlc-kernel-examples/">&larr; All builds</a>
+</header>
+
+<section>
+  <h2>Where the build stands</h2>
+  <p class="sub">Version 0.1.1, verified against the bundled docker-compose stack. No cloud deploy target was configured for this build, so the build was not shipped to a live production host.</p>
+  <div class="grid">
+    <div class="stat ok"><b>37 / 37</b><span>unit and integration tests passing</span></div>
+    <div class="stat ok"><b>17 / 17</b><span>end-to-end smoke flows passing</span></div>
+    <div class="stat ok"><b>10 / 10</b><span>machine-checked invariants passing, plus 4 audited by hand</span></div>
+    <div class="stat ok"><b>15 / 15</b><span>compliance controls implemented, 0 gaps</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Gate results</h2>
+  <p class="sub">Each gate's outcome as recorded in the build's reports. A gate that failed and was fixed is listed with its fix.</p>
+  <table>
+    <thead><tr><th>Gate</th><th>Result</th><th>What it recorded</th></tr></thead>
+    <tbody>
+      <tr><td>Research</td><td><span class="tag t-ok">Pass</span></td><td>Go decision at Stage 0, conditional on the SSRF invariants INV-1 and INV-2, which are encoded in the build.</td></tr>
+      <tr><td>Build Input Reconciliation</td><td><span class="tag t-ok">Pass</span></td><td>16 of 16 non-blank inputs honored: 15 applied, 1 deferred (<code>has_webhooks</code>, see ADR-010). No unresolved conflicts.</td></tr>
+      <tr><td>Interface Contract Validation</td><td><span class="tag t-ok">Pass</span></td><td>All 16 SPEC endpoints implemented. All 13 UI screens routed. Workflows W1 to W5 can be completed through the UI (INV-11).</td></tr>
+      <tr><td>Verification Gate</td><td><span class="tag t-ok">Pass</span></td><td>Clean install, typecheck, lint with 0 warnings, 37 of 37 tests, production build, and invariant lint (10 of 10 machine checks).</td></tr>
+      <tr><td>Security Audit (3 passes)</td><td><span class="tag t-warn">Remediated</span></td><td>Pass 1 dependency scan found 1 critical, 1 high and moderate findings in the test and build toolchain, all remediated by upgrades and removing an unused package. Pass 3 re-scan: 0 vulnerabilities. No SAST or secret-scanning tool was available, so the gate is recorded as PASS WITH ADVISORY.</td></tr>
+      <tr><td>Reviewer Gate</td><td><span class="tag t-ok">Pass</span></td><td>Independent fresh-context review found no correctness-class failures. Three non-blocking advisories were accepted (ADR-016).</td></tr>
+      <tr><td>COMPLIANCE.md</td><td><span class="tag t-ok">15 pass</span></td><td>Posture A 15, B 0, C 0. Mapped to OWASP Top 10 (2021) and the OWASP MCP Top 10.</td></tr>
+      <tr><td>Design Quality Gate</td><td><span class="tag t-ok">Pass</span></td><td>13 of 13 screens checked. Template conformance: 0 token drift against the uploaded design template.</td></tr>
+      <tr><td>Startup verification</td><td><span class="tag t-ok">Pass</span></td><td>Server starts against a fresh database, applies migrations, and serves <code>/api/health</code> with 200. Fixed: a static-serving path that depended on the working directory.</td></tr>
+      <tr><td>Smoke test</td><td><span class="tag t-ok">Pass after fixes</span></td><td>17 of 17 flows passing on the local stack. Three defects found during the smoke run were fixed in place: the Hono error boundary, the undici pinned-lookup contract (with a regression test), and CSS import order plus CSP font and script rules.</td></tr>
+      <tr><td>Drift Detection Gate</td><td><span class="tag t-ok">Pass</span></td><td>0 drifts against the specification.</td></tr>
+      <tr><td>Deploy target</td><td><span class="tag t-open">Local stack</span></td><td>Outcome C: no cloud target configured. Deployed to the bundled docker-compose stack (database and app).</td></tr>
+    </tbody>
+  </table>
+  <p class="note">The manual checklist in SMOKE-TEST.md is unchecked in the copy in this evidence pack. The 17 of 17 result is the one recorded in REPORT.md.</p>
+</section>
+
+<section>
+  <h2>Security audit: what was found</h2>
+  <p class="sub">Findings from the adversarial review, pass 1, and the disposition after remediation. Dependency findings were fixed in the build. The remaining item is advisory.</p>
+  <table>
+    <thead><tr><th>ID</th><th>Severity</th><th>Finding</th><th>Disposition</th></tr></thead>
+    <tbody>
+      <tr><td><code>D1</code></td><td><span class="tag t-bad">High</span></td><td>Runtime dependency <code>drizzle-orm</code> below 0.45.2: SQL injection through improperly escaped identifiers (GHSA-gpj5-g38j-94v9).</td><td><span class="tag t-ok">Remediated</span> upgraded to 0.45.2 or later. Code unchanged.</td></tr>
+      <tr><td><code>D2</code></td><td><span class="tag t-warn">Moderate</span></td><td>Transitive esbuild dev-server issue through <code>drizzle-kit</code> (build time only).</td><td><span class="tag t-ok">Remediated</span> <code>drizzle-kit</code> removed, since migrations are hand-written SQL.</td></tr>
+      <tr><td><code>D3</code></td><td><span class="tag t-warn">Moderate</span></td><td>Dev-server request and path-traversal issues in vite, esbuild, vite-node and @vitest/mocker (test and build time).</td><td><span class="tag t-ok">Remediated</span> vite upgraded to ^6.3.6 and vitest to a patched line.</td></tr>
+      <tr><td><code>D4</code></td><td><span class="tag t-bad">Critical</span></td><td>vitest below 4.1.0: the Vitest UI server allowed arbitrary file read and execution. Only reachable with the <code>--ui</code> option.</td><td><span class="tag t-ok">Remediated</span> vitest upgraded to ^4.1.8. The build never runs the UI server.</td></tr>
+      <tr><td>Manual review</td><td><span class="tag t-open">Advisory</span></td><td>No external SAST, Gitleaks or TruffleHog tooling was available. A manual review covered SQL injection, XSS, SSRF, auth, secrets at rest and ReDoS, and found no issues.</td><td><span class="tag t-open">Advisory</span> CI scanners recommended (Semgrep, Gitleaks, OSV-Scanner or Trivy).</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Result after pass 3: 0 critical, 0 high and 0 medium residual findings, as recorded in SECURITY-AUDIT.md.</p>
+</section>
+
+<section>
+  <h2>Open items</h2>
+  <ul>
+    <li>Automated SAST, secret scanning and config scanning have not run. The build recommends adding Semgrep, Gitleaks and OSV-Scanner or Trivy to CI.</li>
+    <li>No cloud deploy target was configured. The build was verified on the local docker-compose stack only.</li>
+    <li>Accepted advisory (ADR-016): registering an existing email returns a different response shape from a new one. Email verification is out of v1 scope. Per-IP rate limiting is the compensating control. Fix planned for v2.</li>
+    <li>Accepted advisory (ADR-016): the compare view renders the diff inline. The explicit <code>?compare=</code> selector is deferred as a UX nicety.</li>
+    <li>Accepted advisory (ADR-016): the Drizzle email index differs cosmetically from the SQL migration. Behavior is correct because email is lowercased before insert.</li>
+    <li>Deferred (ADR-010): the <code>has_webhooks</code> domain signal. Version 1 has no inbound webhook surface. Re-evaluate if version 2 adds webhook-driven re-scans.</li>
+  </ul>
+</section>
+
+<footer>MDLC kernel · MCP Sentinel 0.1.1-functional-verified · status as recorded in the build reports</footer>
+
+</div>
+</body>
+</html>

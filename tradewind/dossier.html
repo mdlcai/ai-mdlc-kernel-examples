@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tradewind Build Dossier · MDLC</title>
+<meta name="description" content="Tradewind, a milestone-escrow marketplace built with MDLC. Build status, gate results, security audit and open items, as recorded in the build.">
+<meta name="theme-color" content="#06070a">
+<style>
+:root{--bg:#06070a;--surface:#0e1116;--raised:#141922;--border:rgba(255,255,255,.09);--text:#ebe7df;--muted:#a3a9b5;--faint:#7a808c;--amber:#ffb547;--ember:#ff7a3d;--green:#5fe3a1;--red:#ff5d6c;--cyan:#5fd4ff;--mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;--sans:"Inter","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;color-scheme:dark}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6}
+body{padding:0 16px 64px}
+.wrap{max-width:960px;margin:0 auto}
+header{padding:48px 0 28px;border-bottom:1px solid var(--border)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber)}
+h1{font-family:var(--sans);font-weight:600;font-size:clamp(28px,4.5vw,44px);letter-spacing:-.01em;margin:12px 0 10px}
+.lede{color:var(--muted);max-width:680px;font-size:16px}
+.status{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;border:1px solid rgba(255,181,71,.45);color:var(--amber);border-radius:999px;padding:7px 14px}
+.status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--amber)}
+.back{display:inline-block;margin-top:20px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--cyan);text-decoration:none}
+.links{display:flex;gap:24px;flex-wrap:wrap}
+section{margin-top:44px}
+h2{font-size:22px;font-weight:600;margin-bottom:6px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+.stat b{display:block;font-family:var(--mono);font-size:24px;font-weight:600}
+.stat span{font-size:12px;color:var(--muted);letter-spacing:.02em}
+.ok b{color:var(--green)} .warn b{color:var(--amber)} .bad b{color:var(--red)}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:14px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:500}
+tr:last-child td{border-bottom:0}
+td code{font-family:var(--mono);font-size:12px;color:var(--cyan)}
+.tag{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:3px 8px;white-space:nowrap}
+.t-ok{background:rgba(95,227,161,.12);color:var(--green)}
+.t-warn{background:rgba(255,181,71,.12);color:var(--amber)}
+.t-bad{background:rgba(255,93,108,.12);color:var(--red)}
+.t-open{background:rgba(255,255,255,.06);color:var(--muted)}
+.note{margin-top:14px;color:var(--muted);font-size:14px}
+ul{padding-left:20px;color:var(--muted);font-size:15px}
+li{margin-bottom:6px}
+.wrap table{display:block;overflow-x:auto}
+footer{margin-top:52px;color:var(--faint);font-size:12px;font-family:var(--mono);letter-spacing:.04em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Build dossier · MDLC kernel</div>
+  <h1>Tradewind</h1>
+  <p class="lede">Tradewind is a milestone-escrow marketplace. A client funds a milestone up front through Stripe Checkout, the money stays held until the client approves the work, and then it is released to the freelancer minus a platform fee (10% by default). Either party can open a dispute, which an admin resolves by refund, release or split. Every money movement is written to an immutable double-entry ledger, and a reconciliation check confirms the closed system nets to zero. This page records what the build produced, what passed, and what is still open.</p>
+  <div class="status">Stage 4 · working system, local-stack deploy</div>
+  <div class="links">
+    <a class="back" href="./index.html">Open the build &rarr;</a>
+    <a class="back" href="https://mdlcai.github.io/ai-mdlc-kernel-examples/">&larr; All builds</a>
+  </div>
+</header>
+
+<section>
+  <h2>Where the build stands</h2>
+  <p class="sub">Version 0.2.1. The security audit is dated 21 June 2026. The app runs on a local Docker Compose stack; no cloud deploy target was provisioned.</p>
+  <div class="grid">
+    <div class="stat ok"><b>29 / 29</b><span>API tests passing (unit, integration and race), run against real Postgres</span></div>
+    <div class="stat ok"><b>12</b><span>invariants, 0 failing (8 machine-checked, 4 verified manually)</span></div>
+    <div class="stat ok"><b>0 / 0</b><span>critical and high residual security findings after pass 2</span></div>
+    <div class="stat warn"><b>15 / 17</b><span>compliance rows implemented and clean; 2 delegated to infrastructure; 0 gaps</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Gate results</h2>
+  <p class="sub">Each gate's outcome as recorded in the build's reports. A gate that failed and was fixed is listed with its fix.</p>
+  <table>
+    <thead><tr><th>Gate</th><th>Result</th><th>What it recorded</th></tr></thead>
+    <tbody>
+      <tr><td>Build input reconciliation</td><td><span class="tag t-ok">Pass</span></td><td>29 non-blank input rows and 3 domain signals (has_webhooks, has_payments, has_dual_write), all Applied. Zero unresolved conflicts.</td></tr>
+      <tr><td>Architecture gate (Stage 1)</td><td><span class="tag t-open">Self-verified</span></td><td>review_gates set to auto. Completeness was self-verified and the build proceeded. Logged in DECISIONS.md.</td></tr>
+      <tr><td>Interface contract validation (Stage 3)</td><td><span class="tag t-ok">Pass</span></td><td>Every SPEC section 6 endpoint has a route handler. Web client paths match the /v1 routes. All 13 SPEC section 8 screens are routable. Auth wiring and env var completeness checked.</td></tr>
+      <tr><td>Pre-delivery completeness (Stage 3)</td><td><span class="tag t-ok">Pass</span></td><td>All endpoints implemented with no stub handlers. Zod validation on every input endpoint. Verdict PASS.</td></tr>
+      <tr><td>Tests</td><td><span class="tag t-ok">29 / 29</span></td><td>Money math, ledger sum to zero, idempotency, escrow lifecycle, payout paid, failed and insufficient, disputes (refund, release, split), webhook verify-before-read and replay, cross-user and sub-resource IDOR, concurrent approve and payout races, reconciliation.</td></tr>
+      <tr><td>Invariant lint</td><td><span class="tag t-ok">Pass</span></td><td>12 invariants, 0 failing. 8 machine-checkable and 4 manual, documented.</td></tr>
+      <tr><td>Frontend</td><td><span class="tag t-ok">Pass</span></td><td>next build clean across 14 routes. Typecheck 0 errors.</td></tr>
+      <tr><td>Reviewer gate (Stage 3 to 4)</td><td><span class="tag t-warn">Remediated</span></td><td>Advisory verdict, then remediated to PASS. A spec and code mismatch on the password hash (bcrypt in the spec, scrypt in the code) was reconciled to scrypt (ADR-012). Missing Dockerfiles for api and web were added, and the compose api command was corrected. Suite re-run green.</td></tr>
+      <tr><td>Security audit (2 passes)</td><td><span class="tag t-ok">Pass</span></td><td>Gate verdict PASS. Pass 1 findings were remediated. Pass 2 left 2 medium residual items, both deferred with a recorded reason. Secret scan, SAST and config review were clean.</td></tr>
+      <tr><td>COMPLIANCE.md</td><td><span class="tag t-ok">15 pass</span></td><td>Of 17 SEC rows: 15 implemented and audit-clean, 2 with a delegated control (SEC-12 at-rest encryption, SEC-17 TLS), 0 gaps.</td></tr>
+      <tr><td>Functional smoke</td><td><span class="tag t-open">17 / 17 per README</span></td><td>SMOKE-TEST.md is a 17-step checklist covering sign-up, funding, release, payouts, disputes and reconciliation. REPORT.md records the smoke artifacts as generated but not a run result.</td></tr>
+      <tr><td>Deploy and startup (Stage 4)</td><td><span class="tag t-open">Local stack</span></td><td>Outcome C: local-stack deploy, with the app in STRIPE_MODE=stub (synthetic ids, locally signed webhooks). GET /v1/health returned 200 with the database up.</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Not verified against live services: Stripe Connect and Checkout run in stub mode, and no cloud target was provisioned. The cloud deploy path is described in QUICKSTART but was not run.</p>
+</section>
+
+<section>
+  <h2>Security audit: what was found</h2>
+  <p class="sub">Findings from the two-pass audit of 21 June 2026. Remediated items were fixed in the build; deferred items are accepted with the reason recorded.</p>
+  <table>
+    <thead><tr><th>ID</th><th>Severity</th><th>Finding</th><th>Disposition</th></tr></thead>
+    <tbody>
+      <tr><td><code>F-A1</code></td><td><span class="tag t-warn">Medium (19)</span></td><td>Transitive CVEs in the OpenTelemetry core (unbounded memory in W3C Baggage propagation), pulled in by @sentry/node 8.</td><td><span class="tag t-ok">Remediated</span> upgraded to @sentry/node 10.59.0. Re-audit found 0 OpenTelemetry findings.</td></tr>
+      <tr><td><code>F-A2</code></td><td><span class="tag t-bad">Critical (1), High (1)</span> <span class="tag t-warn">Medium (1)</span></td><td>Dev-toolchain CVEs in vitest, vite and esbuild. All three are devDependencies and are not invoked at runtime in the production image.</td><td><span class="tag t-ok">Remediated</span> vitest upgraded to 3.x and npm audit fix applied. API re-audit found 0 vulnerabilities.</td></tr>
+      <tr><td><code>F-A3</code></td><td><span class="tag t-warn">Medium (2)</span></td><td>postcss older than 8.5.10 is bundled inside Next.js. The path is build-time CSS stringify, not a runtime request path.</td><td><span class="tag t-open">Deferred</span> the only fix is a breaking Next.js downgrade. Tracked, to be removed once Next ships postcss 8.5.10 or later.</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Result after pass 2: 0 critical, 0 high, 2 medium residual items, both deferred with reasons (F-A3). The audit's own summary table is the source for these totals.</p>
+</section>
+
+<section>
+  <h2>Open items</h2>
+  <ul>
+    <li>F-A3 is deferred: two medium findings in the postcss copy bundled with Next.js. Re-run the audit on each Next minor upgrade.</li>
+    <li>SEC-12, at-rest encryption, is delegated to the production volume or RDS (KMS or TDE). The dev stack is unencrypted (ADR-008).</li>
+    <li>SEC-17, TLS, is delegated to the reverse proxy in production (HTTP to HTTPS redirect and HSTS). Local dev runs plaintext under a documented exception.</li>
+    <li>Live Stripe is not exercised. The app ran in stub mode with synthetic ids and locally signed webhooks, and no real Stripe externals were provisioned.</li>
+    <li>The cloud deploy path is documented in QUICKSTART but has not been run.</li>
+    <li>Four invariants (INV-7, INV-8, INV-11 and INV-12) are verified by manual documentation rather than a machine check.</li>
+  </ul>
+</section>
+
+<footer>MDLC kernel · Tradewind 0.2.1 · status as recorded in the build reports</footer>
+
+</div>
+</body>
+</html>
