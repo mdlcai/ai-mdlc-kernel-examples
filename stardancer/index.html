@@ -18,6 +18,8 @@ h1{font-family:var(--sans);font-weight:600;font-size:clamp(28px,4.5vw,44px);lett
 .lede{color:var(--muted);max-width:680px;font-size:16px}
 .status{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;border:1px solid rgba(255,181,71,.45);color:var(--amber);border-radius:999px;padding:7px 14px}
 .status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--amber)}
+.status.shipped{border-color:rgba(95,227,161,.45);color:var(--green)}
+.status.shipped::before{background:var(--green)}
 .back{display:inline-block;margin-top:20px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--cyan);text-decoration:none}
 section{margin-top:44px}
 h2{font-size:22px;font-weight:600;margin-bottom:6px}
@@ -51,18 +53,18 @@ footer{margin-top:52px;color:var(--faint);font-size:12px;font-family:var(--mono)
   <div class="eyebrow">Build dossier · MDLC kernel</div>
   <h1>STΛRDΛNCΞR</h1>
   <p class="lede">A system intelligence platform: it reads what your observations mean together, and nothing it proposes happens until governance says it can. This page records what the build produced, what passed, what failed on the way, and what is still open.</p>
-  <div class="status">Halted at Stage 4 · not yet shipped</div>
+  <div class="status shipped">Shipped · v0.1.6</div>
   <br><a class="back" href="https://mdlc.ai/proof.html">&larr; Back to proof</a>
 </header>
 
 <section>
   <h2>Where the build stands</h2>
-  <p class="sub">Version 0.1.6, built 13 to 14 October 2026. The build is paused on one failing performance invariant, so this is not a finished release.</p>
+  <p class="sub">Version 0.1.6, built 12 to 14 October 2026 and tagged on 14 October. Every machine-checked invariant passes and the approval queue is empty.</p>
   <div class="grid">
-    <div class="stat ok"><b>263 / 263</b><span>tests passing at the final checkpoint</span></div>
+    <div class="stat ok"><b>314 / 314</b><span>tests passing at release: server 217, web 90, shared 7</span></div>
     <div class="stat ok"><b>18</b><span>features built in order</span></div>
     <div class="stat ok"><b>23 / 26</b><span>security and web requirements implemented, 3 with notes, 0 gaps</span></div>
-    <div class="stat warn"><b>55 / 56</b><span>invariants proven; INV-55 (performance) open</span></div>
+    <div class="stat ok"><b>56 / 56</b><span>machine-checked invariants proven, 1 manual check left to the reviewer</span></div>
   </div>
 </section>
 
@@ -76,9 +78,9 @@ footer{margin-top:52px;color:var(--faint);font-size:12px;font-family:var(--mono)
       <tr><td>Checkpoints CP-1 to CP-8</td><td><span class="tag t-ok">Pass</span></td><td>Typecheck, lint and formatting clean at each checkpoint. Schema diff 0. Only the specified routes exist.</td></tr>
       <tr><td>Security Audit (2 passes)</td><td><span class="tag t-warn">Remediated</span></td><td>Pass 1 found 1 high, 3 medium and 6 low, and fixed the high and medium items, including an open redirect and a missing per-user stream cap. Pass 2 found one more medium (an unbounded entity listing), which was fixed. Seven low items are deferred with reasons.</td></tr>
       <tr><td>COMPLIANCE.md</td><td><span class="tag t-ok">23 pass</span></td><td>Of 26 spec and web rows: 23 implemented and clean, 3 with a documented note, 0 gaps.</td></tr>
-      <tr><td>Frontend audit</td><td><span class="tag t-ok">99 / 99 cells</span></td><td>Accessibility, landmarks and viewport checks pass on every screen. Lighthouse on mobile: accessibility, best practices and SEO each 100.</td></tr>
-      <tr><td>Performance (INV-55)</td><td><span class="tag t-bad">Open</span></td><td>The build is halted here. The overview page's LCP was cut from 6.6 s to 2.0 s, and a speed pass on time-to-interactive is the next step.</td></tr>
-      <tr><td>Smoke test</td><td><span class="tag t-ok">52 / 52</span></td><td>Automated run passes. Manual checklist covers sign-up, sign-in, CRUD, unhappy paths, a database outage and missing environment variables.</td></tr>
+      <tr><td>Frontend audit</td><td><span class="tag t-ok">99 / 99 cells</span></td><td>Accessibility, landmarks and viewport checks pass on every screen. Lighthouse on mobile: accessibility and best practices 100 on both pages; SEO 100 on the landing page (the signed-in overview is not indexed by design, so it is not scored).</td></tr>
+      <tr><td>Performance (INV-55)</td><td><span class="tag t-ok">Pass</span></td><td>Failed first: the build halted here with the landing at 72 and the overview at 71 against a bar of 80, after the overview's LCP had already been cut from 6.6 s to 2.0 s. A speed pass fixed it: preloaded Latin-only fonts, about 100 KB of validation code removed from both pages, and no background link prefetching. Final scores are landing 83 and overview 81, with LCP about 1.6 s on both.</td></tr>
+      <tr><td>Smoke test</td><td><span class="tag t-ok">52 / 52</span></td><td>Automated run passes at the release build. Manual checklist covers sign-up, sign-in, CRUD, unhappy paths, a database outage and missing environment variables.</td></tr>
     </tbody>
   </table>
   <p class="note">Items not verified automatically: live Stripe billing (no keys in the build environment; simulated billing mode is covered) and email delivery (the product has none by design).</p>
@@ -105,13 +107,14 @@ footer{margin-top:52px;color:var(--faint);font-size:12px;font-family:var(--mono)
 <section>
   <h2>Open items</h2>
   <ul>
-    <li>INV-55 (performance) is the only failing invariant. The build stops here until it passes or the numbers are reported.</li>
-    <li>Pending reviews, some still open at the last checkpoint: features F-02, F-04, F-05, F-07, F-08, F-09, F-10, F-11, F-12, F-13, F-14, F-16, F-18, and the reviewer findings C-4, C-6, C-11, C-20, C-24 and C-31.</li>
-    <li>Before release: tag the version, complete the build, and run the full baseline once more at the final commit.</li>
+    <li>Pending after-the-fact reviews, which do not block the release: features F-02, F-04, F-05, F-07, F-08, F-09, F-10, F-11, F-12, F-13, F-14 and F-16, and changes C-4, C-6, C-11, C-20, C-24, C-28, C-31 and C-38.</li>
+    <li>Not verified automatically: live Stripe billing and the load-test targets, most of which were missed on the build machine.</li>
+    <li>Web unit-test coverage is about 63%. The server's is about 87%.</li>
+    <li>HSTS is on. On localhost it lasts one day, so other local projects on the same ports are forced onto HTTPS for that day.</li>
   </ul>
 </section>
 
-<footer>MDLC kernel · STΛRDΛNCΞR 0.1.6 · status as recorded in the build reports</footer>
+<footer>MDLC kernel · STΛRDΛNCΞR 0.1.6 · shipped 14 October 2026 · status as recorded in the build reports</footer>
 
 </div>
 </body>
