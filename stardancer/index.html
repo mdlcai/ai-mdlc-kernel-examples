@@ -53,15 +53,15 @@ footer{margin-top:52px;color:var(--faint);font-size:12px;font-family:var(--mono)
   <div class="eyebrow">Build dossier · MDLC kernel</div>
   <h1>STΛRDΛNCΞR</h1>
   <p class="lede">A system intelligence platform: it reads what your observations mean together, and nothing it proposes happens until governance says it can. This page records what the build produced, what passed, what failed on the way, and what is still open.</p>
-  <div class="status shipped">Shipped · v0.1.6</div>
+  <div class="status">v0.1.7 tagged · 2 approvals pending</div>
   <br><a class="back" href="https://mdlc.ai/proof.html">&larr; Back to proof</a>
 </header>
 
 <section>
   <h2>Where the build stands</h2>
-  <p class="sub">Version 0.1.6, built 12 to 14 October 2026 and tagged on 14 October. Every machine-checked invariant passes and the approval queue is empty.</p>
+  <p class="sub">Version 0.1.7, a follow-up to 0.1.6, which shipped on 14 October 2026. It was tagged on 15 October. Every machine-checked invariant passes and no after-the-fact reviews are pending. The release waits for a human on two queued changes (C-44, C-45).</p>
   <div class="grid">
-    <div class="stat ok"><b>314 / 314</b><span>tests passing at release: server 217, web 90, shared 7</span></div>
+    <div class="stat ok"><b>569 / 569</b><span>tests passing at release: server 217, web 345, shared 7</span></div>
     <div class="stat ok"><b>18</b><span>features built in order</span></div>
     <div class="stat ok"><b>23 / 26</b><span>security and web requirements implemented, 3 with notes, 0 gaps</span></div>
     <div class="stat ok"><b>56 / 56</b><span>machine-checked invariants proven, 1 manual check left to the reviewer</span></div>
@@ -79,7 +79,8 @@ footer{margin-top:52px;color:var(--faint);font-size:12px;font-family:var(--mono)
       <tr><td>Security Audit (2 passes)</td><td><span class="tag t-warn">Remediated</span></td><td>Pass 1 found 1 high, 3 medium and 6 low, and fixed the high and medium items, including an open redirect and a missing per-user stream cap. Pass 2 found one more medium (an unbounded entity listing), which was fixed. Seven low items are deferred with reasons.</td></tr>
       <tr><td>COMPLIANCE.md</td><td><span class="tag t-ok">23 pass</span></td><td>Of 26 spec and web rows: 23 implemented and clean, 3 with a documented note, 0 gaps.</td></tr>
       <tr><td>Frontend audit</td><td><span class="tag t-ok">99 / 99 cells</span></td><td>Accessibility, landmarks and viewport checks pass on every screen. Lighthouse on mobile: accessibility and best practices 100 on both pages; SEO 100 on the landing page (the signed-in overview is not indexed by design, so it is not scored).</td></tr>
-      <tr><td>Performance (INV-55)</td><td><span class="tag t-ok">Pass</span></td><td>Failed first: the build halted here with the landing at 72 and the overview at 71 against a bar of 80, after the overview's LCP had already been cut from 6.6 s to 2.0 s. A speed pass fixed it: preloaded Latin-only fonts, about 100 KB of validation code removed from both pages, and no background link prefetching. Final scores are landing 83 and overview 81, with LCP about 1.6 s on both.</td></tr>
+      <tr><td>Performance (INV-55)</td><td><span class="tag t-ok">Pass</span></td><td>Failed first: the build halted here with the landing at 72 and the overview at 71 against a bar of 80, after the overview's LCP had already been cut from 6.6 s to 2.0 s. A speed pass fixed it: preloaded Latin-only fonts, about 100 KB of validation code removed from both pages, and no background link prefetching. In 0.1.6 the scores were landing 83 and overview 81. At the 0.1.7 build they are landing 91 and overview 81, with LCP about 1.4 s on both.</td></tr>
+      <tr><td>Reviewer (4 rounds)</td><td><span class="tag t-ok">Pass</span></td><td>Round 1 failed on five items, which were fixed. Rounds 2, 3 and 4 passed. Round 4 reviewed 0.1.6 and its five small findings were fixed in 0.1.7. One was medium: server-rendered reads shared a single rate-limit bucket. All after-the-fact reviews are resolved.</td></tr>
       <tr><td>Smoke test</td><td><span class="tag t-ok">52 / 52</span></td><td>Automated run passes at the release build. Manual checklist covers sign-up, sign-in, CRUD, unhappy paths, a database outage and missing environment variables.</td></tr>
     </tbody>
   </table>
@@ -107,14 +108,14 @@ footer{margin-top:52px;color:var(--faint);font-size:12px;font-family:var(--mono)
 <section>
   <h2>Open items</h2>
   <ul>
-    <li>Pending after-the-fact reviews, which do not block the release: features F-02, F-04, F-05, F-07, F-08, F-09, F-10, F-11, F-12, F-13, F-14 and F-16, and changes C-4, C-6, C-11, C-20, C-24, C-28, C-31 and C-38.</li>
-    <li>Not verified automatically: live Stripe billing and the load-test targets, most of which were missed on the build machine.</li>
-    <li>Web unit-test coverage is about 63%. The server's is about 87%.</li>
+    <li>Two changes wait for a human decision: C-44, an architecture change for the 0.1.7 fixes, and C-45, the 0.1.7 version and infrastructure bump. The release is held until they are answered.</li>
+    <li>Not verified automatically: live Stripe billing and the load-test targets. Most load targets were missed on the build machine, where its 4 shared CPUs saturate. Single requests are within target: graph reads at 2,000 entities take 0.1 to 0.5 s. Generating demo data went from 11 to 15 s down to 3.2 s in 0.1.7.</li>
+    <li>Web unit-test coverage is about 93% of statements, up from about 63% in 0.1.6. The new tests found two small bugs, both fixed. The server's coverage is about 87%.</li>
     <li>HSTS is on. On localhost it lasts one day, so other local projects on the same ports are forced onto HTTPS for that day.</li>
   </ul>
 </section>
 
-<footer>MDLC kernel · STΛRDΛNCΞR 0.1.6 · shipped 14 October 2026 · status as recorded in the build reports</footer>
+<footer>MDLC kernel · STΛRDΛNCΞR 0.1.7 · tagged 15 October 2026 (0.1.6 shipped 14 October) · status as recorded in the build reports</footer>
 
 </div>
 </body>
