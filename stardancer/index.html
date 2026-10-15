@@ -53,13 +53,13 @@ footer{margin-top:52px;color:var(--faint);font-size:12px;font-family:var(--mono)
   <div class="eyebrow">Build dossier · MDLC kernel</div>
   <h1>STΛRDΛNCΞR</h1>
   <p class="lede">A system intelligence platform: it reads what your observations mean together, and nothing it proposes happens until governance says it can. This page records what the build produced, what passed, what failed on the way, and what is still open.</p>
-  <div class="status">v0.1.7 tagged · 2 approvals pending</div>
+  <div class="status shipped">Shipped · v0.1.7</div>
   <br><a class="back" href="https://mdlc.ai/proof.html">&larr; Back to proof</a>
 </header>
 
 <section>
   <h2>Where the build stands</h2>
-  <p class="sub">Version 0.1.7, a follow-up to 0.1.6, which shipped on 14 October 2026. It was tagged on 15 October. Every machine-checked invariant passes and no after-the-fact reviews are pending. The release waits for a human on two queued changes (C-44, C-45).</p>
+  <p class="sub">Version 0.1.7, a follow-up to 0.1.6, which shipped on 14 October 2026. It was tagged on 15 October. Every machine-checked invariant passes, no after-the-fact reviews are pending, and the approval queue is empty.</p>
   <div class="grid">
     <div class="stat ok"><b>569 / 569</b><span>tests passing at release: server 217, web 345, shared 7</span></div>
     <div class="stat ok"><b>18</b><span>features built in order</span></div>
@@ -108,14 +108,13 @@ footer{margin-top:52px;color:var(--faint);font-size:12px;font-family:var(--mono)
 <section>
   <h2>Open items</h2>
   <ul>
-    <li>Two changes wait for a human decision: C-44, an architecture change for the 0.1.7 fixes, and C-45, the 0.1.7 version and infrastructure bump. The release is held until they are answered.</li>
     <li>Not verified automatically: live Stripe billing and the load-test targets. Most load targets were missed on the build machine, where its 4 shared CPUs saturate. Single requests are within target: graph reads at 2,000 entities take 0.1 to 0.5 s. Generating demo data went from 11 to 15 s down to 3.2 s in 0.1.7.</li>
     <li>Web unit-test coverage is about 93% of statements, up from about 63% in 0.1.6. The new tests found two small bugs, both fixed. The server's coverage is about 87%.</li>
     <li>HSTS is on. On localhost it lasts one day, so other local projects on the same ports are forced onto HTTPS for that day.</li>
   </ul>
 </section>
 
-<footer>MDLC kernel · STΛRDΛNCΞR 0.1.7 · tagged 15 October 2026 (0.1.6 shipped 14 October) · status as recorded in the build reports</footer>
+<footer>MDLC kernel · STΛRDΛNCΞR 0.1.7 · shipped 15 October 2026 · status as recorded in the build reports</footer>
 
 </div>
 </body>
