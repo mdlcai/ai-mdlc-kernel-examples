@@ -1,0 +1,984 @@
+<title>STΛRDΛNCΞR Live Demo · MDLC</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: operator console. Sticky status bar, a rail of six destinations, and dense panels; the constellation is the one bold element. Single dark theme by design (DESIGN-TEMPLATE.html, ADR-003). */
+:root{
+  --bg:#06070a; --bg2:#0b0d12; --panel:#0e1117; --panel2:#131823;
+  --line:rgba(255,255,255,.07); --line2:rgba(255,255,255,.14);
+  --text:#ebe7df; --muted:#8b909a; --dim:#575c66;
+  --amber:#ffb547; --ember:#ff7a3d; --cyan:#5fd4ff; --green:#5fe3a1; --red:#ff5d6c; --violet:#a78bfa;
+  --on-accent:#120c04;
+  --display:"Manrope","Segoe UI",system-ui,sans-serif;
+  --ui:"Inter","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --r:14px; --r-sm:8px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font:14px/1.5 var(--ui);-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+a{color:var(--cyan)}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px;border-radius:4px}
+.skip{position:absolute;left:-9999px;top:8px;background:var(--amber);color:var(--on-accent);padding:8px 12px;border-radius:var(--r-sm);z-index:20}
+.skip:focus{left:max(16px,env(safe-area-inset-left,0px))}
+.mono{font-family:var(--mono)}
+.num{font-variant-numeric:tabular-nums}
+.eyebrow{font:500 11px/1.2 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0}
+.muted{color:var(--muted)}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:rgba(6,7,10,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px}
+.top-in{display:flex;align-items:center;gap:12px 20px;flex-wrap:wrap;max-width:1480px;margin:0 auto}
+.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-right:auto}
+.word{font:800 20px/1 var(--display);letter-spacing:.16em;background:linear-gradient(90deg,var(--text),var(--amber) 70%,var(--ember));-webkit-background-clip:text;background-clip:text;color:transparent;margin:0}
+.org{font:500 12px var(--mono);color:var(--muted)}
+.sim{display:inline-flex;align-items:center;font:500 10.5px/1 var(--mono);letter-spacing:.12em;color:var(--amber);border:1px dashed var(--line2);border-radius:999px;padding:5px 9px;text-transform:uppercase;white-space:nowrap}
+.ctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.live{display:inline-flex;align-items:center;gap:8px;font:500 11px var(--mono);letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(95,227,161,.5);animation:ping 1.8s infinite}
+.paused .dot{background:var(--dim);animation:none}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(95,227,161,.45)}80%{box-shadow:0 0 0 8px rgba(95,227,161,0)}100%{box-shadow:0 0 0 0 rgba(95,227,161,0)}}
+.clock{font:500 12px var(--mono);color:var(--text)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:0 14px;border-radius:var(--r-sm);border:1px solid var(--line2);background:var(--panel2);color:var(--text);cursor:pointer;font-weight:500;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:rgba(255,255,255,.28)}
+.btn.primary{background:linear-gradient(90deg,var(--amber),var(--ember));color:var(--on-accent);border-color:transparent;font-weight:600}
+.btn.ghost{background:transparent}
+.btn.danger{border-color:rgba(255,93,108,.45);color:var(--red);background:transparent}
+.btn.sm{min-height:30px;padding:0 10px;font-size:12px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+select.sel{min-height:36px;background:var(--panel2);border:1px solid var(--line2);border-radius:var(--r-sm);padding:0 10px;font-size:13px}
+label.inline{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+
+/* shell */
+.shell{display:grid;grid-template-columns:200px minmax(0,1fr);gap:20px;max-width:1480px;margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 8px}
+.nav{display:flex;flex-direction:column;gap:2px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 76px);align-self:start}
+.nav button{display:flex;align-items:center;gap:10px;min-height:42px;padding:0 12px;border:0;border-radius:var(--r-sm);background:transparent;color:var(--muted);cursor:pointer;text-align:left;font-weight:500}
+.nav button .ic{font:500 13px var(--mono);width:18px;text-align:center;color:var(--dim)}
+.nav button:hover{color:var(--text);background:var(--bg2)}
+.nav button[aria-selected="true"]{color:var(--amber);background:var(--panel)}
+.nav button[aria-selected="true"] .ic{color:var(--amber)}
+.nav .count{margin-left:auto;font:500 11px var(--mono);color:var(--on-accent);background:var(--amber);border-radius:999px;padding:1px 7px}
+.nav .count:empty{display:none}
+main{min-width:0}
+.view-h{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.view-h h1{font:700 26px/1.15 var(--display);margin:4px 0 0;text-wrap:balance}
+.view-h p{margin:4px 0 0;color:var(--muted);max-width:68ch}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;min-width:0}
+.panel-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.panel-h h2{font:600 15px var(--display);margin:0}
+.stack{display:flex;flex-direction:column;gap:16px;min-width:0}
+
+/* overview */
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));padding:0;overflow:hidden;margin-bottom:16px}
+.kpi{padding:14px 16px;border-left:1px solid var(--line);min-width:0}
+.kpi:first-child{border-left:0}
+.kpi .v{font:700 26px/1.1 var(--display);margin-top:6px;font-variant-numeric:tabular-nums}
+.kpi .s{font-size:12px;color:var(--muted);margin-top:2px}
+.kpi svg{display:block;width:100%;height:22px;margin-top:6px}
+.ov{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr) minmax(0,1fr);gap:16px;
+  grid-template-areas:"const health feed" "const loop feed" "risks psi gov"}
+.a-const{grid-area:const}.a-health{grid-area:health}.a-loop{grid-area:loop}.a-feed{grid-area:feed}.a-risks{grid-area:risks}.a-psi{grid-area:psi}.a-gov{grid-area:gov}
+.canvas-box{position:relative;width:100%;aspect-ratio:1/1;max-width:100%}
+.canvas-box canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.health{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.ring{width:118px;height:118px;flex:none}
+.subs{display:flex;flex-direction:column;gap:9px;flex:1;min-width:150px}
+.sub{display:grid;grid-template-columns:96px 1fr 30px;align-items:center;gap:8px;font-size:12px}
+.bar{height:6px;border-radius:3px;background:var(--line2);overflow:hidden}
+.bar b{display:block;height:100%;border-radius:3px;transition:width .3s}
+.loop{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.loop li{display:grid;grid-template-columns:22px 1fr auto;align-items:center;gap:10px;padding:7px 10px;border-radius:var(--r-sm);border:1px solid transparent;transition:border-color .3s,background .3s}
+.loop li .k{font:500 11px var(--mono);color:var(--dim)}
+.loop li .n{font:600 13px var(--display);letter-spacing:.08em}
+.loop li .c{font:500 12px var(--mono);color:var(--muted)}
+.loop li.on{border-color:rgba(255,181,71,.35);background:rgba(255,181,71,.06)}
+.loop li.on .k{color:var(--amber)}
+.feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;max-height:560px;overflow:auto}
+.feed li{display:grid;grid-template-columns:62px 10px minmax(0,1fr);gap:8px;padding:8px 2px;border-top:1px solid var(--line);font-size:13px;align-items:start}
+.feed li:first-child{border-top:0}
+.feed time{font:400 11px/1.9 var(--mono);color:var(--muted)}
+.sev{width:8px;height:8px;border-radius:50%;margin-top:6px}
+.sev-info{background:var(--dim)}.sev-low{background:var(--cyan)}.sev-medium{background:var(--amber)}.sev-high{background:var(--ember)}.sev-critical{background:var(--red)}
+.kind{font:500 10px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-right:6px}
+.kind.pred{color:var(--violet)}
+.ent{background:none;border:0;padding:0;color:var(--cyan);cursor:pointer;font:inherit;text-decoration:underline;text-decoration-color:rgba(95,212,255,.3);text-underline-offset:2px}
+.ent:hover{text-decoration-color:var(--cyan)}
+.rows{list-style:none;margin:0;padding:0}
+.rows li{display:flex;gap:10px;align-items:baseline;justify-content:space-between;padding:9px 0;border-top:1px solid var(--line);font-size:13px}
+.rows li:first-child{border-top:0}
+.rows .why{color:var(--muted);font-size:12px}
+.empty{color:var(--muted);font-size:13px;padding:8px 0}
+
+/* chips & pills */
+.chip{display:inline-flex;align-items:center;font:500 10.5px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:4px 8px;border:1px solid var(--line2);color:var(--muted);white-space:nowrap}
+.risk-low{color:var(--green);border-color:rgba(95,227,161,.35)}
+.risk-medium{color:var(--amber);border-color:rgba(255,181,71,.4)}
+.risk-high{color:var(--ember);border-color:rgba(255,122,61,.45)}
+.risk-critical{color:var(--red);border-color:rgba(255,93,108,.5)}
+.st-ok{color:var(--green);border-color:rgba(95,227,161,.35)}
+.st-wait{color:var(--amber);border-color:rgba(255,181,71,.4);border-style:dashed}
+.st-run{color:var(--cyan);border-color:rgba(95,212,255,.4)}
+.st-bad{color:var(--red);border-color:rgba(255,93,108,.45)}
+.pred-tag{color:var(--violet);border-color:rgba(167,139,250,.45)}
+.kev{color:var(--red);border-color:rgba(255,93,108,.45)}
+
+/* constellation view */
+.cv{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
+.cv .opts{display:flex;gap:14px;flex-wrap:wrap}
+.tip{position:absolute;pointer-events:none;background:var(--panel2);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;font:500 11px var(--mono);white-space:nowrap;transform:translate(-50%,calc(-100% - 12px))}
+.detail h2{font:700 20px var(--display);margin:6px 0 8px;word-break:break-word}
+.meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px;margin:0}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;min-width:0}
+.spark{display:flex;align-items:flex-end;gap:2px;height:28px}
+.spark i{flex:1;background:var(--cyan);opacity:.7;border-radius:1px;min-height:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.sec-t{font:500 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.search{width:100%;min-height:38px;background:var(--bg2);border:1px solid var(--line2);border-radius:var(--r-sm);padding:0 12px}
+.elist{list-style:none;margin:10px 0 0;padding:0;max-height:300px;overflow:auto;display:flex;flex-direction:column}
+.elist button{display:flex;justify-content:space-between;gap:8px;width:100%;padding:7px 8px;border:0;border-radius:6px;background:transparent;cursor:pointer;text-align:left;font-size:13px}
+.elist button:hover,.elist button[aria-current="true"]{background:var(--panel2)}
+.elist .h{font:500 11px var(--mono);color:var(--muted)}
+
+/* tables */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font:500 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line2);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr.click{cursor:pointer}
+tr.click:hover td{background:var(--bg2)}
+tr.sel td{background:var(--panel2)}
+tr.broken td{background:rgba(255,93,108,.09)}
+.path{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:13px}
+.path .arr{color:var(--dim);font-family:var(--mono)}
+.path .hot{color:var(--red)}
+.two{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px;align-items:start}
+
+/* predictions */
+.psi-h{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.psi{font:700 44px/1 var(--display);color:var(--violet);width:64px;height:64px;display:grid;place-items:center;border:1px solid rgba(167,139,250,.35);border-radius:50%;flex:none}
+.weights{display:flex;gap:8px;flex-wrap:wrap}
+.w{border:1px solid var(--line2);border-radius:var(--r-sm);padding:6px 10px;font-size:12px}
+.w b{font:600 14px var(--display);color:var(--violet);margin-right:6px}
+.preds{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;margin-top:16px}
+.pred{border:1px solid rgba(167,139,250,.22);border-radius:var(--r);padding:16px;background:var(--panel);display:flex;flex-direction:column;gap:10px;min-width:0}
+.pred.done{opacity:.66}
+.pred h3{font:600 15px/1.35 var(--display);margin:0;text-wrap:balance}
+.conf{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;font:500 12px var(--mono)}
+.conf .bar b{background:var(--violet)}
+.pred ul{margin:0;padding-left:18px;font-size:13px;color:var(--muted)}
+.pred .foot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:auto}
+
+/* governance */
+.stepper{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.stepper li{display:grid;grid-template-columns:14px 1fr;gap:10px;padding-bottom:12px;position:relative}
+.stepper li::before{content:"";position:absolute;left:6px;top:14px;bottom:0;width:1px;background:var(--line2)}
+.stepper li:last-child::before{display:none}
+.stepper .pt{width:13px;height:13px;border-radius:50%;border:2px solid var(--muted);margin-top:3px;background:var(--panel)}
+.stepper .pt.ok{border-color:var(--green)}.stepper .pt.bad{border-color:var(--red)}.stepper .pt.wait{border-color:var(--amber)}.stepper .pt.run{border-color:var(--cyan)}
+.stepper .s{font:500 12px var(--mono)}
+.stepper .r{font-size:12px;color:var(--muted)}
+.note{font-size:12px;padding:8px 10px;border-radius:var(--r-sm);background:var(--bg2);border:1px solid var(--line2);margin-top:10px}
+.note.err{border-color:rgba(255,93,108,.45);color:var(--red)}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:var(--r-sm);overflow:hidden}
+.seg button{border:0;background:transparent;padding:6px 10px;font-size:12px;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--panel2);color:var(--text)}
+
+/* evidence */
+.banner{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 14px;border-radius:var(--r);border:1px solid var(--line2);margin-bottom:16px;font-size:13px}
+.banner.ok{border-color:rgba(95,227,161,.35)}
+.banner.bad{border-color:rgba(255,93,108,.5);background:rgba(255,93,108,.06)}
+.banner b{font-family:var(--display)}
+.hash{font:400 12px var(--mono);color:var(--muted);word-break:break-all}
+pre.json{font:400 12px/1.5 var(--mono);background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px;overflow:auto;margin:8px 0 0;white-space:pre-wrap;word-break:break-word}
+
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--panel2);border:1px solid var(--line2);border-radius:var(--r-sm);padding:10px 14px;font-size:13px;max-width:min(560px,calc(100% - 32px));z-index:30;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+
+footer{max-width:1480px;margin:24px auto 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px 20px;flex-wrap:wrap;font:400 11px/1.6 var(--mono);letter-spacing:.06em;color:var(--muted);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 24px}
+footer a{color:var(--amber);text-decoration:none}
+footer a:hover{text-decoration:underline}
+
+@media (max-width:1180px){
+  .ov{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"const const" "health loop" "feed feed" "risks psi" "gov gov"}
+  .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .kpi:nth-child(4){border-left:0}
+  .kpi:nth-child(n+4){border-top:1px solid var(--line)}
+  .cv{grid-template-columns:minmax(0,1fr)}
+  .two{grid-template-columns:minmax(0,1fr)}
+  .feed{max-height:380px}
+}
+@media (max-width:820px){
+  .shell{grid-template-columns:minmax(0,1fr);gap:12px}
+  .nav{flex-direction:row;overflow-x:auto;position:static;padding-bottom:4px;border-bottom:1px solid var(--line)}
+  .nav button{flex:none}
+  .ov{grid-template-columns:minmax(0,1fr);grid-template-areas:"const" "health" "loop" "feed" "risks" "psi" "gov"}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kpi:nth-child(odd){border-left:0}
+  .kpi:nth-child(4){border-left:1px solid var(--line)}
+  .kpi:nth-child(n+3){border-top:1px solid var(--line)}
+  .preds{grid-template-columns:minmax(0,1fr)}
+  .view-h h1{font-size:22px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<a class="skip" href="#main">Skip to content</a>
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <p class="word" aria-label="Stardancer">STΛRDΛNCΞR</p>
+      <span class="org">orbital-retail</span>
+      <span class="sim" title="Every record on this page is generated in your browser">Simulated</span>
+    </div>
+    <div class="ctl">
+      <span class="live" id="live"><span class="dot"></span><span id="liveTxt">Live</span></span>
+      <span class="clock num" id="clock" aria-label="Simulation time">--:--:--</span>
+      <button class="btn sm ghost" id="pauseBtn" type="button" aria-pressed="false">Pause</button>
+      <select class="sel" id="speed" aria-label="Simulation speed"><option value="1200">1×</option><option value="400">3×</option></select>
+      <label class="inline" for="role">You are
+        <select class="sel" id="role"><option value="analyst">Analyst</option><option value="admin">Admin</option></select>
+      </label>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="nav" role="tablist" aria-label="Sections">
+    <button role="tab" id="t-overview" aria-controls="v-overview" data-view="overview"><span class="ic">◎</span>Overview</button>
+    <button role="tab" id="t-constellation" aria-controls="v-constellation" data-view="constellation"><span class="ic">✶</span>Constellation</button>
+    <button role="tab" id="t-security" aria-controls="v-security" data-view="security"><span class="ic">⌁</span>Security</button>
+    <button role="tab" id="t-predictions" aria-controls="v-predictions" data-view="predictions"><span class="ic">Ψ</span>Predictions<span class="count" id="nPred"></span></button>
+    <button role="tab" id="t-governance" aria-controls="v-governance" data-view="governance"><span class="ic">⚖</span>Governance<span class="count" id="nGov"></span></button>
+    <button role="tab" id="t-evidence" aria-controls="v-evidence" data-view="evidence"><span class="ic">#</span>Evidence</button>
+  </nav>
+
+  <main id="main" tabindex="-1">
+    <!-- OVERVIEW -->
+    <section id="v-overview" role="tabpanel" aria-labelledby="t-overview">
+      <div class="view-h">
+        <div><p class="eyebrow">Intelligence in motion</p><h1>Every enterprise is a constellation.</h1>
+        <p>A simulated retail estate streams telemetry into the entity graph. Mirror Brain Ψ predicts from it, agents propose fixes under policy, and every decision lands in a hash-chained ledger.</p></div>
+      </div>
+      <div class="panel kpis" id="kpis"></div>
+      <div class="ov">
+        <section class="panel a-const">
+          <div class="panel-h"><h2>System constellation</h2><button class="btn sm ghost" type="button" data-view="constellation">Open graph</button></div>
+          <div class="canvas-box"><canvas id="mini" aria-label="Constellation of 44 entities around the Mirror Brain core. Use the Constellation section for the accessible entity list." role="img"></canvas></div>
+          <div class="legend"><span><i style="background:var(--text)"></i>Healthy</span><span><i style="background:var(--amber)"></i>Degraded</span><span><i style="background:var(--red)"></i>Critical</span><span><i style="border:1.5px solid var(--amber)"></i>Crown jewel</span><span><i style="border:1.5px solid var(--cyan)"></i>Internet-facing</span><span><i style="border:1.5px dashed var(--muted)"></i>Stale</span></div>
+        </section>
+        <section class="panel a-health">
+          <div class="panel-h"><h2>System health</h2><span class="eyebrow">rollup · 1 min</span></div>
+          <div class="health" id="health"></div>
+        </section>
+        <section class="panel a-loop">
+          <div class="panel-h"><h2>Decision loop</h2><span class="eyebrow" id="loopNote"></span></div>
+          <ol class="loop" id="loop"></ol>
+        </section>
+        <section class="panel a-feed">
+          <div class="panel-h"><h2>Intelligence feed</h2><span class="eyebrow">SSE · live</span></div>
+          <ul class="feed" id="feed" aria-live="off"></ul>
+        </section>
+        <section class="panel a-risks">
+          <div class="panel-h"><h2>Top risks</h2></div>
+          <ul class="rows" id="risks"></ul>
+        </section>
+        <section class="panel a-psi">
+          <div class="panel-h"><h2>Mirror Brain Ψ</h2><button class="btn sm ghost" type="button" data-view="predictions">All predictions</button></div>
+          <ul class="rows" id="ovPred"></ul>
+        </section>
+        <section class="panel a-gov">
+          <div class="panel-h"><h2>Awaiting approval</h2><button class="btn sm ghost" type="button" data-view="governance">Governance</button></div>
+          <ul class="rows" id="ovGov"></ul>
+        </section>
+      </div>
+    </section>
+
+    <!-- CONSTELLATION -->
+    <section id="v-constellation" role="tabpanel" aria-labelledby="t-constellation" hidden>
+      <div class="view-h">
+        <div><p class="eyebrow">Entity graph</p><h1>Constellation</h1>
+        <p>Select an entity to see what it depends on (cyan) and its blast radius: everything that fails if it fails (ember).</p></div>
+        <div class="opts">
+          <label class="inline"><input type="checkbox" id="optLabels"> All labels</label>
+          <label class="inline"><input type="checkbox" id="optPaths" checked> Attack paths</label>
+        </div>
+      </div>
+      <div class="cv">
+        <div class="panel"><div class="canvas-box" id="bigBox"><canvas id="big" role="img" aria-label="Interactive constellation graph. The entity list beside it offers the same selection by keyboard."></canvas><div class="tip" id="tip" hidden></div></div></div>
+        <div class="stack">
+          <section class="panel detail" id="detail" aria-live="polite"></section>
+          <section class="panel">
+            <label class="eyebrow" for="q">Find an entity</label>
+            <input class="search" id="q" type="search" placeholder="checkout, db, k8s…" autocomplete="off" style="margin-top:8px">
+            <ul class="elist" id="elist"></ul>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECURITY -->
+    <section id="v-security" role="tabpanel" aria-labelledby="t-security" hidden>
+      <div class="view-h">
+        <div><p class="eyebrow">Attack paths · prioritisation · exposure</p><h1>Security</h1>
+        <p>Paths are searched from internet-facing entities to crown jewels (depth ≤ 6). Priority weighs CVSS by exploitation, reachability and criticality, and every score lists its reasons.</p></div>
+      </div>
+      <div class="stack">
+        <section class="panel"><div class="panel-h"><h2>Attack paths to crown jewels</h2><span class="eyebrow" id="pathCount"></span></div><div id="paths"></div></section>
+        <section class="panel"><div class="panel-h"><h2>Vulnerability priority</h2></div><div class="tbl-wrap" id="vulns"></div></section>
+        <section class="panel"><div class="panel-h"><h2>External exposure</h2></div><div class="tbl-wrap" id="exposure"></div></section>
+      </div>
+    </section>
+
+    <!-- PREDICTIONS -->
+    <section id="v-predictions" role="tabpanel" aria-labelledby="t-predictions" hidden>
+      <div class="view-h">
+        <div><p class="eyebrow">Mirror Brain Ψ · deterministic</p><h1>Predictions</h1>
+        <p>Five fixed rules read the graph every 10 ticks. Each prediction carries its assumptions, evidence and a horizon, and stays a prediction until a person confirms or refutes it.</p></div>
+        <button class="btn primary" type="button" id="runPsi">Run Ψ now</button>
+      </div>
+      <div class="panel psi-h">
+        <div class="psi" aria-hidden="true">Ψ</div>
+        <div class="stack" style="flex:1;gap:10px">
+          <div class="weights" id="weights"></div>
+          <div class="muted" id="accuracy" style="font-size:13px"></div>
+        </div>
+      </div>
+      <div class="preds" id="preds"></div>
+    </section>
+
+    <!-- GOVERNANCE -->
+    <section id="v-governance" role="tabpanel" aria-labelledby="t-governance" hidden>
+      <div class="view-h">
+        <div><p class="eyebrow">Proposals · policies · agents</p><h1>Governance</h1>
+        <p>Every action is a proposal that passes a policy check, a blast-radius validation and, above the auto-approve line, a human approval by someone other than the proposer.</p></div>
+        <div class="seg" role="group" aria-label="Filter proposals">
+          <button type="button" data-filter="all" aria-pressed="true">All</button>
+          <button type="button" data-filter="wait" aria-pressed="false">Awaiting</button>
+          <button type="button" data-filter="done" aria-pressed="false">Closed</button>
+        </div>
+      </div>
+      <div class="two">
+        <section class="panel"><div class="tbl-wrap" id="props"></div></section>
+        <section class="panel" id="propDetail" aria-live="polite"></section>
+      </div>
+      <div class="two" style="margin-top:16px">
+        <section class="panel"><div class="panel-h"><h2>Policies</h2><span class="eyebrow" id="polHash"></span></div><div class="tbl-wrap" id="policies"></div></section>
+        <section class="panel"><div class="panel-h"><h2>Agents</h2></div><div class="tbl-wrap" id="agents"></div></section>
+      </div>
+    </section>
+
+    <!-- EVIDENCE -->
+    <section id="v-evidence" role="tabpanel" aria-labelledby="t-evidence" hidden>
+      <div class="view-h">
+        <div><p class="eyebrow">Tamper-evident ledger · SHA-256 chain</p><h1>Evidence</h1>
+        <p>Each record stores the hash of the one before it. Edit any stored record and verification finds the exact sequence number where the chain breaks.</p></div>
+        <div class="ctl">
+          <button class="btn primary" type="button" id="verify">Verify chain</button>
+          <button class="btn danger" type="button" id="tamper">Tamper with a record</button>
+          <button class="btn ghost" type="button" id="reset">Reset demo</button>
+        </div>
+      </div>
+      <div class="banner" id="vbanner"></div>
+      <div class="two">
+        <section class="panel"><div class="tbl-wrap" id="ledger"></div></section>
+        <section class="panel" id="recDetail"></section>
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>STΛRDΛNCΞR v0.1.7 · <a href="https://intelligence.mdlc.ai" target="_blank" rel="noopener">Intelligence in Motion</a></span>
+  <span>DEMO · DATA SIMULATED IN YOUR BROWSER · NOTHING LEAVES THIS PAGE</span>
+  <span>I AM // STΛRDΛNCΞR · [Ψ ◈ QAI → MDLC.ai → ∞]</span>
+</footer>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+'use strict';
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const RM=matchMedia('(prefers-reduced-motion: reduce)');
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+/* ---------- SHA-256 (sync, for the evidence chain) ---------- */
+const SHA_K=[],SHA_H=[];
+(function(){let n=2,c=0;while(c<64){let p=true;for(let d=2;d*d<=n;d++)if(n%d===0){p=false;break}
+  if(p){if(c<8)SHA_H[c]=(Math.pow(n,1/2)%1)*4294967296|0;SHA_K[c]=(Math.pow(n,1/3)%1)*4294967296|0;c++}n++}})();
+const rotr=(x,n)=>(x>>>n)|(x<<(32-n));
+function sha256(str){
+  const b=new TextEncoder().encode(str),l=b.length,nb=((l+9+63)>>6)<<6,m=new Uint8Array(nb);
+  m.set(b);m[l]=0x80;const dv=new DataView(m.buffer);dv.setUint32(nb-4,(l*8)>>>0);dv.setUint32(nb-8,Math.floor(l/536870912));
+  const H=SHA_H.slice(),W=new Int32Array(64);
+  for(let o=0;o<nb;o+=64){
+    for(let i=0;i<16;i++)W[i]=dv.getInt32(o+i*4);
+    for(let i=16;i<64;i++){const a=W[i-15],c=W[i-2];W[i]=(W[i-16]+(rotr(a,7)^rotr(a,18)^(a>>>3))+W[i-7]+(rotr(c,17)^rotr(c,19)^(c>>>10)))|0}
+    let [a,b2,c,d,e,f,g,h]=H;
+    for(let i=0;i<64;i++){
+      const t1=(h+(rotr(e,6)^rotr(e,11)^rotr(e,25))+((e&f)^(~e&g))+SHA_K[i]+W[i])|0;
+      const t2=((rotr(a,2)^rotr(a,13)^rotr(a,22))+((a&b2)^(a&c)^(b2&c)))|0;
+      h=g;g=f;f=e;e=(d+t1)|0;d=c;c=b2;b2=a;a=(t1+t2)|0}
+    H[0]=(H[0]+a)|0;H[1]=(H[1]+b2)|0;H[2]=(H[2]+c)|0;H[3]=(H[3]+d)|0;H[4]=(H[4]+e)|0;H[5]=(H[5]+f)|0;H[6]=(H[6]+g)|0;H[7]=(H[7]+h)|0}
+  return H.map(x=>(x>>>0).toString(16).padStart(8,'0')).join('');
+}
+
+/* ---------- seeded randomness ---------- */
+function mulberry(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+/* ---------- the simulated estate ---------- */
+// name, type, tier (0 crown core … 4 edge), criticality 1–5, flag x=internet-facing c=crown jewel
+const DEF=[
+ ['edge-gw-01','gateway',4,4,'x'],['edge-gw-02','gateway',4,4,'x'],['cdn-origin','gateway',4,3,'x'],['vpn-concentrator','gateway',4,4,'x'],['partner-api','service',4,3,'x'],
+ ['web-storefront','service',2,4],['api-gateway','service',2,5],['checkout-svc','service',2,5],['catalog-svc','service',2,3],['search-svc','service',2,3],['auth-idp','identity',2,5],
+ ['account-svc','service',2,4],['notification-svc','service',2,2],['ledger-svc','service',2,5],['fraud-scoring','service',2,4],['reporting-svc','service',2,2],['admin-console','service',2,4],
+ ['orders-db','database',1,4],['catalog-db','database',1,3],['session-redis','database',1,3],['kafka-orders','queue',1,4],['search-index','database',1,2],['object-store-backups','storage',1,4],['warehouse-dwh','database',1,3],['vault-secrets','secrets',1,5],
+ ['payments-db','database',0,5,'c'],['customer-pii-store','database',0,5,'c'],['signing-hsm','secrets',0,5,'c'],
+ ['k8s-node-a1','host',3,3],['k8s-node-a2','host',3,3],['k8s-node-a3','host',3,3],['k8s-node-a4','host',3,2],['k8s-node-b1','host',3,4],['k8s-node-b2','host',3,3],['k8s-node-b3','host',3,3],
+ ['ad-dc-01','identity',3,5],['ad-dc-02','identity',3,4],['dns-internal','network',3,4],['ci-runner-01','ci',3,3],['ci-runner-02','ci',3,2],['log-pipeline','pipeline',3,2],['siem-collector','pipeline',3,3],['ntp-01','network',3,1],['svc-acct-deploy','identity',3,4]
+];
+// a>b means a calls / runs on b. If b fails, a is in its blast radius; attackers move a→b.
+const LINKS=`edge-gw-01>web-storefront,api-gateway
+edge-gw-02>api-gateway,partner-api
+cdn-origin>web-storefront
+vpn-concentrator>admin-console,ad-dc-01
+partner-api>orders-db,auth-idp,ledger-svc,k8s-node-b3
+web-storefront>api-gateway,catalog-svc,session-redis,k8s-node-a1
+api-gateway>checkout-svc,catalog-svc,search-svc,account-svc,auth-idp,dns-internal,k8s-node-a1
+checkout-svc>payments-db,fraud-scoring,kafka-orders,ledger-svc,auth-idp,k8s-node-a2
+catalog-svc>catalog-db,search-index,k8s-node-a2
+search-svc>search-index,k8s-node-a3
+account-svc>customer-pii-store,auth-idp,notification-svc,k8s-node-a3
+auth-idp>ad-dc-01,session-redis,vault-secrets,dns-internal,k8s-node-b1
+ledger-svc>payments-db,signing-hsm,kafka-orders,k8s-node-b1
+fraud-scoring>customer-pii-store,warehouse-dwh,k8s-node-b2
+notification-svc>kafka-orders,k8s-node-a4
+reporting-svc>warehouse-dwh,orders-db,k8s-node-b2
+admin-console>account-svc,reporting-svc,auth-idp,k8s-node-b3
+kafka-orders>orders-db
+orders-db>object-store-backups
+payments-db>object-store-backups
+customer-pii-store>object-store-backups
+warehouse-dwh>orders-db
+vault-secrets>signing-hsm
+ad-dc-01>ad-dc-02,ntp-01
+ci-runner-01>vault-secrets,svc-acct-deploy
+ci-runner-02>vault-secrets
+svc-acct-deploy>k8s-node-a2
+k8s-node-a1>log-pipeline
+k8s-node-b1>log-pipeline
+log-pipeline>siem-collector`;
+const PORTS={'edge-gw-01':'443/tcp','edge-gw-02':'443/tcp · 8443/tcp (mgmt)','cdn-origin':'443/tcp','vpn-concentrator':'443/tcp · 500/udp','partner-api':'8443/tcp'};
+const VULN_SEED=[
+ ['SIM-2026-0412','edge-gw-02',9.1,true,'Authentication bypass in management plane'],
+ ['SIM-2026-0501','admin-console',7.2,true,'Stored XSS in report viewer'],
+ ['SIM-2026-0388','ci-runner-01',8.8,true,'Runner escape via crafted job'],
+ ['SIM-2026-0475','k8s-node-b2',7.5,false,'Kernel privilege escalation'],
+ ['SIM-2026-0291','auth-idp',6.5,false,'Session fixation on SSO callback'],
+ ['SIM-2026-0133','catalog-db',5.3,false,'Information disclosure in error pages']];
+const VULN_POOL=[['SIM-2026-0552',8.1,true,'Deserialization in job scheduler'],['SIM-2026-0560',6.1,false,'Open redirect on login'],['SIM-2026-0571',7.8,false,'Container runtime escape'],['SIM-2026-0583',9.8,true,'Pre-auth RCE in admin API']];
+const CHANGES={
+ service:[['image','v1.42.0','v1.43.0'],['replicas','3','4'],['feature_flag','checkout_v2=off','checkout_v2=on']],
+ gateway:[['waf_mode','block','monitor'],['tls_min','1.2','1.0'],['rate_limit_rps','800','2000']],
+ database:[['max_connections','200','400'],['tls_required','true','false'],['backup_schedule','daily','off']],
+ queue:[['retention_hours','72','24'],['partitions','12','24']],
+ storage:[['versioning','on','off'],['public_read','false','true']],
+ secrets:[['rotation_days','30','90'],['audit_log','on','off']],
+ identity:[['mfa_required','true','false'],['session_ttl_min','30','480']],
+ host:[['kernel','5.15.0-112','5.15.0-118'],['ssh_password_auth','no','yes']],
+ network:[['upstream_resolver','10.0.0.2','10.9.9.9'],['ntp_source','pool-a','pool-b']],
+ ci:[['runner_image','ubuntu-24.04','ubuntu-24.04-r2'],['privileged','false','true']],
+ pipeline:[['retention_days','30','7'],['sampling','1.0','0.2']]};
+const RULES=[
+ {id:'R1',sym:'α',name:'Change impact',w:.82},
+ {id:'R2',sym:'β',name:'Exposure to exploit',w:.9},
+ {id:'R3',sym:'γ',name:'Health trend',w:.76},
+ {id:'R4',sym:'δ',name:'Stale drift',w:.6},
+ {id:'R5',sym:'ε',name:'Auth anomaly',w:.7}];
+const RISK=['low','medium','high','critical'], rank=r=>RISK.indexOf(r);
+const ROLE_RANK={analyst:1,admin:2};
+const TERMINAL=new Set(['policy_rejected','validation_failed','rejected','succeeded','failed']);
+const TICK_S=1.2, WARM=34, STALE_AFTER=12;
+
+let S, timer=null, view='overview', toastT=null;
+
+function build(seed){
+  const r=mulberry(seed);
+  const ents=DEF.map(([name,type,tier,crit,f],i)=>({i,name,type,tier,crit,external:f==='x',crown:f==='c',health:86+r()*12,hist:[],state:'active',isolated:false,lastSeen:0,silentUntil:0,incident:0}));
+  const by=Object.fromEntries(ents.map(e=>[e.name,e]));
+  const edges=[];LINKS.trim().split('\n').forEach(l=>{const[a,bs]=l.trim().split('>');bs.split(',').forEach(b=>edges.push([by[a].i,by[b].i]))});
+  const out=ents.map(()=>[]),inn=ents.map(()=>[]);edges.forEach(([a,b])=>{out[a].push(b);inn[b].push(a)});
+  S={r,seed,t:0,t0:Date.now()-WARM*TICK_S*1000,ents,by,edges,out,inn,pos:layout(ents,edges,mulberry(7)),
+    vulns:VULN_SEED.map(([id,ent,cvss,kev,title])=>({id,ent:by[ent].i,cvss,kev,title,status:'open',t:0})),pool:VULN_POOL.slice(),
+    feed:[],changes:[],eps:[],obs:0,preds:[],props:[],ledger:[],seqP:1040,seqD:500,seqC:3000,seqE:90000,
+    agents:[{name:'ops-agent',caps:['restart','scale'],max:'low',status:'active'},{name:'patch-agent',caps:['patch'],max:'medium',status:'active'},{name:'iam-agent',caps:['rotate_credentials','isolate'],max:'high',status:'active'}],
+    policies:[
+      {action:'restart',auto:'low',role:'analyst',reversible:true,enabled:true},
+      {action:'scale',auto:'low',role:'analyst',reversible:true,enabled:true},
+      {action:'patch',auto:null,role:'analyst',reversible:false,enabled:true},
+      {action:'isolate',auto:null,role:'admin',reversible:true,enabled:true},
+      {action:'rotate_credentials',auto:null,role:'admin',reversible:false,enabled:true}],
+    polVer:3,psiRuns:0,executed:0,authBurst:0,sel:by['checkout-svc'].i,selProp:null,selRec:null,verify:null,tampered:null,filter:'all',pulses:[],hover:-1,stage:0,paused:false};
+  S.polHash=sha256(JSON.stringify(S.policies)).slice(0,12);
+  by['ntp-01'].silentUntil=Infinity;
+  append('ledger.genesis','org:orbital-retail',{note:'tenant created',entities:ents.length,relationships:edges.length});
+  append('policy.published','policies',{version:S.polVer,hash:S.polHash});
+  for(let i=0;i<WARM;i++)tick(true);
+}
+
+function layout(ents,edges,r){
+  const RING=[.17,.4,.63,.82,.97];
+  const P=ents.map(e=>{const a=r()*Math.PI*2;return{x:Math.cos(a)*RING[e.tier],y:Math.sin(a)*RING[e.tier]}});
+  for(let it=0;it<420;it++){
+    const F=P.map(()=>({x:0,y:0}));
+    for(let i=0;i<P.length;i++)for(let j=i+1;j<P.length;j++){const dx=P[i].x-P[j].x,dy=P[i].y-P[j].y,d2=dx*dx+dy*dy+1e-4,f=.0016/d2;F[i].x+=dx*f;F[i].y+=dy*f;F[j].x-=dx*f;F[j].y-=dy*f}
+    edges.forEach(([a,b])=>{const dx=P[b].x-P[a].x,dy=P[b].y-P[a].y;F[a].x+=dx*.012;F[a].y+=dy*.012;F[b].x-=dx*.012;F[b].y-=dy*.012});
+    P.forEach((p,i)=>{p.x+=clamp(F[i].x,-.03,.03);p.y+=clamp(F[i].y,-.03,.03);const rr=Math.hypot(p.x,p.y)||1e-3,t=RING[ents[i].tier],k=rr+(t-rr)*.35;p.x=p.x/rr*k;p.y=p.y/rr*k});
+  }
+  return P;
+}
+
+/* ---------- graph queries ---------- */
+function walk(start,adj,skipIsolated){const seen=new Set([start]),q=[start];while(q.length){const n=q.shift();for(const m of adj[n]){if(seen.has(m))continue;if(skipIsolated&&S.ents[m].isolated)continue;seen.add(m);q.push(m)}}seen.delete(start);return[...seen]}
+const blast=i=>walk(i,S.inn,false), deps=i=>walk(i,S.out,false);
+function attackPaths(){
+  const res=[];
+  S.ents.filter(e=>e.external&&!e.isolated).forEach(src=>{
+    const par=new Map([[src.i,-1]]),dist=new Map([[src.i,0]]),q=[src.i];
+    while(q.length){const n=q.shift();if(dist.get(n)>=6)continue;for(const m of S.out[n]){if(par.has(m)||S.ents[m].isolated)continue;par.set(m,n);dist.set(m,dist.get(n)+1);q.push(m)}}
+    S.ents.filter(e=>e.crown&&par.has(e.i)).forEach(c=>{const p=[];let n=c.i;while(n!==-1){p.unshift(n);n=par.get(n)}res.push(p)});
+  });
+  const openOn=new Set(S.vulns.filter(v=>v.status==='open').map(v=>v.ent));
+  res.forEach(p=>p.hot=p.filter(n=>openOn.has(n)).length);
+  return res.sort((a,b)=>b.hot-a.hot||a.length-b.length);
+}
+function reachable(){const set=new Set();S.ents.filter(e=>e.external&&!e.isolated).forEach(e=>{set.add(e.i);walk(e.i,S.out,true).forEach(n=>set.add(n))});return set}
+function hopsToCrown(i){const d=new Map([[i,0]]),q=[i];while(q.length){const n=q.shift();if(S.ents[n].crown&&n!==i)return{hops:d.get(n),to:S.ents[n].name};for(const m of S.out[n])if(!d.has(m)){d.set(m,d.get(n)+1);q.push(m)}}return null}
+function vulnPriority(v,reach){
+  const e=S.ents[v.ent],rch=reach.has(v.ent),hc=hopsToCrown(v.ent),why=[`CVSS ${v.cvss}`];
+  if(v.kev)why.push('known exploited');
+  why.push(rch?(e.external?'internet-facing':'reachable from internet'):'not reachable from internet');
+  if(e.crown)why.push('is a crown jewel');else if(hc)why.push(`${hc.hops} hop${hc.hops>1?'s':''} to ${hc.to}`);
+  why.push(`criticality ${e.crit}/5`);
+  const score=v.cvss*(v.kev?1:.6)*(rch?1:.55)*(.6+.08*e.crit)*(e.crown||hc?1:.8);
+  return{score:Math.round(score*10)/10,why};
+}
+
+/* ---------- ledger ---------- */
+const canon=r=>[r.prev,r.seq,r.ts,r.kind,r.subject,JSON.stringify(r.data)].join('|');
+function append(kind,subject,data){
+  const seq=S.ledger.length+1,prev=seq===1?'0'.repeat(64):S.ledger[seq-2].hash;
+  const rec={seq,ts:now(),kind,subject,data,prev};rec.hash=sha256(canon(rec));S.ledger.push(rec);
+  if(seq%40===0)append('ledger.checkpoint','ledger',{head:rec.hash,records:seq});
+  return rec;
+}
+function verifyChain(){
+  for(let k=0;k<S.ledger.length;k++){const r=S.ledger[k],prev=k===0?'0'.repeat(64):S.ledger[k-1].hash;
+    if(r.prev!==prev)return{ok:false,seq:r.seq,why:'previous-hash link does not match'};
+    if(sha256(canon(r))!==r.hash)return{ok:false,seq:r.seq,why:'stored hash does not match the record contents'}}
+  return{ok:true,count:S.ledger.length,head:S.ledger[S.ledger.length-1].hash};
+}
+
+/* ---------- simulation ---------- */
+const now=()=>S.t0+S.t*TICK_S*1000;
+const pick=a=>a[Math.floor(S.r()*a.length)];
+function feed(sev,kind,text,ent){S.feed.unshift({id:++S.seqE,ts:now(),sev,kind,text,ent});if(S.feed.length>80)S.feed.pop();if(ent!=null&&!RM.matches)pulse(ent,sev)}
+function pulse(i,sev){const ins=S.inn[i];if(!ins.length)return;const a=pick(ins);S.pulses.push({a,b:i,p:0,c:sev==='high'||sev==='critical'?'--ember':sev==='medium'?'--amber':'--cyan'});if(S.pulses.length>40)S.pulses.shift()}
+function incident(e,len){e.incident=len;feed(e.crit>=4?'high':'medium','event',`Latency spike on ${e.name}: p95 ${Math.round(800+S.r()*1600)} ms`,e.i)}
+function change(e,expected,force){
+  const opts=CHANGES[e.type],[attr,before,after]=force||pick(opts);
+  const c={id:'CHG-'+(++S.seqC),ent:e.i,attr,before,after,expected,t:S.t};S.changes.unshift(c);if(S.changes.length>60)S.changes.pop();
+  if(expected)feed('info','change',`${attr} ${before} → ${after} on ${e.name} (planned deploy)`,e.i);
+  else{feed('medium','drift',`Unexpected change on ${e.name}: ${attr} ${before} → ${after}`,e.i);append('change.detected',e.name,{id:c.id,attr,before,after,expected:false})}
+}
+
+function tick(silent){
+  S.t++;const r=S.r,t=S.t,E=S.by;
+  // scripted opening so the first minute shows every behaviour
+  if(t===2)change(E['api-gateway'],false,['rate_limit_rps','800','2000']);
+  if(t===3)incident(E['checkout-svc'],14);
+  if(t===6)propose('patch-agent','patch',E['edge-gw-02'].i,'medium','SIM-2026-0412 is known exploited and edge-gw-02 is internet-facing.');
+  if(t===12){E['payments-db'].incident=10;feed('high','event','Connection pool saturation on payments-db',E['payments-db'].i)}
+  if(t===16)propose('patch-agent','rotate_credentials',E['vault-secrets'].i,'medium','Rotate after CI runner advisory.');
+  if(t>=14&&t<=30)S.authBurst=6;
+  if(t===24)change(E['customer-pii-store'],false,['tls_required','true','false']);
+  if(t===40)incident(E['kafka-orders'],16);
+  // ambient behaviour
+  if(t>30&&r()<.025){const c=S.ents.filter(e=>e.state==='active'&&!e.incident&&!e.isolated);if(c.length)incident(pick(c),8+(r()*14|0))}
+  if(t>30&&r()<.006)S.authBurst=8+(r()*8|0);
+  if(t>30&&r()<.004){const e=pick(S.ents.filter(x=>!x.crown&&!x.external&&isFinite(x.silentUntil)));e.silentUntil=t+20+(r()*25|0)}
+  // telemetry + health
+  S.ents.forEach(e=>{
+    if(t<e.silentUntil)return;
+    const target=e.isolated?60:e.incident>0?34+r()*14:94;if(e.incident>0)e.incident--;
+    e.health=clamp(e.health+(target-e.health)*.2+(r()-.5)*3,0,100);e.hist.push(Math.round(e.health));if(e.hist.length>14)e.hist.shift();e.lastSeen=t;
+    if(e.state==='stale'){e.state='active';feed('info','event',`${e.name} re-observed after going stale`,e.i)}
+  });
+  S.ents.forEach(e=>{if(e.state==='active'&&t-e.lastSeen>=STALE_AFTER){e.state='stale';feed('low','drift',`${e.name} has missed ${STALE_AFTER} samples and is now stale`,e.i);append('entity.stale',e.name,{missed:STALE_AFTER})}});
+  let n=3+(r()*6|0);if(r()<.07)n+=10+(r()*12|0);if(S.authBurst>0)n+=6;S.eps.push(n);if(S.eps.length>60)S.eps.shift();S.obs+=n*14;
+  if(S.authBurst>0){S.authBurst--;const tgt=pick([E['auth-idp'],E['auth-idp'],E['vpn-concentrator']]);feed('low','event',`${3+(r()*9|0)} failed sign-ins on ${tgt.name} from ${1+(r()*4|0)} ASNs`,tgt.i);(S.authHits||(S.authHits=[])).push(t)}
+  else if(r()<.3){const k=r();
+    if(k<.35){const g=pick(S.ents.filter(e=>e.external));feed('info','event',`WAF blocked ${20+(r()*200|0)} scanner requests at ${g.name}`,g.i)}
+    else if(k<.55)feed('info','event','Nightly snapshot verified on object-store-backups',E['object-store-backups'].i);
+    else if(k<.97){const s=pick(S.ents.filter(e=>e.type==='service'));change(s,true)}
+    else if(S.pool.length){const v=S.pool.shift(),h=pick(S.ents.filter(e=>e.type==='host'||e.type==='service'));S.vulns.push({id:v[0],ent:h.i,cvss:v[1],kev:v[2],title:v[3],status:'open',t});feed('high','event',`New vulnerability ${v[0]} (CVSS ${v[1]}) on ${h.name}`,h.i)}}
+  if(t>30&&r()<.035){const c=S.ents.filter(e=>!e.crown);change(pick(c),r()<.6)}
+  agentsAct();
+  S.props.forEach(stepProposal);
+  if(t%10===0)mirrorBrain(false);
+  S.preds.forEach(p=>{if((p.status==='proposed')&&t>=p.t+p.horizon){p.status='expired';append('prediction.expired',p.id,{rule:p.rule})}});
+  S.stage=(S.stage+1)%5;
+  if(!silent)render();
+}
+
+/* ---------- agents & governance ---------- */
+const openOn=(action,ent)=>S.props.some(p=>p.action===action&&p.target===ent&&!TERMINAL.has(p.state));
+function agentsAct(){
+  const r=S.r,t=S.t,A=Object.fromEntries(S.agents.map(a=>[a.name,a]));
+  S.ents.forEach(e=>{if(e.health<52&&e.state==='active'&&!e.isolated&&!openOn('restart',e.i)&&!openOn('scale',e.i)&&r()<.45){
+    if(e.type==='queue')propose('ops-agent','scale',e.i,'low',`${e.name} consumer lag rising; health ${Math.round(e.health)}.`);
+    else propose('ops-agent','restart',e.i,'low',`${e.name} health ${Math.round(e.health)} for ${e.hist.filter(h=>h<60).length} samples.`)}});
+  S.vulns.forEach(v=>{if(v.status==='open'&&t>8&&!openOn('patch',v.ent)&&!S.props.some(p=>p.vuln===v.id&&p.state!=='failed')&&r()<.05){
+    const e=S.ents[v.ent];propose('patch-agent','patch',v.ent,e.crown||e.crit>=5?'high':'medium',`${v.id} (CVSS ${v.cvss}${v.kev?', known exploited':''}).`,v.id)}});
+  const anomaly=S.preds.find(p=>p.rule==='R5'&&p.status==='proposed');
+  if(anomaly&&!openOn('rotate_credentials',S.by['auth-idp'].i)&&!S.props.some(p=>p.action==='rotate_credentials'&&p.target===S.by['auth-idp'].i&&t-p.t<120))
+    propose('iam-agent','rotate_credentials',S.by['auth-idp'].i,'high',`Ψ ${anomaly.id}: credential-stuffing likely. Rotate signing keys and force re-auth.`);
+}
+function propose(by,action,target,risk,why,vuln){
+  const p={id:'PRP-'+(++S.seqP),by,action,target,risk,why,vuln,state:'pending_policy',t:S.t,next:S.t+1,hist:[]};
+  S.props.unshift(p);if(S.props.length>60)S.props.pop();
+  hist(p,'pending_policy',`proposed by ${by}`);
+  feed('info','proposal',`${by} proposed ${action.replace('_',' ')} on ${S.ents[target].name} (${risk})`,target);
+  if(by==='you'){S.selProp=p.id}
+  return p;
+}
+function hist(p,state,reason,actor){p.state=state;p.hist.push({state,ts:now(),reason});append('proposal.'+state,p.id,{action:p.action,target:S.ents[p.target].name,risk:p.risk,by:actor||p.by,reason})}
+const policyOf=a=>S.policies.find(p=>p.action===a);
+const needRole=p=>{const pol=policyOf(p.action);return(rank(p.risk)>=2||pol.role==='admin')?'admin':'analyst'};
+function stepProposal(p){
+  if(TERMINAL.has(p.state)||S.t<p.next)return;
+  const pol=policyOf(p.action),ag=S.agents.find(a=>a.name===p.by),e=S.ents[p.target];p.next=S.t+1;
+  if(p.state==='pending_policy'){
+    if(ag&&ag.status!=='active')return hist(p,'policy_rejected','401 KEY_INVALID: agent is suspended');
+    if(!pol||!pol.enabled)return hist(p,'policy_rejected',`no enabled policy for ${p.action}`);
+    if(ag&&!ag.caps.includes(p.action))return hist(p,'policy_rejected',`403 CAPABILITY_DENIED: ${ag.name} cannot ${p.action}`),feed('medium','proposal',`${p.id} rejected: ${ag.name} lacks ${p.action}`,p.target);
+    if(ag&&rank(p.risk)>rank(ag.max))return hist(p,'policy_rejected',`risk ${p.risk} exceeds ${ag.name} max ${ag.max}`);
+    return hist(p,'pending_validation',`policy v${S.polVer} ok`);
+  }
+  if(p.state==='pending_validation'){
+    const impact=[p.target,...blast(p.target)],cj=impact.map(i=>S.ents[i]).find(x=>x.crown);
+    if(cj&&p.risk==='low'){feed('medium','proposal',`${p.id} failed validation: blast radius includes ${cj.name}`,p.target);return hist(p,'validation_failed',`blast radius includes crown jewel ${cj.name} while risk is low`)}
+    if(pol.auto&&rank(p.risk)<=rank(pol.auto)&&pol.reversible)return hist(p,'approved',`auto: policy v${S.polVer}`,'policy');
+    feed('medium','proposal',`${p.id} needs ${needRole(p)} approval: ${p.action.replace('_',' ')} ${e.name}`,p.target);
+    return hist(p,'pending_approval',`blast radius ${impact.length-1}; needs ${needRole(p)} ≠ ${p.by}`);
+  }
+  if(p.state==='pending_approval'){
+    if(S.t-p.t>110&&p.by!=='r.okafor'){
+      if(S.r()<.75)hist(p,'approved','approved by r.okafor (simulated admin)','r.okafor');
+      else hist(p,'rejected','rejected by r.okafor: outside change window','r.okafor');
+    }
+    return;
+  }
+  if(p.state==='approved'){assertExecutable(p);return hist(p,'executing',`executor claimed; policy hash ${S.polHash} re-checked`,'executor')}
+  if(p.state==='executing'){
+    if(S.r()<.92){effect(p);S.executed++;feed('low','proposal',`${p.id} succeeded: ${p.action.replace('_',' ')} ${e.name}`,p.target);hist(p,'succeeded','executor finished','executor')}
+    else{feed('high','proposal',`${p.id} failed: ${p.action.replace('_',' ')} ${e.name}`,p.target);hist(p,'failed','executor timeout after 30 s','executor')}
+  }
+}
+function assertExecutable(p){/* the executor re-checks state, approval and policy hash before acting */return p.state==='approved'&&sha256(JSON.stringify(S.policies)).slice(0,12)===S.polHash}
+function effect(p){const e=S.ents[p.target];
+  if(p.action==='restart'||p.action==='scale'){e.incident=0;e.health=90}
+  if(p.action==='patch')S.vulns.forEach(v=>{if(v.ent===p.target&&v.status==='open'&&(!p.vuln||v.id===p.vuln)){v.status='fixed';append('vulnerability.fixed',v.id,{entity:e.name,proposal:p.id})}});
+  if(p.action==='isolate')e.isolated=true;
+  if(p.action==='rotate_credentials')S.authBurst=0;
+}
+function decide(id,approve){
+  const p=S.props.find(x=>x.id===id);if(!p||p.state!=='pending_approval')return toast('This proposal is no longer waiting for approval.');
+  if(p.by==='you')return toast('You proposed this. Separation of duties needs a different approver; r.okafor picks it up within two minutes.');
+  const need=needRole(p);if(ROLE_RANK[S.role()]<ROLE_RANK[need])return toast(`This needs an ${need}. Switch "You are" to Admin at the top to decide it.`);
+  if(approve){hist(p,'approved',`approved by you (${S.role()})`,'you');toast(`${p.id} approved. The executor runs it on the next tick.`)}
+  else{hist(p,'rejected',`rejected by you (${S.role()})`,'you');toast(`${p.id} rejected.`)}
+  render();
+}
+
+/* ---------- Mirror Brain Ψ ---------- */
+function mirrorBrain(manual){
+  S.psiRuns++;const t=S.t,W=Object.fromEntries(RULES.map(r=>[r.id,r.w])),found=[];
+  S.changes.filter(c=>!c.expected&&t-c.t<=40).forEach(c=>{const e=S.ents[c.ent],up=blast(c.ent);if(up.length>=2)found.push({rule:'R1',ent:c.ent,
+    stmt:`Services that depend on ${e.name} are likely to degrade within 2 h`,base:.5+.07*Math.min(up.length,6),
+    assumptions:[`The ${c.attr} change on ${e.name} was not part of a planned deploy`,`${up.length} dependents call ${e.name} on their request path`],evidence:[c.id],horizon:150})});
+  const reach=reachable();
+  S.vulns.filter(v=>v.status==='open'&&v.kev&&reach.has(v.ent)).forEach(v=>{const e=S.ents[v.ent],hc=hopsToCrown(v.ent);if(!hc&&!e.crown)return;found.push({rule:'R2',ent:v.ent,
+    stmt:`Exploit attempt likely against ${e.name} (${v.id}) on a path to ${hc?hc.to:e.name}`,base:.55+v.cvss/40,
+    assumptions:[`${v.id} stays unpatched`,`The internet-facing route to ${e.name} stays open`],evidence:[v.id,`path:${hc?hc.hops:0} hops`],horizon:200})});
+  S.ents.forEach(e=>{const h=e.hist.slice(-4);if(h.length===4&&h[0]>h[1]&&h[1]>h[2]&&h[2]>h[3]&&h[3]<70)found.push({rule:'R3',ent:e.i,
+    stmt:`${e.name} is likely to breach its SLO within 1 h`,base:.5+(70-h[3])/80,
+    assumptions:['The downward health trend continues at the current rate','No remediation runs in the meantime'],evidence:[`health ${h.join(' → ')}`],horizon:90})});
+  S.ents.filter(e=>e.state==='stale').forEach(e=>found.push({rule:'R4',ent:e.i,stmt:`${e.name} configuration has likely drifted from its baseline`,base:.75,
+    assumptions:[`${e.name} kept running while it stopped reporting`,'Unreported changes accumulate at the estate average'],evidence:[`last seen ${Math.round((t-e.lastSeen)*TICK_S)} s ago`],horizon:160}));
+  const hits=(S.authHits||[]).filter(x=>t-x<=25).length;
+  if(hits>=6)found.push({rule:'R5',ent:S.by['auth-idp'].i,stmt:'A credential-stuffing campaign against auth-idp is likely under way',base:.45+Math.min(hits,20)/40,
+    assumptions:['Failed sign-ins come from rotating ASNs, not one misconfigured client','Valid credentials are among the attempts'],evidence:[`${hits} failed-sign-in bursts in 30 s`],horizon:140});
+  let made=0;
+  found.forEach(f=>{const conf=clamp(W[f.rule]*f.base,.05,.97),ex=S.preds.find(p=>p.rule===f.rule&&p.ent===f.ent&&p.status==='proposed');
+    if(ex){ex.conf=conf;return}
+    const p={id:'PRD-'+(++S.seqD),rule:f.rule,ent:f.ent,stmt:f.stmt,conf,assumptions:f.assumptions,evidence:f.evidence,horizon:f.horizon,t,status:'proposed'};
+    S.preds.unshift(p);made++;if(S.preds.length>40)S.preds.pop();
+    feed('medium','prediction',`${p.stmt} (${Math.round(conf*100)}%)`,f.ent);append('prediction.created',p.id,{rule:f.rule,entity:S.ents[f.ent].name,confidence:+conf.toFixed(2)})});
+  if(manual)toast(made?`Ψ produced ${made} new prediction${made>1?'s':''}.`:'Ψ ran. No new predictions; existing ones were refreshed.');
+}
+function review(id,verdict){const p=S.preds.find(x=>x.id===id);if(!p||p.status!=='proposed')return;p.status=verdict;p.by='you';append('prediction.reviewed',p.id,{verdict,by:'you'});toast(`${p.id} marked ${verdict}.`);render()}
+
+/* ---------- rendering ---------- */
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmt=ts=>new Date(ts).toTimeString().slice(0,8);
+const ago=t=>{const s=Math.round((S.t-t)*TICK_S);return s<60?`${s} s ago`:`${Math.round(s/60)} min ago`};
+const entBtn=i=>`<button class="ent" type="button" data-ent="${i}">${esc(S.ents[i].name)}</button>`;
+const riskChip=r=>`<span class="chip risk-${r}">${r}</span>`;
+const stCls=s=>s==='succeeded'||s==='approved'?'st-ok':s.startsWith('pending')?'st-wait':s==='executing'?'st-run':'st-bad';
+const stChip=s=>`<span class="chip ${stCls(s)}">${s.replace('_',' ')}</span>`;
+function set(el,html){if(typeof el==='string')el=$(el);if(el&&el._h!==html){el.innerHTML=html;el._h=html}}
+function colorOf(e){if(e.state==='stale')return css('--muted');return e.health<45?css('--red'):e.health<70?css('--amber'):css('--text')}
+
+function scores(){
+  const act=S.ents.filter(e=>e.state==='active'),avail=act.reduce((a,e)=>a+e.health,0)/act.length;
+  const reach=reachable(),open=S.vulns.filter(v=>v.status==='open'),risk=open.reduce((a,v)=>a+vulnPriority(v,reach).score,0);
+  const sec=clamp(100-risk*1.7,15,100),drift=S.changes.filter(c=>!c.expected&&S.t-c.t<=100).length,chg=clamp(100-drift*9,10,100);
+  const stale=S.ents.filter(e=>e.state==='stale').length,kev=open.filter(v=>v.kev).length,broken=S.verify&&!S.verify.ok?4:0;
+  const pass=clamp(26-stale-kev-broken-(drift>2?2:0),0,26);
+  return{avail,sec,chg,comp:pass/26*100,pass,overall:(avail+sec+chg+pass/26*100)/4};
+}
+const tone=v=>v>=80?css('--green'):v>=60?css('--amber'):css('--red');
+
+function renderHeader(){
+  $('#clock').textContent=fmt(now());
+  const pend=S.props.filter(p=>p.state==='pending_approval').length,pr=S.preds.filter(p=>p.status==='proposed').length;
+  $('#nGov').textContent=pend||'';$('#nPred').textContent=pr||'';
+}
+function renderOverview(){
+  const sc=scores(),epm=Math.round(S.eps.slice(-50).reduce((a,b)=>a+b,0)/(Math.min(50,S.eps.length)*TICK_S)*60);
+  const mx=Math.max(...S.eps,1),pts=S.eps.map((v,i)=>`${(i/(Math.max(S.eps.length-1,1))*100).toFixed(1)},${(21-v/mx*19).toFixed(1)}`).join(' ');
+  const stale=S.ents.filter(e=>e.state==='stale').length,drift=S.changes.filter(c=>!c.expected&&S.t-c.t<=100).length;
+  set('#kpis',[
+    ['Entities',S.ents.length,`${stale} stale · ${S.ents.filter(e=>e.isolated).length} isolated`],
+    ['Relationships',S.edges.length,'calls and runs-on'],
+    ['Events / min',epm,`<svg viewBox="0 0 100 22" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="${css('--cyan')}" stroke-width="1.4" vector-effect="non-scaling-stroke"/></svg>`],
+    ['Drift',drift,'unexpected changes, 2 min'],
+    ['Ψ predictions',S.preds.filter(p=>p.status==='proposed').length,`${S.psiRuns} runs`],
+    ['Ledger',S.ledger.length,'hash-chained records']
+  ].map(([l,v,s])=>`<div class="kpi"><p class="eyebrow">${l}</p><div class="v">${v}</div>${s.startsWith('<svg')?s:`<div class="s">${s}</div>`}</div>`).join(''));
+  const C=2*Math.PI*50,o=sc.overall;
+  set('#health',`<svg class="ring" viewBox="0 0 120 120" role="img" aria-label="Overall health ${Math.round(o)} of 100"><circle cx="60" cy="60" r="50" fill="none" stroke="${css('--line2')}" stroke-width="10"/><circle cx="60" cy="60" r="50" fill="none" stroke="${tone(o)}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${(o/100*C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 60 60)"/><text x="60" y="64" text-anchor="middle" fill="${css('--text')}" style="font:700 28px var(--display)">${Math.round(o)}</text><text x="60" y="82" text-anchor="middle" fill="${css('--muted')}" style="font:500 9px var(--mono);letter-spacing:.12em">OF 100</text></svg>
+    <div class="subs">${[['Availability',sc.avail],['Security',sc.sec],['Change',sc.chg],['Compliance',sc.comp]].map(([l,v])=>`<div class="sub"><span>${l}</span><span class="bar"><b style="width:${v.toFixed(0)}%;background:${tone(v)}"></b></span><span class="mono num" style="text-align:right">${Math.round(v)}</span></div>`).join('')}
+    <div class="muted" style="font-size:12px">${sc.pass}/26 NIST CSF 2.0 controls passing</div></div>`);
+  const pend=S.props.filter(p=>p.state==='pending_validation'||p.state==='pending_approval').length;
+  const L=[['Observe',`${S.obs.toLocaleString()} observations`],['Understand',`${S.ents.length-stale}/${S.ents.length} entities current`],['Predict',`${S.preds.filter(p=>p.status==='proposed').length} active`],['Validate',`${pend} in review`],['Act',`${S.executed} executed`]];
+  set('#loop',L.map(([n,c],i)=>`<li class="${i===S.stage?'on':''}"><span class="k">${['Ξ','Φ','Ψ','Λ','Ω'][i]}</span><span class="n">${n.toUpperCase()}</span><span class="c num">${c}</span></li>`).join(''));
+  $('#loopNote').textContent=`cycle ${Math.floor(S.t/5)}`;
+  set('#feed',S.feed.slice(0,30).map(f=>`<li><time class="num">${fmt(f.ts)}</time><span class="sev sev-${f.sev}" title="${f.sev}"></span><span><span class="kind ${f.kind==='prediction'?'pred':''}">${f.kind}</span>${esc(f.text).replace(esc(S.ents[f.ent]?.name??'§'),f.ent!=null?entBtn(f.ent):'')}</span></li>`).join(''));
+  const reach=reachable(),paths=attackPaths(),onPath=new Set(paths.flat());
+  const risks=S.ents.map(e=>{const vs=S.vulns.filter(v=>v.status==='open'&&v.ent===e.i),vp=vs.reduce((a,v)=>a+vulnPriority(v,reach).score,0),why=[];
+    if(e.health<70)why.push(`health ${Math.round(e.health)}`);if(vs.length)why.push(`${vs.length} open vuln${vs.length>1?'s':''}${vs.some(v=>v.kev)?' (KEV)':''}`);if(e.state==='stale')why.push('stale');if(onPath.has(e.i)&&!e.crown)why.push('on attack path');
+    return{e,score:(100-e.health)*e.crit/5+vp*5+(e.state==='stale'?15:0)+(onPath.has(e.i)?8:0),why}}).sort((a,b)=>b.score-a.score).slice(0,5);
+  set('#risks',risks.map(x=>`<li><span>${entBtn(x.e.i)}<br><span class="why">${esc(x.why.join(' · ')||'elevated criticality')}</span></span><span class="mono num">${Math.round(x.score)}</span></li>`).join(''));
+  const ap=S.preds.filter(p=>p.status==='proposed').slice(0,4);
+  set('#ovPred',ap.length?ap.map(p=>`<li><span><span class="chip pred-tag">Prediction</span> ${esc(p.stmt)}</span><span class="mono num">${Math.round(p.conf*100)}%</span></li>`).join(''):'<li class="empty">No active predictions. Ψ runs every 10 ticks.</li>');
+  const pa=S.props.filter(p=>p.state==='pending_approval').slice(0,5);
+  set('#ovGov',pa.length?pa.map(p=>`<li><span><button class="ent" type="button" data-prop="${p.id}">${p.id}</button> ${esc(p.action.replace('_',' '))} ${esc(S.ents[p.target].name)}<br><span class="why">${esc(p.by)} · needs ${needRole(p)}</span></span>${riskChip(p.risk)}</li>`).join(''):'<li class="empty">Nothing waiting. Low-risk reversible actions auto-approve under policy.</li>');
+}
+
+function renderDetail(){
+  const e=S.ents[S.sel];if(!e)return;
+  const up=blast(e.i),dn=deps(e.i),hc=hopsToCrown(e.i),reach=reachable();
+  const vs=S.vulns.filter(v=>v.ent===e.i),ps=S.preds.filter(p=>p.ent===e.i&&p.status==='proposed');
+  const isoRisk=e.crit>=4?'high':'medium';
+  set('#detail',`<p class="eyebrow">${esc(e.type)} · tier ${e.tier}</p><h2>${esc(e.name)}</h2>
+  <div class="meta">${e.crown?'<span class="chip risk-medium">Crown jewel</span>':''}${e.external?'<span class="chip st-run">Internet-facing</span>':''}<span class="chip ${e.state==='stale'?'st-wait':'st-ok'}">${e.state}</span>${e.isolated?'<span class="chip st-bad">isolated</span>':''}<span class="chip">criticality ${e.crit}/5</span></div>
+  <dl class="kv"><dt>Health</dt><dd><span class="mono num" style="color:${colorOf(e)}">${Math.round(e.health)}</span><div class="spark" aria-hidden="true" style="margin-top:4px">${e.hist.map(h=>`<i style="height:${Math.max(6,h)}%;background:${tone(h)}"></i>`).join('')}</div></dd>
+  <dt>Last seen</dt><dd>${ago(e.lastSeen)}</dd>
+  <dt>Blast radius</dt><dd><b style="color:var(--ember)">${up.length}</b> entit${up.length===1?'y':'ies'} fail if this fails</dd>
+  <dt>Crown jewel</dt><dd>${e.crown?'this entity':hc?`${hc.hops} hop${hc.hops>1?'s':''} to ${esc(hc.to)}`:'no downstream path'}</dd>
+  <dt>Reachable</dt><dd>${reach.has(e.i)?'from the internet':'internal only'}</dd></dl>
+  <p class="sec-t">Depends on (${S.out[e.i].length} direct, ${dn.length} total)</p><div class="chips">${S.out[e.i].map(entBtn).join(' ')||'<span class="muted">nothing</span>'}</div>
+  <p class="sec-t">Used by (${S.inn[e.i].length} direct)</p><div class="chips">${S.inn[e.i].map(entBtn).join(' ')||'<span class="muted">nothing</span>'}</div>
+  ${vs.length?`<p class="sec-t">Vulnerabilities</p>${vs.map(v=>`<div style="font-size:13px">${v.id} · CVSS ${v.cvss} ${v.kev?'<span class="chip kev">KEV</span>':''} <span class="chip ${v.status==='open'?'st-wait':'st-ok'}">${v.status}</span></div>`).join('')}`:''}
+  ${ps.length?`<p class="sec-t">Predictions</p>${ps.map(p=>`<div style="font-size:13px"><span class="chip pred-tag">Prediction</span> ${esc(p.stmt)}</div>`).join('')}`:''}
+  <div class="actions"><button class="btn sm" type="button" data-propose="restart" data-risk="${e.crown?'medium':'low'}">Propose restart</button><button class="btn sm" type="button" data-propose="isolate" data-risk="${isoRisk}" ${e.isolated?'disabled':''}>Propose isolation (${isoRisk})</button></div>`);
+  const q=$('#q').value.trim().toLowerCase();
+  set('#elist',S.ents.filter(x=>!q||x.name.includes(q)||x.type.includes(q)).map(x=>`<li><button type="button" data-ent="${x.i}" ${x.i===S.sel?'aria-current="true"':''}><span>${esc(x.name)}</span><span class="h num" style="color:${colorOf(x)}">${x.state==='stale'?'stale':Math.round(x.health)}</span></button></li>`).join('')||'<li class="empty">No entity matches that search.</li>');
+}
+
+function renderSecurity(){
+  const paths=attackPaths(),reach=reachable(),hot=new Set(S.vulns.filter(v=>v.status==='open').map(v=>v.ent));
+  $('#pathCount').textContent=`${paths.length} path${paths.length===1?'':'s'} · depth ≤ 6`;
+  set('#paths',paths.length?`<div class="tbl-wrap"><table><thead><tr><th>Path</th><th>Hops</th><th>Vulnerable hops</th></tr></thead><tbody>${paths.slice(0,12).map(p=>`<tr><td><div class="path">${p.map((n,k)=>`${k?'<span class="arr">→</span>':''}<span class="${hot.has(n)?'hot':''}">${entBtn(n)}</span>`).join('')}</div></td><td class="mono num">${p.length-1}</td><td>${p.hot?`<span class="chip st-bad">${p.hot}</span>`:'<span class="chip st-ok">0</span>'}</td></tr>`).join('')}</tbody></table></div>`:'<p class="empty">No path from the internet reaches a crown jewel. Isolation closed them all.</p>');
+  const vs=S.vulns.map(v=>({v,...vulnPriority(v,reach)})).sort((a,b)=>(a.v.status==='open'?0:1)-(b.v.status==='open'?0:1)||b.score-a.score);
+  set('#vulns',`<table><thead><tr><th>Priority</th><th>Vulnerability</th><th>Entity</th><th>Reasons</th><th>Status</th><th></th></tr></thead><tbody>${vs.map(({v,score,why})=>`<tr><td class="mono num" style="font-size:15px;color:${v.status!=='open'?css('--muted'):score>=7?css('--red'):score>=4?css('--amber'):css('--text')}">${score.toFixed(1)}</td><td><span class="mono">${v.id}</span>${v.kev?' <span class="chip kev">KEV</span>':''}<br><span class="muted" style="font-size:12px">${esc(v.title)}</span></td><td>${entBtn(v.ent)}</td><td class="muted" style="font-size:12px;min-width:200px">${esc(why.join(' · '))}</td><td><span class="chip ${v.status==='open'?'st-wait':'st-ok'}">${v.status}</span></td><td>${v.status==='open'?`<button class="btn sm" type="button" data-patch="${v.id}">Propose patch</button>`:''}</td></tr>`).join('')}</tbody></table>`);
+  set('#exposure',`<table><thead><tr><th>Entity</th><th>Listening</th><th>Reaches</th><th>State</th></tr></thead><tbody>${S.ents.filter(e=>e.external).map(e=>`<tr><td>${entBtn(e.i)}</td><td class="mono" style="font-size:12px">${PORTS[e.name]}</td><td class="num">${e.isolated?'—':walk(e.i,S.out,true).length+' entities'}</td><td>${e.isolated?'<span class="chip st-bad">isolated</span>':'<span class="chip st-run">exposed</span>'}</td></tr>`).join('')}</tbody></table>`);
+}
+
+function renderPredictions(){
+  const rev=S.preds.filter(p=>p.status==='confirmed'||p.status==='refuted'),ok=rev.filter(p=>p.status==='confirmed').length;
+  set('#weights',RULES.map(r=>{const n=S.preds.filter(p=>p.rule===r.id).length;return`<div class="w"><b>${r.sym}</b>${r.name} <span class="mono muted">w=${r.w.toFixed(2)} · ${n}</span></div>`}).join(''));
+  set('#accuracy',`${S.psiRuns} runs · ${S.preds.filter(p=>p.status==='proposed').length} active · ${rev.length?`accuracy ${Math.round(ok/rev.length*100)}% over ${rev.length} reviewed`:'none reviewed yet. Confirm or refute a prediction to start measuring accuracy.'}`);
+  const list=S.preds.slice().sort((a,b)=>(a.status==='proposed'?0:1)-(b.status==='proposed'?0:1)||b.t-a.t).slice(0,18);
+  set('#preds',list.length?list.map(p=>{const left=Math.max(0,Math.round((p.t+p.horizon-S.t)*TICK_S)),u=Math.round((1-p.conf)*50),rule=RULES.find(r=>r.id===p.rule);
+    return`<article class="pred ${p.status!=='proposed'?'done':''}"><div class="meta" style="margin:0"><span class="chip pred-tag">Prediction</span><span class="chip">${rule.sym} ${rule.name}</span>${p.status!=='proposed'?`<span class="chip ${p.status==='confirmed'?'st-ok':p.status==='refuted'?'st-bad':''}">${p.status}</span>`:''}</div>
+    <h3>${esc(p.stmt)}</h3>
+    <div class="conf"><span class="bar"><b style="width:${Math.round(p.conf*100)}%"></b></span><span class="num">${Math.round(p.conf*100)}% ± ${u}</span></div>
+    <div><p class="sec-t" style="margin-top:0">Assumptions</p><ul>${p.assumptions.map(a=>`<li>${esc(a)}</li>`).join('')}</ul></div>
+    <div><p class="sec-t" style="margin-top:0">Evidence</p><div class="chips">${p.evidence.map(x=>`<span class="chip">${esc(x)}</span>`).join('')} ${entBtn(p.ent)}</div></div>
+    <div class="foot"><span class="mono muted" style="font-size:11px">${p.id} · ${p.status==='proposed'?`horizon ${left} s`:esc(p.status)}</span>${p.status==='proposed'?`<span class="ctl"><button class="btn sm" type="button" data-review="${p.id}" data-v="confirmed">Confirm</button><button class="btn sm ghost" type="button" data-review="${p.id}" data-v="refuted">Refute</button></span>`:''}</div></article>`}).join(''):'<p class="empty">Ψ has not produced a prediction yet. Press Run Ψ now.</p>');
+}
+
+function renderGovernance(){
+  const f=S.filter,list=S.props.filter(p=>f==='all'||(f==='wait'?!TERMINAL.has(p.state):TERMINAL.has(p.state)));
+  if(!S.selProp||!S.props.some(p=>p.id===S.selProp))S.selProp=(S.props.find(p=>p.state==='pending_approval')||S.props[0]||{}).id;
+  set('#props',list.length?`<table><thead><tr><th>Proposal</th><th>Action</th><th>Risk</th><th>State</th></tr></thead><tbody>${list.slice(0,30).map(p=>`<tr class="click ${p.id===S.selProp?'sel':''}" data-prop="${p.id}" tabindex="0"><td><span class="mono">${p.id}</span><br><span class="muted" style="font-size:12px">${esc(p.by)} · ${ago(p.t)}</span></td><td>${esc(p.action.replace('_',' '))}<br><span class="muted" style="font-size:12px">${esc(S.ents[p.target].name)}</span></td><td>${riskChip(p.risk)}</td><td>${stChip(p.state)}</td></tr>`).join('')}</tbody></table>`:'<p class="empty">No proposals match this filter.</p>');
+  const p=S.props.find(x=>x.id===S.selProp);
+  if(p){const need=needRole(p),pt=s=>s==='succeeded'||s==='approved'?'ok':s.startsWith('pending')?'wait':s==='executing'?'run':s==='failed'||s.includes('rejected')||s.includes('failed')?'bad':'';
+    const own=p.by==='you',low=ROLE_RANK[S.role()]<ROLE_RANK[need];
+    set('#propDetail',`<p class="eyebrow">${p.id} · proposed by ${esc(p.by)}</p><h2 style="font:700 19px var(--display);margin:6px 0 8px">${esc(p.action.replace('_',' '))} ${esc(S.ents[p.target].name)}</h2>
+    <div class="meta">${riskChip(p.risk)}${stChip(p.state)}<span class="chip">blast radius ${blast(p.target).length}</span><span class="chip">approver ≥ ${need}</span></div>
+    <p style="margin:0 0 14px;font-size:13px">${esc(p.why)}</p>
+    <ol class="stepper">${p.hist.map(h=>`<li><span class="pt ${pt(h.state)}"></span><div><div class="s">${h.state.replace('_',' ')} <span class="muted">${fmt(h.ts)}</span></div><div class="r">${esc(h.reason)}</div></div></li>`).join('')}</ol>
+    ${p.state==='pending_approval'?`<div class="actions"><button class="btn primary" type="button" data-decide="${p.id}" data-ok="1" ${own||low?'aria-disabled="true"':''}>Approve</button><button class="btn danger" type="button" data-decide="${p.id}" data-ok="0">Reject</button></div>
+      ${own?'<div class="note">You proposed this. Separation of duties: someone else must approve it.</div>':low?`<div class="note">You are an analyst; this needs an ${need}. Switch "You are" to Admin to decide it.</div>`:''}`:''}`);
+  }else set('#propDetail','<p class="empty">Select a proposal to see its state transitions.</p>');
+  $('#polHash').textContent=`v${S.polVer} · sha256 ${S.polHash}`;
+  set('#policies',`<table><thead><tr><th>Action</th><th>Auto-approve</th><th>Approver</th><th>Reversible</th></tr></thead><tbody>${S.policies.map(p=>`<tr><td>${p.action.replace('_',' ')}</td><td>${p.auto?`≤ ${p.auto}`:'never'}</td><td>${p.role}${p.role!=='admin'?' (admin if high)':''}</td><td>${p.reversible?'yes':'no'}</td></tr>`).join('')}</tbody></table>`);
+  set('#agents',`<table><thead><tr><th>Agent</th><th>Capabilities</th><th>Max risk</th><th></th></tr></thead><tbody>${S.agents.map(a=>`<tr><td><span class="mono">${a.name}</span><br>${a.status==='active'?'<span class="chip st-ok">active</span>':'<span class="chip st-bad">suspended</span>'}</td><td style="font-size:12px">${a.caps.map(c=>c.replace('_',' ')).join(', ')}</td><td>${riskChip(a.max)}</td><td><button class="btn sm ${a.status==='active'?'danger':''}" type="button" data-agent="${a.name}">${a.status==='active'?'Suspend':'Activate'}</button></td></tr>`).join('')}</tbody></table>`);
+}
+
+function renderEvidence(){
+  const v=S.verify;
+  set('#vbanner',!v?`<b>Not verified this session.</b><span class="muted">${S.ledger.length} records. Press Verify chain to recompute every hash.</span>`:
+    v.ok?`<b style="color:var(--green)">Chain intact</b><span>${v.count} records verified</span><span class="hash">head ${v.head.slice(0,24)}…</span>`:
+    `<b style="color:var(--red)">Chain broken at #${v.seq}</b><span>${esc(v.why)}. Records after it can no longer be trusted.</span>`);
+  $('#vbanner').className='banner '+(!v?'':v.ok?'ok':'bad');
+  const rows=S.ledger.slice(-40).reverse();if(v&&!v.ok&&!rows.some(r=>r.seq===v.seq))rows.push(S.ledger[v.seq-1]);
+  set('#ledger',`<table><thead><tr><th>Seq</th><th>Time</th><th>Kind</th><th>Subject</th><th>Hash</th></tr></thead><tbody>${rows.map(r=>`<tr class="click ${r.seq===S.selRec?'sel':''} ${v&&!v.ok&&r.seq===v.seq?'broken':''}" data-rec="${r.seq}" tabindex="0"><td class="mono num">${r.seq}</td><td class="mono num" style="font-size:12px">${fmt(r.ts)}</td><td class="mono" style="font-size:12px">${esc(r.kind)}</td><td style="font-size:12px">${esc(r.subject)}</td><td class="hash">${r.hash.slice(0,10)}</td></tr>`).join('')}</tbody></table>`);
+  const r=S.ledger[(S.selRec||S.ledger.length)-1];
+  set('#recDetail',`<p class="eyebrow">Record #${r.seq}</p><h2 style="font:700 18px var(--display);margin:6px 0 10px">${esc(r.kind)}</h2>
+   <dl class="kv"><dt>Subject</dt><dd>${esc(r.subject)}</dd><dt>Time</dt><dd class="mono">${new Date(r.ts).toISOString()}</dd><dt>Prev</dt><dd class="hash">${r.prev}</dd><dt>Hash</dt><dd class="hash">${r.hash}</dd></dl>
+   <pre class="json">${esc(JSON.stringify(r.data,null,2))}</pre>
+   ${S.tampered===r.seq?'<div class="note err">This record was edited directly in storage after it was written.</div>':''}`);
+}
+
+function render(){
+  renderHeader();
+  if(view==='overview')renderOverview();
+  else if(view==='constellation')renderDetail();
+  else if(view==='security')renderSecurity();
+  else if(view==='predictions')renderPredictions();
+  else if(view==='governance')renderGovernance();
+  else if(view==='evidence')renderEvidence();
+  if(RM.matches)drawAll();
+}
+
+/* ---------- constellation canvas ---------- */
+function fit(cv){const r=cv.getBoundingClientRect(),d=devicePixelRatio||1,w=Math.round(r.width*d),h=Math.round(r.height*d);if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h}return{w:r.width,h:r.height,d}}
+function geom(w,h,pad){const R=Math.min(w,h)/2-pad;return{cx:w/2,cy:h/2,R}}
+function draw(cv,big,time){
+  if(!cv.offsetParent)return;
+  const{w,h,d}=fit(cv),ctx=cv.getContext('2d'),g=geom(w,h,big?46:18),P=S.pos.map(p=>({x:g.cx+p.x*g.R,y:g.cy+p.y*g.R}));
+  ctx.setTransform(d,0,0,d,0,0);ctx.clearRect(0,0,w,h);
+  const cyan=css('--cyan'),ember=css('--ember'),amber=css('--amber'),violet=css('--violet'),line=css('--line2'),muted=css('--muted'),text=css('--text');
+  [.17,.4,.63,.82,.97].forEach(r=>{ctx.beginPath();ctx.arc(g.cx,g.cy,r*g.R,0,Math.PI*2);ctx.strokeStyle=line;ctx.globalAlpha=.35;ctx.lineWidth=1;ctx.stroke()});ctx.globalAlpha=1;
+  // Ψ core
+  const pulseR=RM.matches?0:Math.sin(time/700)*2;
+  ctx.beginPath();ctx.arc(g.cx,g.cy,g.R*.07+pulseR,0,Math.PI*2);ctx.fillStyle=violet;ctx.globalAlpha=.12;ctx.fill();ctx.globalAlpha=1;
+  ctx.fillStyle=violet;ctx.font=`700 ${Math.round(g.R*.08)}px Manrope, sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('Ψ',g.cx,g.cy+1);
+  const sel=big?S.sel:-1,up=sel>=0?new Set(blast(sel)):new Set(),dn=sel>=0?new Set(deps(sel)):new Set();
+  const showPaths=big&&$('#optPaths').checked,pathE=new Set();
+  if(showPaths)attackPaths().forEach(p=>{for(let k=1;k<p.length;k++)pathE.add(p[k-1]+'>'+p[k])});
+  S.edges.forEach(([a,b])=>{
+    let c=cyan,al=big?.16:.12,lw=1;
+    if(sel>=0){if((a===sel||dn.has(a))&&(dn.has(b)))({c,al,lw}={c:cyan,al:.75,lw:1.4});else if((b===sel||up.has(b))&&up.has(a))({c,al,lw}={c:ember,al:.8,lw:1.4});else al=.07}
+    if(showPaths&&pathE.has(a+'>'+b)&&al<.5){c=css('--red');al=.45;lw=1.2}
+    if(S.ents[a].isolated||S.ents[b].isolated){al=.05}
+    ctx.beginPath();ctx.moveTo(P[a].x,P[a].y);ctx.lineTo(P[b].x,P[b].y);ctx.strokeStyle=c;ctx.globalAlpha=al;ctx.lineWidth=lw;ctx.stroke()});
+  ctx.globalAlpha=1;
+  S.pulses.forEach(p=>{const x=P[p.a].x+(P[p.b].x-P[p.a].x)*p.p,y=P[p.a].y+(P[p.b].y-P[p.a].y)*p.p;ctx.beginPath();ctx.arc(x,y,big?2.6:2,0,Math.PI*2);ctx.fillStyle=css(p.c);ctx.globalAlpha=1-p.p*.6;ctx.fill()});ctx.globalAlpha=1;
+  S.ents.forEach(e=>{const p=P[e.i],r=(big?3.2:2.2)+e.crit*(big?.9:.55);
+    const dim=sel>=0&&e.i!==sel&&!up.has(e.i)&&!dn.has(e.i);ctx.globalAlpha=dim?.3:1;
+    if(e.crown){ctx.beginPath();ctx.arc(p.x,p.y,r+4,0,Math.PI*2);ctx.strokeStyle=amber;ctx.lineWidth=1.5;ctx.stroke()}
+    else if(e.external){ctx.beginPath();ctx.arc(p.x,p.y,r+3.5,0,Math.PI*2);ctx.strokeStyle=cyan;ctx.lineWidth=1.2;ctx.stroke()}
+    ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);
+    if(e.state==='stale'||e.isolated){ctx.setLineDash([2,2]);ctx.strokeStyle=muted;ctx.lineWidth=1.3;ctx.stroke();ctx.setLineDash([])}
+    else{ctx.fillStyle=colorOf(e);ctx.fill()}
+    if(big&&up.has(e.i)){ctx.beginPath();ctx.arc(p.x,p.y,r+2,0,Math.PI*2);ctx.strokeStyle=ember;ctx.lineWidth=1.5;ctx.stroke()}
+    if(e.i===sel){ctx.beginPath();ctx.arc(p.x,p.y,r+7,0,Math.PI*2);ctx.strokeStyle=text;ctx.lineWidth=1.5;ctx.stroke()}
+    ctx.globalAlpha=1;
+    const label=big&&($('#optLabels').checked||e.crown||e.i===sel||e.i===S.hover||e.health<70||up.has(e.i)&&up.size<=8||dn.has(e.i)&&dn.size<=8);
+    if(label){ctx.font='500 11px "JetBrains Mono", monospace';const tw=ctx.measureText(e.name).width;let lx=p.x+r+6;if(lx+tw>w-4)lx=p.x-r-6-tw;ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillStyle=dim?muted:text;ctx.globalAlpha=dim?.6:.92;ctx.fillText(e.name,lx,p.y);ctx.globalAlpha=1}
+  });
+  cv._P=P;cv._R=big?3.2:2.2;
+}
+let lastT=0;
+function frame(time){
+  const dt=Math.min(.05,(time-lastT)/1000);lastT=time;
+  if(!S.paused)S.pulses.forEach(p=>p.p+=dt*1.1);S.pulses=S.pulses.filter(p=>p.p<1);
+  drawAll(time);
+  if(!RM.matches)requestAnimationFrame(frame);
+}
+function drawAll(time=performance.now()){if(view==='overview')draw($('#mini'),false,time);if(view==='constellation')draw($('#big'),true,time)}
+function hit(cv,ev){const r=cv.getBoundingClientRect(),x=ev.clientX-r.left,y=ev.clientY-r.top;let best=-1,bd=1e9;(cv._P||[]).forEach((p,i)=>{const dd=Math.hypot(p.x-x,p.y-y);if(dd<bd){bd=dd;best=i}});return bd<16?best:-1}
+
+/* ---------- interaction ---------- */
+function show(v){view=v;$$('.nav button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.view===v)));$$('main > section').forEach(s=>s.hidden=s.id!=='v-'+v);try{localStorage.setItem('sd-view',v)}catch(e){}render();drawAll()}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,4200)}
+function schedule(){clearInterval(timer);if(!S.paused)timer=setInterval(()=>tick(false),+$('#speed').value)}
+S={role:()=>'analyst'};
+document.addEventListener('click',ev=>{
+  const b=ev.target.closest('[data-view],[data-ent],[data-prop],[data-propose],[data-patch],[data-decide],[data-review],[data-agent],[data-rec],[data-filter]');if(!b)return;
+  const d=b.dataset;
+  if(d.view&&b.closest('.nav, .panel-h'))return show(d.view);
+  if(d.ent!=null){S.sel=+d.ent;if(view!=='constellation')show('constellation');else render();return}
+  if(d.prop){S.selProp=d.prop;if(view!=='governance')show('governance');else render();return}
+  if(d.propose){const p=propose('you',d.propose,S.sel,d.risk,`Proposed from the constellation by you (${S.role()}).`);toast(`${p.id} created. Watch it move through policy and validation in Governance.`);render();return}
+  if(d.patch){const v=S.vulns.find(x=>x.id===d.patch),e=S.ents[v.ent];if(openOn('patch',v.ent))return toast(`A patch for ${e.name} is already in flight.`);const p=propose('you','patch',v.ent,e.crown||e.crit>=5?'high':'medium',`Patch ${v.id} (CVSS ${v.cvss}).`,v.id);toast(`${p.id} created.`);render();return}
+  if(d.decide)return decide(d.decide,d.ok==='1');
+  if(d.review)return review(d.review,d.v);
+  if(d.agent){const a=S.agents.find(x=>x.name===d.agent);a.status=a.status==='active'?'suspended':'active';append('agent.'+a.status,a.name,{by:'you',role:S.role()});feed(a.status==='active'?'info':'medium','proposal',`${a.name} ${a.status} by you`,null);toast(a.status==='suspended'?`${a.name} suspended. Its next proposals fail with 401 KEY_INVALID.`:`${a.name} active again.`);render();return}
+  if(d.rec){S.selRec=+d.rec;render();return}
+  if(d.filter){S.filter=d.filter;$$('[data-filter]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));render()}
+});
+document.addEventListener('keydown',ev=>{if((ev.key==='Enter'||ev.key===' ')&&ev.target.matches('tr[data-prop],tr[data-rec]')){ev.preventDefault();ev.target.click()}});
+$('#pauseBtn').addEventListener('click',()=>{S.paused=!S.paused;$('#pauseBtn').textContent=S.paused?'Resume':'Pause';$('#pauseBtn').setAttribute('aria-pressed',String(S.paused));$('#live').classList.toggle('paused',S.paused);$('#liveTxt').textContent=S.paused?'Paused':'Live';schedule()});
+$('#speed').addEventListener('change',schedule);
+$('#role').addEventListener('change',render);
+$('#q').addEventListener('input',renderDetail);
+$('#optLabels').addEventListener('change',()=>drawAll());$('#optPaths').addEventListener('change',()=>drawAll());
+$('#runPsi').addEventListener('click',()=>{mirrorBrain(true);render()});
+$('#verify').addEventListener('click',()=>{S.verify=verifyChain();const v=S.verify;append('ledger.verified','ledger',v.ok?{result:'intact',records:v.count}:{result:'broken',seq:v.seq});toast(v.ok?`Verified ${v.count} records. Chain intact.`:`Verification failed at record #${v.seq}.`);if(!v.ok)S.selRec=v.seq;render()});
+$('#tamper').addEventListener('click',()=>{const c=S.ledger.filter(r=>r.kind.startsWith('proposal.')&&r.seq<S.ledger.length-5);const r=c.length?c[Math.floor(c.length*.4)]:S.ledger[1];
+  r.data=Object.assign({},r.data,{by:'nobody',reason:'approved by nobody'});S.tampered=r.seq;S.verify=null;S.selRec=r.seq;toast(`Record #${r.seq} was edited directly in storage. Press Verify chain to detect it.`);render()});
+$('#reset').addEventListener('click',()=>{const p=S.paused;build(20261017);S.paused=p;S.role=()=>$('#role').value;render();drawAll();toast('Demo reset. A fresh simulated tenant is running.')});
+['mini','big'].forEach(id=>{const cv=$('#'+id);
+  cv.addEventListener('click',ev=>{const i=hit(cv,ev);if(i<0)return;S.sel=i;if(id==='mini')show('constellation');else render();drawAll()});
+  cv.addEventListener('mousemove',ev=>{const i=hit(cv,ev);if(id==='big'){S.hover=i;const tip=$('#tip');if(i>=0){const p=cv._P[i];tip.textContent=`${S.ents[i].name} · ${S.ents[i].state==='stale'?'stale':Math.round(S.ents[i].health)}`;tip.style.left=p.x+'px';tip.style.top=p.y+'px';tip.hidden=false}else tip.hidden=true;if(RM.matches)drawAll()}cv.style.cursor=i>=0?'pointer':'crosshair'});
+  cv.addEventListener('mouseleave',()=>{S.hover=-1;$('#tip').hidden=true})});
+addEventListener('resize',()=>drawAll());
+
+build(20261017);
+S.role=()=>$('#role').value;
+let start='overview';try{start=localStorage.getItem('sd-view')||start}catch(e){}
+const h=location.hash.slice(1);if(['overview','constellation','security','predictions','governance','evidence'].includes(h))start=h;
+show(start);schedule();
+if(!RM.matches)requestAnimationFrame(frame);
+RM.addEventListener?.('change',()=>{if(!RM.matches)requestAnimationFrame(frame);drawAll()});
+</script>
+
+<a href="../index.html" aria-label="Back to the MDLC examples gallery" data-mdlc-backlink style="position:fixed;left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:40;font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;color:#ffb547;background:rgba(6,7,10,.88);border:1px solid rgba(255,181,71,.45);border-radius:999px;padding:9px 14px;text-decoration:none">&larr; Gallery</a>
