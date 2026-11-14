@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CIPHΞRZER0 Build Dossier · MDLC</title>
+<meta name="description" content="CIPHΞRZER0, a cryptographic trust plane built by MDLC. Build status, gate results, security audit and open items, as recorded in the build.">
+<meta name="theme-color" content="#06070a">
+<style>
+:root{--bg:#06070a;--surface:#0e1116;--raised:#141922;--border:rgba(255,255,255,.09);--text:#ebe7df;--muted:#a3a9b5;--faint:#7a808c;--amber:#ffb547;--ember:#ff7a3d;--green:#5fe3a1;--red:#ff5d6c;--cyan:#5fd4ff;--mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;--sans:"Inter","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;color-scheme:dark}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6}
+body{padding:0 16px 64px}
+.wrap{max-width:960px;margin:0 auto}
+header{padding:48px 0 28px;border-bottom:1px solid var(--border)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber)}
+h1{font-family:var(--sans);font-weight:600;font-size:clamp(28px,4.5vw,44px);letter-spacing:-.01em;margin:12px 0 10px}
+.lede{color:var(--muted);max-width:680px;font-size:16px}
+.status{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;border:1px solid rgba(255,181,71,.45);color:var(--amber);border-radius:999px;padding:7px 14px}
+.status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--amber)}
+.status.shipped{border-color:rgba(95,227,161,.45);color:var(--green)}
+.status.shipped::before{background:var(--green)}
+.back{display:inline-block;margin-top:20px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--cyan);text-decoration:none}
+section{margin-top:44px}
+h2{font-size:22px;font-weight:600;margin-bottom:6px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+.stat b{display:block;font-family:var(--mono);font-size:24px;font-weight:600}
+.stat span{font-size:12px;color:var(--muted);letter-spacing:.02em}
+.ok b{color:var(--green)} .warn b{color:var(--amber)} .bad b{color:var(--red)}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:14px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:500}
+tr:last-child td{border-bottom:0}
+td code{font-family:var(--mono);font-size:12px;color:var(--cyan)}
+.tag{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:3px 8px;white-space:nowrap}
+.t-ok{background:rgba(95,227,161,.12);color:var(--green)}
+.t-warn{background:rgba(255,181,71,.12);color:var(--amber)}
+.t-bad{background:rgba(255,93,108,.12);color:var(--red)}
+.t-open{background:rgba(255,255,255,.06);color:var(--muted)}
+.note{margin-top:14px;color:var(--muted);font-size:14px}
+ul{padding-left:20px;color:var(--muted);font-size:15px}
+li{margin-bottom:6px}
+.wrap table{display:block;overflow-x:auto}
+footer{margin-top:52px;color:var(--faint);font-size:12px;font-family:var(--mono);letter-spacing:.04em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Build dossier · MDLC kernel</div>
+  <h1>CIPHΞRZER0</h1>
+  <p class="lede">A cryptographic trust plane: key lifecycle, purpose-bound encryption, signed authorization policy, scoped grants for workloads and AI agents, a hash-chained evidence log, post-quantum migration planning and APEX risk analysis, with two-person approval for destructive actions. This page records what the build produced, what passed, what failed on the way, and what is still open.</p>
+  <div class="status shipped">Shipped · v0.5.2</div>
+  <p class="note">The interactive demo on the proof page is <b>read-only</b> and runs entirely in your browser on <b>simulated data</b>. It does not connect to a running CIPHΞRZER0, and nothing you do in it is saved. The results on this page come from the real build: its tests, gates and reports.</p>
+  <a class="back" href="https://mdlc.ai/cipherzer0-demo.html">Open the read-only demo &rarr;</a> &nbsp; <a class="back" href="https://mdlc.ai/proof.html">&larr; Back to proof</a> &nbsp; <a class="back" href="../index.html" aria-label="Back to the MDLC examples gallery" data-mdlc-backlink>&larr; Gallery</a>
+</header>
+
+<section>
+  <h2>Where the build stands</h2>
+  <p class="sub">Version 0.5.2, verified at commit <code>b8b0f99</code> and recorded as shipped on 12 November 2026. Security domain, comprehensive depth, with controls mapped to HIPAA, PCI DSS, SOC 2 and ISO 27001 (a mapping, not a certification). A Next.js 16 console, an Express 5 REST API, a gRPC trust-core over mTLS that holds the keys, a BullMQ worker and an isolated egress prober, on PostgreSQL (primary and replica) and Redis, behind Caddy in Docker Compose. The local Compose stack is the shipped artifact. Built in an initial pass and three re-entries, with about 30 hours of active build time.</p>
+  <div class="grid">
+    <div class="stat ok"><b>733 / 733</b><span>unit and integration tests passing (vitest, 60 files)</span></div>
+    <div class="stat ok"><b>48 / 48</b><span>smoke-test steps passing against the redeployed stack</span></div>
+    <div class="stat ok"><b>28</b><span>features built (17, then 3, 4 and 4 in the re-entries); 26 of 26 inputs reconciled</span></div>
+    <div class="stat ok"><b>59 / 59</b><span>machine-checked invariants passing, 1 manual check left to the reviewer</span></div>
+    <div class="stat ok"><b>94 / 9 / 0</b><span>compliance rows: implemented, with a recorded residual, gaps</span></div>
+    <div class="stat warn"><b>11</b><span>low-severity security findings deferred with reasons; 0 critical, high or medium open at ship</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Gate results</h2>
+  <p class="sub">Each gate's outcome as recorded in the build's reports. A gate that failed and was fixed is listed with its fix.</p>
+  <table>
+    <thead><tr><th>Gate</th><th>Result</th><th>What it recorded</th></tr></thead>
+    <tbody>
+      <tr><td>Research</td><td><span class="tag t-ok">Pass</span></td><td>Go decision. The pre-build review raised 8 findings, all applied (ADR-011). All 26 RESEARCH.md input fields reconciled into the build, with 0 conflicts left.</td></tr>
+      <tr><td>Verification</td><td><span class="tag t-ok">Pass</span></td><td>First pass: 271 / 271 tests, 91.48% line coverage against an 80% floor, and end-to-end 79 / 80, fixed to 80 / 80. That run found interactive jobs starved behind scheduled sweeps; job priorities fixed it (ADR-062). At 0.5.2: typecheck and lint pass, vitest 733 / 733. The format check still flags two files that were already flagged.</td></tr>
+      <tr><td>Invariants</td><td><span class="tag t-ok">59 / 59</span></td><td>60 invariants in total: 59 machine-checked and passing, 1 manual. They include: only trust-core reads the root key, audit events are written through one function, webhook signatures are checked before any database access, and only the scanner and the prober may open raw sockets or DNS.</td></tr>
+      <tr><td>Reviewer (11 round files)</td><td><span class="tag t-ok">Pass</span></td><td>Initial build: round 1 failed on 10 items, including a quantum migration that validated while every ciphertext stayed on the classical key, and agent workloads that could get a long-lived credential. Round 2 failed on 3 items; the round 3 settle check passed. Re-entry R-2: rounds 4 and 5 failed (in readiness mode an APEX <code>rotate_key</code> could still rotate a customer key); round 6 failed one item, a policy activation that could never be retried after a failed audit step. Each was fixed and its settle check passed. Re-entry R-3: round 7 failed because the internet-facing prober mounted the whole PKI volume, CA key included. Round 8 passed, and the round 9 settle check passed.</td></tr>
+      <tr><td>Security Audit</td><td><span class="tag t-warn">Pass with advisory</span></td><td>Pass 1 found 1 medium and 6 low. Later passes over each re-entry found 1 high dependency advisory and 6 more medium findings, all fixed with tests. At ship: 0 critical, 0 high, 0 medium open; 11 low deferred plus one compose residual. In pass 6, Trivy crashed on the image scan, so the Dockerfile and compose changes were reviewed by hand.</td></tr>
+      <tr><td>Web delivery baseline</td><td><span class="tag t-warn">2 accepted</span></td><td>24 screens at 375, 768 and 1280 px in both themes. The first run had 226 failures; two fix batches brought it to 0 (ADR-063, ADR-064). Lighthouse performance on the landing and dashboard pages stays under the 80 target and is accepted under ADR-071. At <code>c6221ce</code> the landing page scored 81, 73 and 75 on three runs of the same build.</td></tr>
+      <tr><td>Design gate</td><td><span class="tag t-ok">8 / 16 / 0</span></td><td>Started at 1 pass, 22 warn, 1 fail; the second score found 9 fails, fixed in the settle batch. Latest (score-7): 8 pass, 16 warn, 0 fail over 24 screens. In R-3, score-6 failed the landing page on mobile LCP (2992 ms); it now measures 2066 ms.</td></tr>
+      <tr><td>Compliance</td><td><span class="tag t-ok">94 / 9 / 0</span></td><td>103 requirements: 94 implemented, 9 with a recorded residual, 0 gaps. R-3 added seven external-discovery rows; one of them (EXT-VERIFIED-ONLY) carries the deferred SEC-32.</td></tr>
+      <tr><td>Smoke</td><td><span class="tag t-ok">48 / 48</span></td><td>At 0.5.2 after <code>docker compose up -d --build</code>. The run needed three extra worker processes: leftover test tenants in the dev database keep every worker slot busy with scheduled sweeps. The live mounts confirm the PKI fix: the prober holds only its own certificate, key and the CA certificate.</td></tr>
+      <tr><td>Governance</td><td><span class="tag t-ok">Recorded</span></td><td>129 records over 54 changes: 56 escalations to a human, 13 reviews and 1 block. The block (GD-0018) stopped a formatter run that had changed the pinned kernel scripts; it was reverted and recommitted without them. All 54 changes end approved. Every record is in GOVERNANCE-DECISIONS.jsonl.</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Not verified automatically: the 1,000 virtual-user load profile. It is scripted in <code>load/k6.js</code>, but only the k6 smoke profile's result is recorded (read p95 29.7 ms, key-op p95 92.1 ms, 0 errors). The 99.95% availability figure is a documented target that a single host cannot demonstrate.</p>
+</section>
+
+<section>
+  <h2>Security audit: what was found</h2>
+  <p class="sub">Findings from the audit passes and the reviewer's checks. Remediated items were fixed in the build; deferred items are accepted with the reason recorded.</p>
+  <table>
+    <thead><tr><th>ID</th><th>Severity</th><th>Finding</th><th>Disposition</th></tr></thead>
+    <tbody>
+      <tr><td><code>SEC-1</code></td><td><span class="tag t-warn">Medium</span></td><td>Agent workloads could mint long-lived <code>czw_</code> credentials, skipping the grant TTL, key and purpose scope.</td><td><span class="tag t-ok">Remediated</span> 409 on issue, 401 on use.</td></tr>
+      <tr><td><code>SEC-8</code>, <code>SEC-9</code></td><td><span class="tag t-warn">Medium</span></td><td>An MFA re-auth form without <code>method="post"</code>; a quantum key migration that silently stopped key-scoped policy rules and grants from applying.</td><td><span class="tag t-ok">Remediated</span> migration refuses to move objects off a key that an active rule or grant names (ADR-070).</td></tr>
+      <tr><td><code>SEC-18</code></td><td><span class="tag t-warn">Medium</span></td><td>The readiness-mode gate matched paths case-sensitively, so <code>/api/v1/VAULT/objects</code> reached the vault router.</td><td><span class="tag t-ok">Remediated</span> with a regression test that fails on the old code. A body-parser HIGH dependency advisory in the same pass was fixed by an update.</td></tr>
+      <tr><td><code>SEC-28</code></td><td><span class="tag t-warn">Medium</span></td><td>The internet-facing prober mounted the whole PKI volume, so code execution in it could read the CA key and every service's key.</td><td><span class="tag t-ok">Remediated</span> per-service PKI volumes (0.5.1, ADR-094). Upgrades from 0.5.0 should rotate the internal CA.</td></tr>
+      <tr><td><code>SEC-29</code>, <code>SEC-30</code></td><td><span class="tag t-warn">Medium</span></td><td>One hostile TLS peer could crash the shared prober; slow-drip peers could hold its slots, and one discovery run over 1,000 slow hosts could run for about 7 hours.</td><td><span class="tag t-ok">Remediated</span> absolute handshake deadline, a 20-minute run budget and 2 discovery jobs per worker (0.5.1, 0.5.2).</td></tr>
+      <tr><td><code>SEC-2</code>, <code>SEC-4</code>, <code>SEC-13</code></td><td><span class="tag t-open">Low</span></td><td>Account existence is enumerable through 409/429 responses; the vault purpose is not bound into the AEAD AAD; server first-paint reads share a per-IP rate bucket.</td><td><span class="tag t-open">Deferred</span> each needs an API contract or re-seal change with its own ADR.</td></tr>
+      <tr><td><code>SEC-31</code>, <code>SEC-32</code>, <code>SEC-33</code></td><td><span class="tag t-open">Low</span></td><td>Prober findings are not bound to the probed host and port; a domain whose DNS fails persistently never lapses; a CT response is buffered up to 10 MB.</td><td><span class="tag t-open">Deferred</span> reasons in SECURITY-AUDIT.md.</td></tr>
+      <tr><td><code>SEC-40</code> to <code>SEC-44</code></td><td><span class="tag t-bad">High</span> <span class="tag t-warn">Medium</span></td><td>Found after 0.5.2 shipped, by a full-repository review (pass 7): an admin could reset the password of a member without TOTP and approve their own two-person request; a payment for a cheaper checkout could activate a more expensive plan; unpatched runtime images; unauthenticated Redis and default container capabilities; an open redirect through a tab character.</td><td><span class="tag t-warn">Fix in progress</span> fixes are written (ADR-096) but not yet committed or through the ship gates.</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Result at ship: 0 critical, 0 high, 0 medium open; 11 low deferred (SEC-2, 4, 5, 7, 13, 15, 20, 23, 31, 32, 33) plus the compose <code>change-me</code> residual, each with a recorded reason. The post-ship pass 7 findings are not counted in that result and are listed under open items.</p>
+</section>
+
+<section>
+  <h2>Open items</h2>
+  <ul>
+    <li>Post-ship security pass 7 found 4 high and 1 medium issue in 0.5.2 (SEC-40 to SEC-44). Fixes are written but not committed or verified by the gates. Two more items from that pass are not yet started: the application database role can update and delete audit rows (the hash chain detects this but does not prevent it), and trust-core authorizes RPCs by mTLS peer only, with no per-method check.</li>
+    <li>Lighthouse performance on the landing and dashboard pages sits below 80 and is accepted under ADR-071. The scores move with host load; the fix is performance work, not the acceptance.</li>
+    <li>Leftover test tenants in the dev database keep the worker busy with sweeps, so smoke needed extra worker processes. The <code>job_runs</code> table also grows without a bound.</li>
+    <li>Low security residuals: 11 deferred findings and the compose <code>change-me</code> defaults (loopback only).</li>
+    <li>HSTS is absent on the localhost edge by design under Caddy's local CA (ADR-017), so the WEB-HEADERS compliance row is a residual.</li>
+    <li>Design warnings remain on 16 of 24 screens (cosmetic, 0 fails), including a plans table clipped at 375 px and panels with no capture.</li>
+    <li>Version labels disagree: the console reads 0.1.0 from package.json while VERSION.md says 0.5.2.</li>
+    <li>Registration maps any unique-key conflict, such as a taken tenant slug, to "email already exists", seen as a rare test flake.</li>
+    <li>The CI security job has no <code>.gitleaksignore</code> or Semgrep excludes, so it would fail on its first run on known test fixtures.</li>
+  </ul>
+</section>
+
+<footer>MDLC kernel · CIPHΞRZER0 0.5.2 · shipped 12 November 2026 · status as recorded in the build reports</footer>
+
+</div>
+</body>
+</html>

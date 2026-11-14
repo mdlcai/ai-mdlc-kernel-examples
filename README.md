@@ -2,7 +2,7 @@
 
 # MDLC - Example Builds
 
-### Fifteen real applications, each built end-to-end by the MDLC methodology.
+### Seventeen real applications, each built end-to-end by the MDLC methodology.
 
 **[🌐 Browse the live gallery →](https://mdlcai.github.io/ai-mdlc-kernel-examples/)**
 
@@ -14,7 +14,7 @@
 
 ## What you're looking at
 
-**MDLC** (the Markdown Development Life Cycle) turns a single `RESEARCH.md` blueprint into a working, reviewed application — driving it through architecture, build, and a battery of automated quality gates. These fifteen examples are the proof. Each one was generated, not hand-written, and each ships the **complete paper trail**: the blueprint that started it, the architecture that fell out of it, the spec and decisions it was built to, and the build report showing every gate it passed.
+**MDLC** (the Markdown Development Life Cycle) turns a single `RESEARCH.md` blueprint into a working, reviewed application — driving it through architecture, build, and a battery of automated quality gates. These seventeen examples are the proof. Each one was generated, not hand-written, and each ships the **complete paper trail**: the blueprint that started it, the architecture that fell out of it, the spec and decisions it was built to, and the build report showing every gate it passed.
 
 Open any folder and read it top to bottom — `RESEARCH.md` → `ARCHITECTURE.md` → `SPEC.md` → `DECISIONS.md` → `REPORT.md` — and you can follow the process end to end.
 
@@ -26,6 +26,8 @@ Open any folder and read it top to bottom — `RESEARCH.md` → `ARCHITECTURE.md
 | [<img src="starshield/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/starshield/demo.html) | **[STΛRSHΞILD](starshield/)** | **Build dossier + interactive demo.** Governed security operations: signed telemetry correlated into alerts and incidents, response actions held for policy and human approval (two approvers for high impact), every change in a hash-chained ledger. | 253 tests · 82/82 e2e · 9/9 smoke · 48/48 invariants · 0 high/med open |
 | [<img src="stardancer/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/stardancer/demo.html) | **[STΛRDΛNCΞR](stardancer/)** | **Build dossier + interactive demo.** System intelligence platform: telemetry into an entity graph, drift and risk predictions, agent fixes held for policy and human approval, every decision in a hash-chained ledger. | 569 tests · 52/52 smoke · 56/56 invariants · 0 high/med open |
 | [<img src="rails/preview.webp" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/rails/index.html) | **[RΛILS](rails/)** | **Build dossier.** Programmable payment infrastructure: one API for payments, subscriptions, refunds and payouts, exactly-once idempotency, signed webhooks, an append-only double-entry ledger. Reviewer failed three rounds before it passed. | 431 tests · 53/53 smoke · 39/39 invariants · 96% coverage · 0 high/med open |
+| [<img src="cipherzero/preview.webp" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/cipherzero/index.html) | **[CIPHΞRZER0](cipherzero/)** | **Build dossier + interactive demo.** Cryptographic trust plane: key lifecycle, purpose-bound encryption, signed policy, scoped AI-agent grants, post-quantum migration planning, two-person approval for destructive actions. | 733 tests · 48/48 smoke · 59/59 invariants · compliance 94/9/0 |
+| [<img src="qai-evolution/preview.webp" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/qai-evolution/index.html) | **[QAI // ΞVOLUTION](qai-evolution/)** | **Build dossier + demo.** Quantum circuit SDK and multi-tenant platform; its Evolution Engine adopts a candidate only when independent validation passes and the score improves. Simulation only. | 1,432 tests · 29/29 smoke · 37/37 invariants · 0 high/med open |
 | [<img src="cyberops/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/cyberops/index.html) | **[CyberOps](cyberops/)** | **Live at [cyberops.mdlc.ai](https://cyberops.mdlc.ai).** Multi-tenant security operations: asset discovery with ownership verification, real DNS/HTTP/TLS recon, AI-assisted pentest planning behind a human approval gate, OSINT, and SOC 2 / PCI / OWASP posture mapping. | 29 tests · 17/17 smoke · 15/15 invariants · Reviewer PASS after 4 IDOR rounds |
 | [<img src="tradewind/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/tradewind/index.html) | **[Tradewind](tradewind/)** | Services marketplace with milestone escrow — fund, release on approval, payouts, disputes, and verified Stripe webhooks, every movement an immutable double-entry ledger entry that always balances. | 29 tests · 17/17 smoke · 12 invariants (double-entry Σ=0) · 0 crit/high |
 | [<img src="sentinel/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/sentinel/index.html) | **[Sentinel](sentinel/)** | Unified AppSec scanning — runs OSS scanners (SAST, SCA, DAST, secrets, IaC) in sandboxed containers, then dedupes and prioritizes into one dashboard. | 21 tests · 23/23 smoke · 11/11 invariants · 0 crit/high |
