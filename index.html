@@ -4,9 +4,9 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>MDLC — Example Builds</title>
-<meta name="description" content="Fifteen real applications, each built end-to-end by the MDLC methodology, from a one-page blueprint to a gate-passing build." />
+<meta name="description" content="Seventeen real applications, each built end-to-end by the MDLC methodology, from a one-page blueprint to a gate-passing build." />
 <meta property="og:title" content="MDLC — Example Builds" />
-<meta property="og:description" content="Fifteen real applications, each built end-to-end by the MDLC methodology. Live previews, architecture, and the full build report for each." />
+<meta property="og:description" content="Seventeen real applications, each built end-to-end by the MDLC methodology. Live previews, architecture, and the full build report for each." />
 <meta property="og:type" content="website" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -261,14 +261,14 @@
 
   <header class="hero">
     <div class="eyebrow"><span class="gl">✦</span> Reference Builds <span class="gl">→</span> Built with MDLC</div>
-    <h1>Fifteen real apps,<br><em>built by the methodology.</em></h1>
+    <h1>Seventeen real apps,<br><em>built by the methodology.</em></h1>
     <p class="sub">Each app below started as a one-page <code>RESEARCH.md</code> blueprint and came out the other side as a working, reviewed application. The architecture, the spec, the decisions, and the full build report are all there to prove it.</p>
     <div class="actions">
       <a class="pricing-cta pricing-cta-secondary" href="https://mdlc.ai/catches.html" style="display:inline-flex;align-items:center;gap:0.5rem;margin-top:0;padding:1rem 2.25rem;font-size:0.8rem;">See everything it catches →</a>
     </div>
     <div class="stats">
-      <span>15 apps, 0 hand-written</span>
-      <span>313 smoke flows passed</span>
+      <span>17 apps, 0 hand-written</span>
+      <span>390 smoke flows passed</span>
       <span>every gate, with receipts</span>
     </div>
   </header>
@@ -324,6 +324,28 @@
         <p>Programmable financial infrastructure: one API for payments, subscriptions, refunds and payouts, with exactly-once idempotency, signed webhooks and an append-only double-entry ledger. The reviewer failed three rounds, including a refund retry that could pay out twice; each was fixed with a test. The sustained load test still misses its latency targets on one host, with 0 errors and 0 duplicate charges. Shipped as v1.0.1.</p>
         <div class="gates"><span class="gate">431 tests</span><span class="gate">53/53 smoke</span><span class="gate">39/39 invariants</span><span class="gate">96% coverage</span><span class="gate">0 high/med open</span><span class="gate">Reviewer PASS</span></div>
         <div class="links"><a class="lead" href="https://mdlc.ai/rails-demo.html">Try the interactive demo</a><a href="rails/index.html">Open the dossier</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/rails/REPORT.md">Build report</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/rails/SECURITY-AUDIT.md">Security audit</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/tree/main/rails">Files &#8599;</a></div>
+      </div>
+    </article>
+
+    <article class="card featured">
+      <a class="shot" href="cipherzero/index.html"><img src="cipherzero/preview.webp" alt="CIPHΞRZER0 build dossier" loading="lazy"><span class="open"><span>Open the dossier &rarr;</span></span></a>
+      <div class="body">
+        <h3><span style="font-family:'Segoe UI','Helvetica Neue',Arial,system-ui,sans-serif;font-weight:600;letter-spacing:.08em">CIPHΞRZER0</span> <span class="badge dossier">Build dossier</span> <span class="badge">Security</span></h3>
+        <p class="featured-note">The interactive demo is read-only and runs entirely in your browser on sample data. The numbers on this card come from the real build.</p>
+        <p>A cryptographic trust plane: key lifecycle, purpose-bound encryption, signed policy, scoped AI-agent grants and post-quantum migration planning, with two-person approval for destructive actions. The reviewer failed six rounds and the web baseline started at 226 failures; all were fixed. A security review after the v0.5.2 ship found 4 high and 1 medium issue, and the dossier lists them as open work.</p>
+        <div class="gates"><span class="gate">733 tests</span><span class="gate">48/48 smoke</span><span class="gate">59/59 invariants</span><span class="gate">compliance 94/9/0</span></div>
+        <div class="links"><a class="lead" href="https://mdlc.ai/cipherzer0-demo.html">Try the interactive demo</a><a href="cipherzero/index.html">Open the dossier</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/cipherzero/REPORT.md">Build report</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/cipherzero/SECURITY-AUDIT.md">Security audit</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/tree/main/cipherzero">Files &#8599;</a></div>
+      </div>
+    </article>
+
+    <article class="card featured">
+      <a class="shot" href="qai-evolution/index.html"><img src="qai-evolution/preview.webp" alt="QAI // ΞVOLUTION build dossier" loading="lazy"><span class="open"><span>Open the dossier &rarr;</span></span></a>
+      <div class="body">
+        <h3><span style="font-family:'Segoe UI','Helvetica Neue',Arial,system-ui,sans-serif;font-weight:600;letter-spacing:.08em">QAI // ΞVOLUTION</span> <span class="badge dossier">Build dossier</span> <span class="badge">Quantum</span></h3>
+        <p class="featured-note">The Evolution Engine demo is a read-only copy of the frontend on a frozen sample dataset; runs replay recorded results. The numbers on this card come from the real build.</p>
+        <p>A quantum circuit SDK and multi-tenant platform whose Evolution Engine adopts a candidate only when independent validation passes and the score improves. Security pass 3 failed on a high-severity regex stall introduced by an earlier fix; it was fixed at the root. Five reviewer rounds failed and were fixed. Simulation only, no hardware backend. Shipped as v0.8.0.</p>
+        <div class="gates"><span class="gate">1,432 tests</span><span class="gate">29/29 smoke</span><span class="gate">37/37 invariants</span><span class="gate">0 high/med open</span></div>
+        <div class="links"><a class="lead" href="https://quantum.mdlc.ai/app/optimization">Open the Evolution Engine</a><a href="qai-evolution/index.html">Open the dossier</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/qai-evolution/REPORT.md">Build report</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/tree/main/qai-evolution">Files &#8599;</a></div>
       </div>
     </article>
 

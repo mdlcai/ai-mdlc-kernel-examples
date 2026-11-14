@@ -6,7 +6,7 @@
 
 ![RΛILS](preview.webp)
 
-> One of fifteen reference apps built end-to-end with the **[MDLC](https://mdlc.ai)** methodology, from a `RESEARCH.md` blueprint, through architecture and build, to a passing set of quality gates.
+> One of seventeen reference apps built end-to-end with the **[MDLC](https://mdlc.ai)** methodology, from a `RESEARCH.md` blueprint, through architecture and build, to a passing set of quality gates.
 
 ## What it does
 

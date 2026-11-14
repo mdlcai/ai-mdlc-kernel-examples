@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QAI ΞVOLUTION Build Dossier · MDLC</title>
+<meta name="description" content="QAI, a quantum circuit SDK and multi-tenant platform with an Evolution Engine, built by MDLC. Build status, gate results, security audit and open items, as recorded in the build.">
+<meta name="theme-color" content="#06070a">
+<style>
+:root{--bg:#06070a;--surface:#0e1116;--raised:#141922;--border:rgba(255,255,255,.09);--text:#ebe7df;--muted:#a3a9b5;--faint:#7a808c;--amber:#ffb547;--ember:#ff7a3d;--green:#5fe3a1;--red:#ff5d6c;--cyan:#5fd4ff;--mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;--sans:"Inter","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;color-scheme:dark}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6}
+body{padding:0 16px 64px}
+.wrap{max-width:960px;margin:0 auto}
+header{padding:48px 0 28px;border-bottom:1px solid var(--border)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber)}
+h1{font-family:var(--sans);font-weight:600;font-size:clamp(28px,4.5vw,44px);letter-spacing:-.01em;margin:12px 0 10px}
+.lede{color:var(--muted);max-width:680px;font-size:16px}
+.status{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;border:1px solid rgba(255,181,71,.45);color:var(--amber);border-radius:999px;padding:7px 14px}
+.status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--amber)}
+.status.shipped{border-color:rgba(95,227,161,.45);color:var(--green)}
+.status.shipped::before{background:var(--green)}
+.back{display:inline-block;margin-top:20px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--cyan);text-decoration:none}
+section{margin-top:44px}
+h2{font-size:22px;font-weight:600;margin-bottom:6px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+.stat b{display:block;font-family:var(--mono);font-size:24px;font-weight:600}
+.stat span{font-size:12px;color:var(--muted);letter-spacing:.02em}
+.ok b{color:var(--green)} .warn b{color:var(--amber)} .bad b{color:var(--red)}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:14px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:500}
+tr:last-child td{border-bottom:0}
+td code{font-family:var(--mono);font-size:12px;color:var(--cyan)}
+.tag{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:3px 8px;white-space:nowrap}
+.t-ok{background:rgba(95,227,161,.12);color:var(--green)}
+.t-warn{background:rgba(255,181,71,.12);color:var(--amber)}
+.t-bad{background:rgba(255,93,108,.12);color:var(--red)}
+.t-open{background:rgba(255,255,255,.06);color:var(--muted)}
+.note{margin-top:14px;color:var(--muted);font-size:14px}
+ul{padding-left:20px;color:var(--muted);font-size:15px}
+li{margin-bottom:6px}
+.wrap table{display:block;overflow-x:auto}
+footer{margin-top:52px;color:var(--faint);font-size:12px;font-family:var(--mono);letter-spacing:.04em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Build dossier · MDLC kernel</div>
+  <h1>QAI // ΞVOLUTION</h1>
+  <p class="lede">QAI is a quantum circuit SDK and platform: the <code>qai</code> Python SDK (statevector simulation, compilation, Grover and QAOA, validation against a Qiskit reference) plus a multi-tenant web platform that runs simulation, algorithm, validation, benchmark and evolution jobs, keeps hash-verified evidence and gates releases on it. The Evolution Engine is part of QAI: it proposes new QAOA configurations for MaxCut, scores each one on the server, and adopts a candidate only when it is valid and improves the objective by at least a set margin. Every result is noiseless state-vector simulation; no quantum hardware is involved. This page records what the build produced, what passed, what failed on the way, and what is still open.</p>
+  <div class="status shipped">Shipped · v0.8.0</div>
+  <p class="note">The Evolution Engine at <b>quantum.mdlc.ai</b> is a <b>demo copy</b> of the QAI web app. It runs the same Next.js frontend on a Cloudflare Worker, but every request is answered from a <b>frozen, invented dataset</b> (a fictional lab), not from the QAI API, database or worker. Browsing works fully. Starting an evolution run or a job computes nothing: it replays a recorded run. Other changes are refused with a read-only error, and nothing is saved. The results on this page come from the real build: its tests, gates and reports, run against the full local stack.</p>
+  <a class="back" href="https://quantum.mdlc.ai/app/optimization">Open the Evolution Engine &rarr;</a> &nbsp; <a class="back" href="https://mdlc.ai/proof.html">&larr; Back to proof</a> &nbsp; <a class="back" href="../index.html" aria-label="Back to the MDLC examples gallery" data-mdlc-backlink>&larr; Gallery</a>
+</header>
+
+<section>
+  <h2>Where the build stands</h2>
+  <p class="sub">Release 0.8.0, 8 November 2026. Three later re-entries (R7 Formula Lab notation, R8 and R9 Validation Lab) were built on top of 0.8.0 and shipped to the local stack at commit <code>38e45fd</code> on 11 November 2026 without a new version number; the numbers below are from that ship. Quantum physics domain, comprehensive depth. A Python 3.14 SDK, a FastAPI API with a worker and scheduler, and a Next.js 16 web app on PostgreSQL 18 (primary and replica) and Valkey, behind Caddy in Docker Compose. The local Compose stack is the shipped artifact. The initial build (Stages 0 to 4) took 13.9 hours of active time; the re-entries are not included in that figure.</p>
+  <div class="grid">
+    <div class="stat ok"><b>623</b><span>SDK tests passing, 9 skipped</span></div>
+    <div class="stat ok"><b>366 + 391</b><span>API integration tests (real Postgres and Valkey) and web unit tests, all passing</span></div>
+    <div class="stat ok"><b>52</b><span>end-to-end tests passing, desktop and mobile</span></div>
+    <div class="stat ok"><b>45</b><span>features built (F-1 to F-45); 20 of 20 inputs reconciled</span></div>
+    <div class="stat ok"><b>37 / 37</b><span>machine-checked invariants passing at ship, 2 web-baseline cells accepted by ADR, 1 manual check left to the reviewer</span></div>
+    <div class="stat ok"><b>29 / 29</b><span>smoke-test checks passing</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Where evolution fits</h2>
+  <p class="sub">The Evolution Engine is not a separate product. It is a thread of features inside the QAI build.</p>
+  <table>
+    <thead><tr><th>Feature</th><th>What it added</th></tr></thead>
+    <tbody>
+      <tr><td><code>F-7</code></td><td>SDK evolution engine: seeded perturbation of a QAOA configuration; V (every seed's run passes validation) and J (mean of 1 minus the approximation ratio) computed by the engine; a candidate is accepted only when V holds and J &le; J(&Psi;n) &minus; &epsilon;.</td></tr>
+      <tr><td><code>F-14</code></td><td>Optimization screens (<code>/app/optimization</code>, the page the demo link opens): create a run, decision timeline, checkpoint history and the current &Psi;n. The server re-verifies every outcome against the SDK (compliance row S14).</td></tr>
+      <tr><td><code>F-26</code></td><td>The Evolution Engine section on the landing page (the loop, why it matters, its limits) and a "Load example" on Optimization.</td></tr>
+      <tr><td><code>F-31</code> to <code>F-34</code></td><td>Release 0.8.0, the evidence protocol: a governance gate with evidence completeness, a six-test protocol (baseline, improvement, repeatability, generalization on locked splits, governance injections, report), a protocol job and its screen.</td></tr>
+      <tr><td><code>F-38</code> to <code>F-45</code></td><td>Validation Lab (R8, R9, unreleased): release decisions with a reason, a versioned active &Psi; with promote and rollback, an audit hash chain, an independent MaxCut scorer, classical baselines and ablations with Holm-corrected statistics, and a report bundle labelled "Noiseless state-vector simulation".</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>Gate results</h2>
+  <p class="sub">Each gate's outcome as recorded in the build's reports. A gate that failed or halted and was fixed is listed with its fix.</p>
+  <table>
+    <thead><tr><th>Gate</th><th>Result</th><th>What it recorded</th></tr></thead>
+    <tbody>
+      <tr><td>Research</td><td><span class="tag t-ok">Pass</span></td><td>Go decision. 19 non-blank input fields plus the domain, 20 reconciliation rows, 0 unresolved conflicts. The design template's dark theme won over the configured light theme (ADR-01).</td></tr>
+      <tr><td>Pre-Delivery Completeness</td><td><span class="tag t-ok">Pass</span></td><td>All 55 SPEC endpoints have a handler. One fix during the gate: coverage was under-measured because SQLAlchemy's async layer runs in greenlets; once measured correctly, API coverage went from 77% to 91% and CI now enforces floors of 85% (API) and 90% (SDK).</td></tr>
+      <tr><td>Verification</td><td><span class="tag t-warn">Blocked, then cleared</span></td><td>First run (1 November): everything passed (API 272, SDK 195, web 109, end-to-end 40 / 40) except the web baseline, which could not run until the local Caddy certificate was trusted on the host (ADR-29). At the R9 ship: SDK 623 passed and 9 skipped, API 366, web 391, end-to-end 52.</td></tr>
+      <tr><td>Invariants</td><td><span class="tag t-ok">37 / 37</span></td><td>38 invariants: 37 machine-checked, 1 manual. They include an append-only governance ledger and audit table, row-level security on tenant tables, no pickle, eval or exec, Argon2id passwords, Qiskit confined to the reference adapter, and evolution decisions accepted and rejected both written. The web-baseline invariant passes with two cells accepted by ADR (below).</td></tr>
+      <tr><td>Reviewer (33 rounds)</td><td><span class="tag t-ok">Pass</span></td><td>Five rounds failed and were fixed. Round 1: a second, divergent lease watchdog that production never called. Round 17: one blocker in a numeric-edge fix. Round 19: requeueing a protocol job bypassed the one-protocol-per-tenant slot. Rounds 30 and 31: two medium SPEC drifts on the Validation Lab screens, then a fix that broke the rollback view. Round 29 found a medium lock-order deadlock in the audit chain, also fixed. Round 33 passed with one condition, the final full web baseline; it ran and failed only the two cells accepted by ADR-29 and ADR-56.</td></tr>
+      <tr><td>Security Audit (7 passes)</td><td><span class="tag t-warn">Remediated</span></td><td>Pass 1: 3 medium, 6 low, 3 info. Pass 3 failed with 1 high: a fix from pass 2 made the log redactor's regex quadratic, so one unauthenticated request could block an API replica for about 1 s. Pass 4 confirmed it fixed at the root. Passes 5 to 7: 0 critical, 0 high, 0 medium. Every pass is advisory because no secret scanner or TypeScript SAST tool was available.</td></tr>
+      <tr><td>Frontend audit</td><td><span class="tag t-warn">93 cells</span></td><td>31 screens at three widths, production build. The only failures: no HSTS header on the localhost edge (ADR-29), and mobile Lighthouse performance below 80 on landing (70) and app (67), accepted as host-bound (ADR-56). Accessibility and best practices 100; SEO 100 on landing (63 on the app, which is not indexed by design). Bundles 144 and 156 KB against a 400 KB budget.</td></tr>
+      <tr><td>Design gate</td><td><span class="tag t-ok">4 / 5</span></td><td>Review round 1 failed with 2 &#x2717;. The Observatory redesign scored 3 / 5 first: the full wordmark showed in the mobile top bar. Fixed, then re-scored 4 / 5.</td></tr>
+      <tr><td>End-to-end checkpoints</td><td><span class="tag t-ok">Fixed</span></td><td>Evolution runs timed out under host contention because the soft budget did not count child start-up (ADR-24). A mobile run found a chart table widening a 412 px viewport to 935 px; fixed on all nine app page roots with a guard test (ADR-27).</td></tr>
+      <tr><td>Governance</td><td><span class="tag t-ok">Recorded</span></td><td>224 records over 120 changes. Along the way, 57 records sent a change to review and 46 escalated it to a human; 41 human approvals were recorded; 0 changes blocked. Every record is in GOVERNANCE-DECISIONS.jsonl.</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Not verified: the "large, 50k+ concurrent" scale target. The shipped stack is single-host Compose and multi-host is a recorded residual (ADR-09). <code>/api/health</code> p95 was 618 ms against a 500 ms target on the Docker Desktop host.</p>
+</section>
+
+<section>
+  <h2>Security audit: what was found</h2>
+  <p class="sub">Findings from the seven security passes. Remediated items were fixed in the build; accepted items carry a recorded reason.</p>
+  <table>
+    <thead><tr><th>ID</th><th>Severity</th><th>Finding</th><th>Disposition</th></tr></thead>
+    <tbody>
+      <tr><td><code>P3-1</code></td><td><span class="tag t-bad">High</span></td><td>Polynomial regex backtracking in the log redactor, reachable without authentication: one request blocked an API replica's event loop for about 1 s. It was introduced by the pass-2 fix for DSN redaction.</td><td><span class="tag t-ok">Remediated</span> both patterns bounded, each string capped at 16 KiB before matching.</td></tr>
+      <tr><td><code>F-1</code>, <code>P2-1</code>, <code>P3-2</code></td><td><span class="tag t-warn">Medium</span></td><td>Circuit compile ran on the event loop for any viewer or API key. The first two fixes were partial; the third left one global CPU slot that one tenant could hold.</td><td><span class="tag t-ok">Remediated</span> two slots per process, at most one per tenant; low residuals P4-1 and P4-2.</td></tr>
+      <tr><td><code>F-2</code></td><td><span class="tag t-warn">Medium</span></td><td>Admin-issued password resets were checked against cross-workspace takeover only when issued, not when claimed.</td><td><span class="tag t-ok">Remediated</span></td></tr>
+      <tr><td><code>F-3</code></td><td><span class="tag t-warn">Medium</span></td><td>Server-side rendering did not forward the client IP, so per-IP limits applied to the web container as a whole.</td><td><span class="tag t-ok">Remediated</span></td></tr>
+      <tr><td><code>P2-2</code></td><td><span class="tag t-warn">Medium</span></td><td>Loading a circuit was quadratic in its number of operations.</td><td><span class="tag t-ok">Remediated</span> now linear; low residual P3-6 on writes.</td></tr>
+      <tr><td><code>P3-3</code> to <code>P3-5</code>, <code>P5-1</code>, <code>P5-3</code>, <code>P6-1</code></td><td><span class="tag t-open">Low</span></td><td>A compile slot freed on cancellation while its thread ran on; 60 parallel requests created 38 API keys against a cap of 25; huge integers escaped as a 500; wrong types and oversized parameter lists produced the wrong errors.</td><td><span class="tag t-ok">Remediated</span></td></tr>
+      <tr><td><code>F-4</code>, <code>F-5</code>, <code>F-6</code>, <code>F-9</code></td><td><span class="tag t-open">Low</span></td><td>No email verification at signup; the job child shares the worker's user and network, and Valkey has no password locally; the RLS bypass setting holds only while there is no SQL injection (none found); Python dependencies are pinned without hashes.</td><td><span class="tag t-open">Accepted</span> no mail provider in v1; deployment hardening.</td></tr>
+      <tr><td><code>P4-1</code> to <code>P4-4</code>, <code>P5-2</code>, <code>P6-2</code></td><td><span class="tag t-open">Low</span></td><td>Compile-slot race and cross-tenant contention, redaction gaps at the size bounds, and heavy jobs (about 8.4 s and 65 s of worker time) for one job-rate unit.</td><td><span class="tag t-open">Accepted</span> bounded by the 120 s timeout and queue caps (ADR-35, ADR-44).</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Result: 0 critical, 0 high, 0 medium open; low and info items accepted with reasons. Production <code>npm audit</code> reported 0 vulnerabilities. The last dedicated security pass (pass 7) covered re-entry R4; the R5 to R9 changes were checked in reviewer rounds 14 to 33, not in a separate security pass.</p>
+</section>
+
+<section>
+  <h2>Open items</h2>
+  <ul>
+    <li>HSTS is off on the localhost edge by design, because the stack uses a local certificate (ADR-29).</li>
+    <li>Mobile Lighthouse performance is below 80 on landing and app (63 to 70, LCP 2.7 to 3.6 s) in three full runs, while an isolated measure scored 83. Accepted as host-bound (ADR-56), to be reviewed on the next quiet-host or CI run.</li>
+    <li>Not a public deploy: the stack is local. A remote host needs a public certificate, HSTS enabled, real secrets, a Valkey password and database backups.</li>
+    <li>The 50k-concurrent scale target is not demonstrated (single host; ADR-09), and <code>/api/health</code> p95 missed its 500 ms target on the Docker Desktop host.</li>
+    <li>Carried low and info review items: N-R33-3, N-R33-5, N-R32-1, N-R32-2, N-R28-3, N-R28-4, N-R29-2 to N-R29-5, N-R30-5 and N-R30-6, plus the accepted security residuals above.</li>
+    <li>R7 to R9 are not yet a numbered release; the last release is 0.8.0. COMPLIANCE.md (36 rows: 16 implemented, 20 with a residual or waiting on measurement, 0 gaps) was last re-checked at re-entry R3.</li>
+    <li>All results are noiseless state-vector simulation on small instances (the protocol uses 6 to 10 nodes). No noisy simulator or hardware backend exists.</li>
+  </ul>
+</section>
+
+<footer>MDLC kernel · QAI 0.8.0 + R7 to R9 · shipped 11 November 2026 at 38e45fd · status as recorded in the build reports</footer>
+
+</div>
+</body>
+</html>
