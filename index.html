@@ -4,9 +4,9 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>MDLC — Example Builds</title>
-<meta name="description" content="Thirteen real applications, each built end-to-end by the MDLC methodology, from a one-page blueprint to a gate-passing build." />
+<meta name="description" content="Fourteen real applications, each built end-to-end by the MDLC methodology, from a one-page blueprint to a gate-passing build." />
 <meta property="og:title" content="MDLC — Example Builds" />
-<meta property="og:description" content="Thirteen real applications, each built end-to-end by the MDLC methodology. Live previews, architecture, and the full build report for each." />
+<meta property="og:description" content="Fourteen real applications, each built end-to-end by the MDLC methodology. Live previews, architecture, and the full build report for each." />
 <meta property="og:type" content="website" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -261,14 +261,14 @@
 
   <header class="hero">
     <div class="eyebrow"><span class="gl">✦</span> Reference Builds <span class="gl">→</span> Built with MDLC</div>
-    <h1>Thirteen real apps,<br><em>built by the methodology.</em></h1>
+    <h1>Fourteen real apps,<br><em>built by the methodology.</em></h1>
     <p class="sub">Each app below started as a one-page <code>RESEARCH.md</code> blueprint and came out the other side as a working, reviewed application. The architecture, the spec, the decisions, and the full build report are all there to prove it.</p>
     <div class="actions">
       <a class="pricing-cta pricing-cta-secondary" href="https://mdlc.ai/catches.html" style="display:inline-flex;align-items:center;gap:0.5rem;margin-top:0;padding:1rem 2.25rem;font-size:0.8rem;">See everything it catches →</a>
     </div>
     <div class="stats">
-      <span>13 apps, 0 hand-written</span>
-      <span>251 smoke flows passed</span>
+      <span>14 apps, 0 hand-written</span>
+      <span>304 smoke flows passed</span>
       <span>every gate, with receipts</span>
     </div>
   </header>
@@ -302,6 +302,17 @@
         <p>A system intelligence platform: it streams telemetry into an entity graph, predicts drift and risk from it, and lets agents propose fixes that wait for policy and a human before anything changes. Every decision lands in a hash-chained evidence ledger. The reviewer failed round 1 and the performance gate halted the build at 72 against a floor of 80; both were fixed, not waived. Shipped as v0.1.7.</p>
         <div class="gates"><span class="gate">569 tests</span><span class="gate">52/52 smoke</span><span class="gate">56/56 invariants</span><span class="gate">0 high/med open</span><span class="gate">Reviewer PASS</span></div>
         <div class="links"><a class="lead" href="stardancer/demo.html">Try the interactive demo</a><a href="stardancer/index.html">Open the dossier</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/stardancer/REPORT.md">Build report</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/stardancer/SECURITY-AUDIT.md">Security audit</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/tree/main/stardancer">Files &#8599;</a></div>
+      </div>
+    </article>
+
+    <article class="card featured">
+      <a class="shot" href="rails/index.html"><img src="rails/preview.webp" alt="RΛILS build dossier" loading="lazy"><span class="open"><span>Open the dossier &rarr;</span></span></a>
+      <div class="body">
+        <h3><span style="font-family:'Segoe UI','Helvetica Neue',Arial,system-ui,sans-serif;font-weight:600;letter-spacing:.08em">RΛILS</span> <span class="badge dossier">Build dossier</span> <span class="badge">Payments</span></h3>
+        <p class="featured-note">The interactive demo is read-only and runs entirely in your browser on simulated data. The numbers on this card come from the real build.</p>
+        <p>Programmable financial infrastructure: one API for payments, subscriptions, refunds and payouts, with exactly-once idempotency, signed webhooks and an append-only double-entry ledger. The reviewer failed three rounds, including a refund retry that could pay out twice; each was fixed with a test. The sustained load test still misses its latency targets on one host, with 0 errors and 0 duplicate charges. Shipped as v1.0.1.</p>
+        <div class="gates"><span class="gate">431 tests</span><span class="gate">53/53 smoke</span><span class="gate">39/39 invariants</span><span class="gate">96% coverage</span><span class="gate">0 high/med open</span><span class="gate">Reviewer PASS</span></div>
+        <div class="links"><a class="lead" href="https://mdlc.ai/rails-demo.html">Try the interactive demo</a><a href="rails/index.html">Open the dossier</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/rails/REPORT.md">Build report</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/rails/SECURITY-AUDIT.md">Security audit</a><a href="https://github.com/mdlcai/ai-mdlc-kernel-examples/tree/main/rails">Files &#8599;</a></div>
       </div>
     </article>
 
