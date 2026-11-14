@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RΛILS Build Dossier · MDLC</title>
+<meta name="description" content="RΛILS, programmable payment infrastructure built by MDLC. Build status, gate results, security audit and open items, as recorded in the build.">
+<meta name="theme-color" content="#06070a">
+<style>
+:root{--bg:#06070a;--surface:#0e1116;--raised:#141922;--border:rgba(255,255,255,.09);--text:#ebe7df;--muted:#a3a9b5;--faint:#7a808c;--amber:#ffb547;--ember:#ff7a3d;--green:#5fe3a1;--red:#ff5d6c;--cyan:#5fd4ff;--mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;--sans:"Inter","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;color-scheme:dark}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6}
+body{padding:0 16px 64px}
+.wrap{max-width:960px;margin:0 auto}
+header{padding:48px 0 28px;border-bottom:1px solid var(--border)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber)}
+h1{font-family:var(--sans);font-weight:600;font-size:clamp(28px,4.5vw,44px);letter-spacing:-.01em;margin:12px 0 10px}
+.lede{color:var(--muted);max-width:680px;font-size:16px}
+.status{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;border:1px solid rgba(255,181,71,.45);color:var(--amber);border-radius:999px;padding:7px 14px}
+.status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--amber)}
+.status.shipped{border-color:rgba(95,227,161,.45);color:var(--green)}
+.status.shipped::before{background:var(--green)}
+.back{display:inline-block;margin-top:20px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--cyan);text-decoration:none}
+section{margin-top:44px}
+h2{font-size:22px;font-weight:600;margin-bottom:6px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+.stat b{display:block;font-family:var(--mono);font-size:24px;font-weight:600}
+.stat span{font-size:12px;color:var(--muted);letter-spacing:.02em}
+.ok b{color:var(--green)} .warn b{color:var(--amber)} .bad b{color:var(--red)}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:14px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:500}
+tr:last-child td{border-bottom:0}
+td code{font-family:var(--mono);font-size:12px;color:var(--cyan)}
+.tag{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:3px 8px;white-space:nowrap}
+.t-ok{background:rgba(95,227,161,.12);color:var(--green)}
+.t-warn{background:rgba(255,181,71,.12);color:var(--amber)}
+.t-bad{background:rgba(255,93,108,.12);color:var(--red)}
+.t-open{background:rgba(255,255,255,.06);color:var(--muted)}
+.note{margin-top:14px;color:var(--muted);font-size:14px}
+ul{padding-left:20px;color:var(--muted);font-size:15px}
+li{margin-bottom:6px}
+.wrap table{display:block;overflow-x:auto}
+footer{margin-top:52px;color:var(--faint);font-size:12px;font-family:var(--mono);letter-spacing:.04em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Build dossier · MDLC kernel</div>
+  <h1>RΛILS</h1>
+  <p class="lede">Programmable financial infrastructure: one API for payments, subscriptions, refunds and payouts, with a double-entry ledger that records every movement of money. This page records what the build produced, what passed, what failed on the way, and what is still open.</p>
+  <div class="status shipped">Shipped · v1.0.1</div>
+  <p class="note">The interactive demo on the proof page is <b>read-only</b> and runs entirely in your browser on <b>simulated data</b>. It does not connect to a running RΛILS, and nothing you do in it is saved. The results on this page come from the real build: its tests, gates and reports.</p>
+  <a class="back" href="https://mdlc.ai/rails-demo.html">Open the read-only demo &rarr;</a> &nbsp; <a class="back" href="https://mdlc.ai/proof.html">&larr; Back to proof</a> &nbsp; <a class="back" href="../index.html" aria-label="Back to the MDLC examples gallery" data-mdlc-backlink>&larr; Gallery</a>
+</header>
+
+<section>
+  <h2>Where the build stands</h2>
+  <p class="sub">Version 1.0.1, commit <code>0a8587b</code>, verified on 21 October 2026. Finance domain, PCI DSS baseline, comprehensive depth. A Rails 8.1 API and a Next.js 16 console on PostgreSQL 18 (primary and replica), Redis, Solid Queue and Action Cable, behind Caddy in Docker Compose. The local Compose stack is the shipped artifact. About 20 hours of active build time.</p>
+  <div class="grid">
+    <div class="stat ok"><b>341 / 341</b><span>API tests passing, 96.3% line coverage</span></div>
+    <div class="stat ok"><b>64 + 26</b><span>web unit tests and end-to-end flows (desktop and mobile), all passing</span></div>
+    <div class="stat ok"><b>19</b><span>features built in order; 34 of 34 inputs reconciled</span></div>
+    <div class="stat ok"><b>39 / 39</b><span>machine-checked invariants proven, 1 manual check left to the reviewer</span></div>
+    <div class="stat ok"><b>53 / 53</b><span>smoke-test flows passing</span></div>
+    <div class="stat ok"><b>62 / 7 / 0</b><span>compliance rows: implemented, with a recorded residual, gaps</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Gate results</h2>
+  <p class="sub">Each gate's outcome as recorded in the build's reports. A gate that failed and was fixed is listed with its fix.</p>
+  <table>
+    <thead><tr><th>Gate</th><th>Result</th><th>What it recorded</th></tr></thead>
+    <tbody>
+      <tr><td>Research</td><td><span class="tag t-ok">Pass</span></td><td>Go decision. All 34 RESEARCH.md input fields reconciled into the build, each applied or deferred with a reason.</td></tr>
+      <tr><td>Verification</td><td><span class="tag t-ok">Pass</span></td><td>API 341 examples, 0 failures; RuboCop clean on 267 files; web unit 64 / 64; end-to-end 26 passed on Desktop Chrome and Pixel 7. API line coverage 96.33%, services 97.14%.</td></tr>
+      <tr><td>Invariants</td><td><span class="tag t-ok">39 / 39</span></td><td>40 invariants in total: 39 machine-checked and passing, 1 manual. They include an append-only ledger (a database trigger refuses updates and deletes), money held as integer minor units, and a guard that refuses card numbers.</td></tr>
+      <tr><td>Reviewer (8 rounds)</td><td><span class="tag t-ok">Pass</span></td><td>Rounds 1 to 3 failed and were fixed. Round 1 found that retrying a refund after a 503 could create a second refund; the fix keeps the claimed idempotency record and resumes it, and a request spec proves one refund on retry. Rounds 4 to 8 passed. Round 8 left three advisories, recorded in ADR-055.</td></tr>
+      <tr><td>Security Audit (pass 1 and re-scan)</td><td><span class="tag t-warn">Remediated</span></td><td>Pass 1 found 1 high, 2 medium and 3 low. The high and medium items and two of the lows were fixed, each with a test. The reviewer then found three gaps in those fixes, also fixed. Re-scan: 0 critical, 0 high, 0 medium open.</td></tr>
+      <tr><td>Frontend audit</td><td><span class="tag t-ok">150 cells</span></td><td>30 screens at 375, 768 and 1280 px in both palettes. The only failure is the missing HSTS header on the localhost edge, accepted under ADR-048. Lighthouse landing: performance 93, accessibility, best practices and SEO 100, LCP 1.8 s. Dashboard: performance 93 (not indexed by design, so SEO is 63). Bundles 139 and 150 KB against a 400 KB budget.</td></tr>
+      <tr><td>Design gate</td><td><span class="tag t-ok">27 / 3 / 0</span></td><td>Started at 5 pass, 21 warn, 4 fail. Four re-scores brought it to 27 pass, 3 warn, 0 fail.</td></tr>
+      <tr><td>Load test</td><td><span class="tag t-bad">Latency fail</span></td><td>The sustained profile misses its p95 latency targets (50 and 250 ms) on a single local host, because virtual users queue on the API threads. Error rate 0%, and the replay mix produced 0 duplicate charges. Capacity work is carried as a residual.</td></tr>
+      <tr><td>Governance</td><td><span class="tag t-ok">Recorded</span></td><td>75 records over 49 changes: 35 auto-approved, 12 sent to review, 2 blocked and reverted. Every record is in GOVERNANCE-DECISIONS.jsonl.</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Not verified automatically: live Stripe payments. Stripe runs in contract mode because no live keys were provisioned (ADR-008); the sandbox processor is covered.</p>
+</section>
+
+<section>
+  <h2>Security audit: what was found</h2>
+  <p class="sub">Findings from the audit and the reviewer's checks of the fixes. Remediated items were fixed in the build; deferred items are accepted with the reason recorded.</p>
+  <table>
+    <thead><tr><th>ID</th><th>Severity</th><th>Finding</th><th>Disposition</th></tr></thead>
+    <tbody>
+      <tr><td><code>SA-1</code></td><td><span class="tag t-bad">High</span></td><td>Login and password-reset throttles compared the raw path, so <code>/login/</code>, <code>/login.json</code> and form-encoded bodies skipped the per-IP and per-email limits.</td><td><span class="tag t-ok">Remediated</span> throttles key on the normalised route and the parsed parameters.</td></tr>
+      <tr><td><code>SA-2</code></td><td><span class="tag t-warn">Medium</span></td><td>Outbound webhooks had no overall deadline, so a slow endpoint could hold the shared delivery sweep.</td><td><span class="tag t-ok">Remediated</span> 5 s deadline per attempt; slow endpoints are deferred.</td></tr>
+      <tr><td><code>SA-3</code></td><td><span class="tag t-warn">Medium</span></td><td>Open redirect after sign-in through a tab character in the return path.</td><td><span class="tag t-ok">Remediated</span> control characters, backslashes and dot-segment tricks refused.</td></tr>
+      <tr><td><code>N1</code>, <code>N2</code>, <code>N5</code></td><td><span class="tag t-bad">High</span> <span class="tag t-warn">Medium</span></td><td>The reviewer found gaps in the first fixes: a dot-segment redirect, and two request shapes that still skipped the per-email throttle.</td><td><span class="tag t-ok">Remediated</span> each with a test.</td></tr>
+      <tr><td><code>SA-5</code>, <code>SA-6</code></td><td><span class="tag t-open">Low</span></td><td>The SSRF block list missed IPv6 transition ranges; a locked account answered faster than an unknown one.</td><td><span class="tag t-ok">Remediated</span></td></tr>
+      <tr><td><code>SA-4</code></td><td><span class="tag t-open">Low</span></td><td>bcrypt ignores bytes after 72, so very long passphrases are only as strong as their first 72 bytes.</td><td><span class="tag t-open">Deferred</span> needs a versioned pre-hash migration with its own ADR.</td></tr>
+      <tr><td><code>N3</code>, <code>N4</code></td><td><span class="tag t-open">Low</span></td><td>One endpoint with many due retries can delay other tenants' webhook retries; two narrow idempotent-resume edges around processor failover.</td><td><span class="tag t-open">Residual</span> scheduled after 1.0.1; failover across two live accounts is not reachable in contract mode.</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Result after the re-scan: 0 critical, 0 high, 0 medium open; 1 low deferred and 2 low residual, each with a recorded reason. Dependency audits and Brakeman report nothing; Semgrep's 8 hits are false positives.</p>
+</section>
+
+<section>
+  <h2>Open items</h2>
+  <ul>
+    <li>Load test: sustained latency targets are missed on a single local host. No errors and no duplicate charges under load.</li>
+    <li>Live Stripe payments were not verified; Stripe runs in contract mode until keys are provisioned.</li>
+    <li>HSTS is absent on the localhost edge, because the local certificate is not trusted by the host store (ADR-048).</li>
+    <li>Low security residuals SA-4, N3 and N4, and three reviewer advisories (ADR-055).</li>
+    <li>After 1.0.1, work continued on agent mandates (spend-capped, expiring authority an AI agent can use to pay). That work has not yet been through the ship gates, so it is not counted on this page.</li>
+  </ul>
+</section>
+
+<footer>MDLC kernel · RΛILS 1.0.1 · verified 21 October 2026 · status as recorded in the build reports</footer>
+
+</div>
+</body>
+</html>
