@@ -8,7 +8,7 @@
 
 > **Superseded by STΛRSHΞILD (2026-11-12).** ThreatWatch's capabilities were merged into STΛRSHΞILD, the MDLC.ai DEFEND module, in eight waves (ingest connectors, correlation, outbound notifications, threat intel, reports, the investigation copilot, live updates and THREAT//MAP). This dossier is kept as the record of the original build; the ThreatWatch source is archived and no longer developed.
 
-> One of thirteen reference apps built end-to-end with the **[MDLC](https://mdlc.ai)** methodology, from a `RESEARCH.md` blueprint, through architecture and build, to a passing set of quality gates. Nothing here was hand-tuned after generation.
+> One of fourteen reference apps built end-to-end with the **[MDLC](https://mdlc.ai)** methodology, from a `RESEARCH.md` blueprint, through architecture and build, to a passing set of quality gates. Nothing here was hand-tuned after generation.
 
 ## What it does
 
