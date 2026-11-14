@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STΛRSHΞILD Build Dossier · MDLC</title>
+<meta name="description" content="STΛRSHΞILD, a governed security operations console built by MDLC. Gate results, what each gate sent back, the security audit, governance and open items, as recorded in the build.">
+<meta name="theme-color" content="#050b17">
+<style>
+:root{--bg:#050b17;--surface:#071226;--raised:#0a1830;--border:#16325a;--text:#e6f1ff;--muted:#9db4d3;--faint:#7f98ba;--accent:#22d3ee;--qai:#a78bfa;--green:#4ade80;--amber:#fbbf24;--red:#f87171;--mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;--sans:"Inter","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;color-scheme:dark}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6}
+body{padding:0 16px 64px;background-image:radial-gradient(ellipse 80% 40% at 50% -10%,rgba(34,211,238,.10),transparent 70%)}
+.wrap{max-width:960px;margin:0 auto}
+header{padding:48px 0 28px;border-bottom:1px solid var(--border)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:"Segoe UI","Helvetica Neue",Arial,system-ui,sans-serif;font-weight:600;font-size:clamp(30px,5vw,48px);letter-spacing:.08em;margin:12px 0 10px}
+.lede{color:var(--muted);max-width:700px;font-size:16px}
+.status{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;border:1px solid rgba(74,222,128,.45);color:var(--green);border-radius:999px;padding:7px 14px}
+.status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--green)}
+.links{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:20px}
+.back{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--accent);text-decoration:none}
+.back:hover{text-decoration:underline}
+section{margin-top:44px}
+h2{font-size:22px;font-weight:600;margin-bottom:6px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:16px;max-width:760px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+.stat b{display:block;font-family:var(--mono);font-size:24px;font-weight:600;color:var(--green)}
+.stat span{font-size:12px;color:var(--muted);letter-spacing:.02em}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:14px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:500}
+tr:last-child td{border-bottom:0}
+td code{font-family:var(--mono);font-size:12px;color:var(--accent)}
+.wrap table{display:block;overflow-x:auto}
+.tag{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:3px 8px;white-space:nowrap}
+.t-ok{background:rgba(74,222,128,.12);color:var(--green)}
+.t-warn{background:rgba(251,191,36,.12);color:var(--amber)}
+.t-bad{background:rgba(248,113,113,.12);color:var(--red)}
+.t-open{background:rgba(255,255,255,.06);color:var(--muted)}
+.tape{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 18px 14px}
+.row{display:grid;grid-template-columns:150px 1fr;align-items:center;gap:12px;padding:6px 0;font-size:13px;color:var(--muted)}
+.sq{display:flex;flex-wrap:wrap;gap:5px}
+.sq i{display:block;width:16px;height:16px;border-radius:4px;background:var(--red);opacity:.85}
+.sq i.p{background:var(--green)}
+.sq i.w{background:var(--amber)}
+.cap{margin-top:10px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--faint)}
+.legend{display:flex;gap:16px;margin-top:8px;font-size:12px;color:var(--faint)}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px;background:var(--c)}
+.note{margin-top:14px;color:var(--muted);font-size:14px}
+ul{padding-left:20px;color:var(--muted);font-size:15px}
+li{margin-bottom:6px}
+footer{margin-top:52px;color:var(--faint);font-size:12px;font-family:var(--mono);letter-spacing:.04em}
+@media (max-width:560px){.row{grid-template-columns:1fr;gap:4px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Build dossier · MDLC kernel</div>
+  <h1>STΛRSHΞILD</h1>
+  <p class="lede">A governed security operations console. It correlates signed telemetry into alerts and incidents, proposes response actions that run only after a policy check and human approval (two approvers, neither the proposer, for high-impact actions), and records every change in a hash-chained evidence ledger. This page records what the build produced, what each gate sent back, and what is still open.</p>
+  <div class="status">Built · v0.1.2 · local deploy</div>
+  <p class="note">The interactive demo is <b>read-only</b> and runs entirely in your browser on <b>recorded, simulated data</b>. It renders the build's real screens, but it does not connect to a running STΛRSHΞILD, and nothing you do in it is saved. The results on this page come from the real build: its tests, gates and reports.</p>
+  <div class="links">
+    <a class="back" href="demo.html">Open the read-only demo &rarr;</a>
+    <a class="back" href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/starshield/REPORT.md">Build report &nearr;</a>
+    <a class="back" href="https://mdlc.ai/proof.html">&larr; Back to proof</a>
+    <a class="back" href="../index.html" aria-label="Back to the MDLC examples gallery" data-mdlc-backlink>&larr; Gallery</a>
+  </div>
+</header>
+
+<section>
+  <h2>Where the build stands</h2>
+  <p class="sub">Version 0.1.2, built on 7 November 2026 in 15.7 active hours on Claude Opus 5.5, and deployed locally with Docker Compose behind Caddy over TLS. It is not running in production. Every machine-checked invariant passes and no reviews or approvals are pending.</p>
+  <div class="grid">
+    <div class="stat"><b>253 / 253</b><span>unit and integration tests, 96% statement coverage</span></div>
+    <div class="stat"><b>82 / 82</b><span>end-to-end tests on desktop and mobile</span></div>
+    <div class="stat"><b>9 / 9</b><span>smoke flows against the deployed stack, plus 10 operations checks</span></div>
+    <div class="stat"><b>48 / 48</b><span>machine-checked invariants, 2 manual ones upheld by the reviewer</span></div>
+    <div class="stat"><b>19</b><span>features built from the spec, 20 screens</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>What the gates sent back</h2>
+  <p class="sub">Each square is one run of a gate, in order. Red means the gate returned the build for fixes, amber means it passed with an accepted residual, and green means it passed. No threshold was lowered to get a pass.</p>
+  <div class="tape" role="img" aria-label="Gate runs in order. Reviewer: fail, fail, pass, pass, pass. Security: fail, pass with advisory. Design: fail, fail, pass with accepted residuals. Web baseline: four failing runs, then pass. Verification and smoke: pass.">
+    <div class="row"><span>Reviewer</span><span class="sq"><i></i><i></i><i class="p"></i><i class="p"></i><i class="p"></i></span></div>
+    <div class="row"><span>Security audit</span><span class="sq"><i></i><i class="w"></i></span></div>
+    <div class="row"><span>Design quality</span><span class="sq"><i></i><i></i><i class="w"></i></span></div>
+    <div class="row"><span>Web baseline</span><span class="sq"><i></i><i></i><i></i><i></i><i class="p"></i></span></div>
+    <div class="row"><span>Verify · Smoke</span><span class="sq"><i class="p"></i><i class="p"></i></span></div>
+    <div class="legend"><span style="--c:var(--red)">Sent back</span><span style="--c:var(--amber)">Pass with residual</span><span style="--c:var(--green)">Pass</span></div>
+    <div class="cap">Web baseline failing cells over five runs: 275 &rarr; 100 &rarr; 2 &rarr; 0</div>
+  </div>
+</section>
+
+<section>
+  <h2>Gate results</h2>
+  <p class="sub">Each gate's final outcome as recorded in REPORT.md, with what it caught on the way.</p>
+  <table>
+    <thead><tr><th>Gate</th><th>Result</th><th>What it recorded</th></tr></thead>
+    <tbody>
+      <tr><td>Invariant lint</td><td><span class="tag t-ok">48 / 48</span></td><td>50 invariants: 48 machine-checked and proven before any feature code, then passing at the final close. The 2 manual invariants were audited by the reviewer and upheld.</td></tr>
+      <tr><td>Verification</td><td><span class="tag t-ok">Pass</span></td><td>Run against production builds. Format, type-checked lint (jsx-a11y, zero warnings), typecheck and build all clean. 253/253 tests at 96.3% statements and 85.3% branches against an 80% floor. 82/82 end-to-end tests.</td></tr>
+      <tr><td>Web baseline</td><td><span class="tag t-warn">Pass, 2 residuals</span></td><td>Failing cells went from 275 to 100 to 2 to 0 over five runs. Final run: 24 screens, 120 cells, 0 failing, all site checks pass. Lighthouse performance on the Command Center scored a median of 80 against a bar of 85, and the landing page hit a browser measurement error. Both are recorded as residuals, not passes (ADR-059, ADR-070).</td></tr>
+      <tr><td>Reviewer</td><td><span class="tag t-ok">Pass</span></td><td>Round 1 failed (validator confidence calibration, export scope and other items). Round 2 failed (the SLA escalation smoke flow and others). Round 3 passed after a scoped-export end-to-end test settled the last uncertain item. Rounds 4 and 5 re-reviewed the load fixes and passed. 26 after-the-fact review items resolved.</td></tr>
+      <tr><td>Security audit</td><td><span class="tag t-warn">Pass with advisory</span></td><td>Three passes: scan, fix, re-scan. 24 findings catalogued: 0 critical, 0 high, 4 medium, 11 low, 9 informational. All 4 mediums were fixed. 7 lows are accepted with recorded reasons. Advisory: no rate limit at the edge.</td></tr>
+      <tr><td>COMPLIANCE.md</td><td><span class="tag t-ok">21 / 7 / 0</span></td><td>21 controls met, 7 met with a documented note, 0 gaps. Every web-delivery row cites the measured frontend audit.</td></tr>
+      <tr><td>Design quality</td><td><span class="tag t-warn">Conforms</span></td><td>20 screens scored three times: 2 pass / 5 note / 13 fail, then 8 / 10 / 2, then 13 / 7 / 0. The 7 notes are accepted polish items; none is an anti-slop or accessibility floor failure. The built tokens match the design template 38 of 38.</td></tr>
+      <tr><td>Smoke test</td><td><span class="tag t-ok">9 / 9</span></td><td>Against the deployed containers: trusted TLS, health, sign-up and sign-in, CRUD, signed ingest with forged-signature and replay rejection, cross-tenant isolation, viewer permissions, ledger export, scheduled SLA escalation and a 16 KB cookie. Plus worker liveness, image provenance, graceful shutdown and fail-fast on a missing secret.</td></tr>
+      <tr><td>Completeness</td><td><span class="tag t-ok">Pass</span></td><td>Every spec route has a handler (53 of 55 in the contract check; the other 2 are intended exclusions). No TODO or stub code. A reversible migration verified up, down and up again on a scratch database.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>Security audit: what was found</h2>
+  <p class="sub">Selected findings from SECURITY-AUDIT.md. Fixed items were fixed in the build, most with a test; accepted items carry the reason in an ADR.</p>
+  <table>
+    <thead><tr><th>ID</th><th>Severity</th><th>Finding</th><th>Disposition</th></tr></thead>
+    <tbody>
+      <tr><td><code>SEC-20</code></td><td><span class="tag t-warn">Medium</span></td><td>Server-rendered page fetches pooled every user into one per-IP rate-limit bucket, so one busy user could lock everyone out.</td><td><span class="tag t-ok">Fixed</span> with a test.</td></tr>
+      <tr><td><code>SEC-3</code></td><td><span class="tag t-warn">Medium</span></td><td>No per-source ingest limit.</td><td><span class="tag t-ok">Fixed</span> with a test.</td></tr>
+      <tr><td><code>SEC-2</code></td><td><span class="tag t-warn">Medium</span></td><td>The log redaction list missed the signature, CSRF and email fields.</td><td><span class="tag t-ok">Fixed</span> with a test.</td></tr>
+      <tr><td><code>SEC-1</code></td><td><span class="tag t-warn">Medium</span></td><td>Credential forms without <code>method="post"</code>, so a script failure could put a password in the URL.</td><td><span class="tag t-ok">Fixed</span></td></tr>
+      <tr><td><code>SEC-24</code></td><td><span class="tag t-open">Info</span></td><td>Asset creation could let the request body override the organisation id.</td><td><span class="tag t-ok">Fixed</span> with a test.</td></tr>
+      <tr><td><code>SEC-21</code></td><td><span class="tag t-open">Low</span></td><td>A <code>sideEffects:false</code> package flag dropped a validation library setting and broke the content security policy.</td><td><span class="tag t-ok">Fixed</span> with a test.</td></tr>
+      <tr><td><code>SEC-7</code>, <code>SEC-9</code></td><td><span class="tag t-open">Low</span></td><td>Redis without authentication; an unset <code>NODE_ENV</code> fell back to development secrets.</td><td><span class="tag t-ok">Fixed</span></td></tr>
+      <tr><td><code>SEC-4</code>, <code>5</code>, <code>6</code>, <code>8</code>, <code>10</code>, <code>11</code>, <code>13</code></td><td><span class="tag t-open">Low</span></td><td>Sign-up reveals whether an email exists, no per-account login limit across IPs, the app uses the database owner role and the ledger chain is not anchored outside the database, public health shows the version, demo seeding on by default, prefetch requests skip middleware headers, dev-only dependency advisories.</td><td><span class="tag t-open">Accepted</span> each with a recorded reason.</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Result after the re-scan: 0 critical, 0 high and 0 medium open. <code>npm audit --omit=dev</code> reports 0.</p>
+</section>
+
+<section>
+  <h2>Governance</h2>
+  <p class="sub">Every change was classified against policy 1.5 before it merged, and the decisions are kept in a hash-chained ledger (GOVERNANCE-DECISIONS.jsonl).</p>
+  <div class="grid">
+    <div class="stat"><b>91</b><span>decision records over 49 changes</span></div>
+    <div class="stat"><b>10</b><span>changes held for a human: authentication, security boundary, infrastructure and architecture</span></div>
+    <div class="stat"><b>49 / 49</b><span>changes cleared by the end; none left blocked, in review or in rework</span></div>
+  </div>
+  <p class="note">Ledger head after 91 records: <code>e0dc01a59e120ee1…</code>. The full hash is in REPORT.md, so a later copy of the ledger can be checked against it.</p>
+</section>
+
+<section>
+  <h2>Open items</h2>
+  <ul>
+    <li>Load targets in the spec were not met on the single shared build machine (residual R1, ADR-065). Single requests are within target; three load fixes went in before the final redeploy.</li>
+    <li>Command Center performance is marginal: clean Lighthouse runs average 86.5, but the median counted 80 against a bar of 85 (ADR-059, ADR-061). The landing page's last measurement hit a browser error rather than a score (ADR-070).</li>
+    <li>No rate limit at the edge; limits are enforced in the API only.</li>
+    <li>The evidence ledger is tamper-evident inside the database but not anchored outside it, so an attacker with database owner rights could rewrite it (SEC-6). The breached-password check fails open if its service is unreachable (ADR-007).</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Evidence</h2>
+  <ul>
+    <li><a class="back" href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/starshield/REPORT.md">REPORT.md</a>: every gate, usage and governance summary</li>
+    <li><a class="back" href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/starshield/SECURITY-AUDIT.md">SECURITY-AUDIT.md</a>: all 24 findings with file references</li>
+    <li><a class="back" href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/starshield/SPEC.md">SPEC.md</a>, <a class="back" href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/starshield/ARCHITECTURE.md">ARCHITECTURE.md</a>, <a class="back" href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/starshield/DECISIONS.md">DECISIONS.md</a>, <a class="back" href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/starshield/COMPLIANCE.md">COMPLIANCE.md</a>, <a class="back" href="https://github.com/mdlcai/ai-mdlc-kernel-examples/blob/main/starshield/RESEARCH.md">RESEARCH.md</a></li>
+  </ul>
+</section>
+
+<footer>MDLC kernel · STΛRSHΞILD 0.1.2 · built 7 November 2026 · status as recorded in the build reports</footer>
+
+</div>
+</body>
+</html>

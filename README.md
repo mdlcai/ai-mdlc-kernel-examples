@@ -2,7 +2,7 @@
 
 # MDLC - Example Builds
 
-### Fourteen real applications, each built end-to-end by the MDLC methodology.
+### Fifteen real applications, each built end-to-end by the MDLC methodology.
 
 **[🌐 Browse the live gallery →](https://mdlcai.github.io/ai-mdlc-kernel-examples/)**
 
@@ -14,7 +14,7 @@
 
 ## What you're looking at
 
-**MDLC** (the Markdown Development Life Cycle) turns a single `RESEARCH.md` blueprint into a working, reviewed application — driving it through architecture, build, and a battery of automated quality gates. These fourteen examples are the proof. Each one was generated, not hand-written, and each ships the **complete paper trail**: the blueprint that started it, the architecture that fell out of it, the spec and decisions it was built to, and the build report showing every gate it passed.
+**MDLC** (the Markdown Development Life Cycle) turns a single `RESEARCH.md` blueprint into a working, reviewed application — driving it through architecture, build, and a battery of automated quality gates. These fifteen examples are the proof. Each one was generated, not hand-written, and each ships the **complete paper trail**: the blueprint that started it, the architecture that fell out of it, the spec and decisions it was built to, and the build report showing every gate it passed.
 
 Open any folder and read it top to bottom — `RESEARCH.md` → `ARCHITECTURE.md` → `SPEC.md` → `DECISIONS.md` → `REPORT.md` — and you can follow the process end to end.
 
@@ -23,6 +23,7 @@ Open any folder and read it top to bottom — `RESEARCH.md` → `ARCHITECTURE.md
 | | App | What it is | Gates passed |
 |---|-----|-----------|--------------|
 | [<img src="threatwatch/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/threatwatch/index.html) | **[ThreatWatch](threatwatch/)** | **Build dossier.** Multi-tenant security operations: signed event ingest, detection and correlation on Temporal, alert triage, live dashboard and threat map. Every gate sent it back at least once before it passed; the [dossier](https://mdlcai.github.io/ai-mdlc-kernel-examples/threatwatch/index.html) shows each run. | 418 tests · 42/42 e2e · 24/24 smoke · 43 invariants · Reviewer, Security, Design PASS |
+| [<img src="starshield/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/starshield/demo.html) | **[STΛRSHΞILD](starshield/)** | **Build dossier + interactive demo.** Governed security operations: signed telemetry correlated into alerts and incidents, response actions held for policy and human approval (two approvers for high impact), every change in a hash-chained ledger. | 253 tests · 82/82 e2e · 9/9 smoke · 48/48 invariants · 0 high/med open |
 | [<img src="stardancer/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/stardancer/demo.html) | **[STΛRDΛNCΞR](stardancer/)** | **Build dossier + interactive demo.** System intelligence platform: telemetry into an entity graph, drift and risk predictions, agent fixes held for policy and human approval, every decision in a hash-chained ledger. | 569 tests · 52/52 smoke · 56/56 invariants · 0 high/med open |
 | [<img src="rails/preview.webp" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/rails/index.html) | **[RΛILS](rails/)** | **Build dossier.** Programmable payment infrastructure: one API for payments, subscriptions, refunds and payouts, exactly-once idempotency, signed webhooks, an append-only double-entry ledger. Reviewer failed three rounds before it passed. | 431 tests · 53/53 smoke · 39/39 invariants · 96% coverage · 0 high/med open |
 | [<img src="cyberops/preview.png" width="220">](https://mdlcai.github.io/ai-mdlc-kernel-examples/cyberops/index.html) | **[CyberOps](cyberops/)** | **Live at [cyberops.mdlc.ai](https://cyberops.mdlc.ai).** Multi-tenant security operations: asset discovery with ownership verification, real DNS/HTTP/TLS recon, AI-assisted pentest planning behind a human approval gate, OSINT, and SOC 2 / PCI / OWASP posture mapping. | 29 tests · 17/17 smoke · 15/15 invariants · Reviewer PASS after 4 IDOR rounds |
